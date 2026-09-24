@@ -1,0 +1,18 @@
+[gd_scene format=3 uid="uid://cspacerock01"]
+
+[ext_resource type="Script" path="res://scripts/space_rock.gd" id="1_rock"]
+[ext_resource type="Texture2D" path="res://assets/asteroid60.png" id="2_tex"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_rock"]
+radius = 26.0
+
+[node name="SpaceRock" type="AnimatableBody2D"]
+sync_to_physics = true
+script = ExtResource("1_rock")
+
+[node name="Sprite" type="Sprite2D" parent="."]
+texture_filter = 0
+texture = ExtResource("2_tex")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("CircleShape2D_rock")

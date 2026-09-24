@@ -1,0 +1,2476 @@
+[gd_scene format=3 uid="uid://bkpmnt5832gcp"]
+
+[ext_resource type="Texture2D" uid="uid://b41glendbab3m" path="res://assets/bg.png" id="1_bg"]
+[ext_resource type="Script" uid="uid://dplktpj8vse8x" path="res://scripts/background.gd" id="1_bg_script"]
+[ext_resource type="Script" uid="uid://c8o715rrsjt5b" path="res://scripts/star_field.gd" id="2_stars"]
+[ext_resource type="Texture2D" uid="uid://dbadnu2t04lxh" path="res://assets/zvezdets2.png" id="3_star"]
+[ext_resource type="Texture2D" uid="uid://6vjqtrisigxv" path="res://assets/cosmoman2.png" id="4_wanderer"]
+[ext_resource type="Script" uid="uid://djnm554bi5ccd" path="res://scripts/wanderer.gd" id="5_wanderer"]
+[ext_resource type="Script" uid="uid://bo1yamnrlqi0y" path="res://scripts/menu.gd" id="7_menu"]
+[ext_resource type="PackedScene" uid="uid://cspacerock01" path="res://scenes/space_rock.tscn" id="8_rock"]
+[ext_resource type="Script" uid="uid://bc800lgo1y05g" path="res://scripts/rock_river.gd" id="9_river"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_wanderer"]
+radius = 12.0
+
+[node name="Main" type="Node2D" unique_id=540210433]
+
+[node name="Menu" type="CanvasLayer" parent="." unique_id=1029261457]
+layer = 120
+script = ExtResource("7_menu")
+
+[node name="Background" type="Sprite2D" parent="." unique_id=285845862]
+z_index = -10
+texture = ExtResource("1_bg")
+centered = false
+script = ExtResource("1_bg_script")
+
+[node name="StarField" type="Node2D" parent="." unique_id=240356815]
+z_index = -5
+script = ExtResource("2_stars")
+star_texture = ExtResource("3_star")
+
+[node name="Bodies" type="Node2D" parent="." unique_id=764655573]
+script = ExtResource("9_river")
+
+[node name="S0_-16" parent="Bodies" unique_id=944205095 instance=ExtResource("8_rock")]
+position = Vector2(10429.244, 326.499)
+scale = Vector2(1.1967, 1.1967)
+drift_velocity = Vector2(32, -7.8049)
+
+[node name="S0_-15" parent="Bodies" unique_id=1768273102 instance=ExtResource("8_rock")]
+position = Vector2(11309.923, 500.0268)
+scale = Vector2(1.1321, 1.1321)
+drift_velocity = Vector2(32, -8.7054)
+
+[node name="S0_-14" parent="Bodies" unique_id=1083159661 instance=ExtResource("8_rock")]
+position = Vector2(6377.666, 415.9173)
+scale = Vector2(1.3113, 1.3113)
+drift_velocity = Vector2(32, 3.1086)
+
+[node name="S0_-13" parent="Bodies" unique_id=986692443 instance=ExtResource("8_rock")]
+position = Vector2(683.1424, 618.6588)
+scale = Vector2(0.817, 0.817)
+drift_velocity = Vector2(32, 2.4105)
+
+[node name="S0_-12" parent="Bodies" unique_id=1272810815 instance=ExtResource("8_rock")]
+position = Vector2(7085.873, 506.5351)
+scale = Vector2(0.9361, 0.9361)
+drift_velocity = Vector2(32, 5.1317)
+
+[node name="S0_-11" parent="Bodies" unique_id=1106891835 instance=ExtResource("8_rock")]
+position = Vector2(9510.831, 155.6802)
+scale = Vector2(1.1348, 1.1348)
+drift_velocity = Vector2(32, -1.2968)
+
+[node name="S0_-10" parent="Bodies" unique_id=1641703748 instance=ExtResource("8_rock")]
+position = Vector2(1799.3943, 586.314)
+scale = Vector2(1.5937, 1.5937)
+drift_velocity = Vector2(32, 9.2362)
+
+[node name="S0_-9" parent="Bodies" unique_id=790644031 instance=ExtResource("8_rock")]
+position = Vector2(-431.3917, 636.9557)
+scale = Vector2(0.7312, 0.7312)
+drift_velocity = Vector2(32, -4.817)
+
+[node name="S0_-8" parent="Bodies" unique_id=973949286 instance=ExtResource("8_rock")]
+position = Vector2(8839.035, 276.1391)
+scale = Vector2(0.5604, 0.5604)
+drift_velocity = Vector2(32, 6.8013)
+
+[node name="S0_-7" parent="Bodies" unique_id=1059186307 instance=ExtResource("8_rock")]
+position = Vector2(4297.7827, 587.4106)
+scale = Vector2(0.7585, 0.7585)
+drift_velocity = Vector2(32, -1.0134)
+
+[node name="S0_-6" parent="Bodies" unique_id=1865138529 instance=ExtResource("8_rock")]
+position = Vector2(2041.8708, 348.4857)
+scale = Vector2(1.562, 1.562)
+drift_velocity = Vector2(32, -4.4264)
+
+[node name="S0_-5" parent="Bodies" unique_id=991956851 instance=ExtResource("8_rock")]
+position = Vector2(11088.79, 289.7343)
+scale = Vector2(0.5211, 0.5211)
+drift_velocity = Vector2(32, -6.1247)
+
+[node name="S0_-4" parent="Bodies" unique_id=688447095 instance=ExtResource("8_rock")]
+position = Vector2(4621.4854, 351.8911)
+scale = Vector2(1.5756, 1.5756)
+drift_velocity = Vector2(32, 4.433)
+
+[node name="S0_-3" parent="Bodies" unique_id=186623080 instance=ExtResource("8_rock")]
+position = Vector2(1845.2635, 159.2693)
+scale = Vector2(0.8539, 0.8539)
+drift_velocity = Vector2(32, 3.4663)
+
+[node name="S0_-2" parent="Bodies" unique_id=412337552 instance=ExtResource("8_rock")]
+position = Vector2(-400.3498, 713.5195)
+scale = Vector2(1.5044, 1.5044)
+drift_velocity = Vector2(32, 9.5963)
+
+[node name="S0_-1" parent="Bodies" unique_id=1288198329 instance=ExtResource("8_rock")]
+position = Vector2(12248.682, 699.9878)
+scale = Vector2(1.2053, 1.2053)
+drift_velocity = Vector2(32, 0.1103)
+
+[node name="StaticNear" parent="Bodies" unique_id=643722892 instance=ExtResource("8_rock")]
+position = Vector2(220, 400)
+scale = Vector2(1.35, 1.35)
+drift_velocity = Vector2(32, 8.411)
+
+[node name="StaticMid" parent="Bodies" unique_id=1541486983 instance=ExtResource("8_rock")]
+position = Vector2(8580.093, 606.7927)
+scale = Vector2(0.9589, 0.9589)
+drift_velocity = Vector2(32, 1.4428)
+
+[node name="S0_2" parent="Bodies" unique_id=1914149483 instance=ExtResource("8_rock")]
+position = Vector2(968.4546, 643.5721)
+scale = Vector2(0.7747, 0.7747)
+drift_velocity = Vector2(32, 4.5576)
+
+[node name="S0_3" parent="Bodies" unique_id=1771387131 instance=ExtResource("8_rock")]
+position = Vector2(10103.84, 588.4856)
+scale = Vector2(1.4212, 1.4212)
+drift_velocity = Vector2(32, -6.0681)
+
+[node name="S0_4" parent="Bodies" unique_id=1962996335 instance=ExtResource("8_rock")]
+position = Vector2(2156.3684, 514.299)
+scale = Vector2(1.2932, 1.2932)
+drift_velocity = Vector2(32, 2.5414)
+
+[node name="S0_5" parent="Bodies" unique_id=325119036 instance=ExtResource("8_rock")]
+position = Vector2(9513.338, 236.2589)
+scale = Vector2(1.0521, 1.0521)
+drift_velocity = Vector2(32, 6.8739)
+
+[node name="S0_6" parent="Bodies" unique_id=901670222 instance=ExtResource("8_rock")]
+position = Vector2(3009.6804, 554.41)
+scale = Vector2(0.913, 0.913)
+drift_velocity = Vector2(32, -7.3894)
+
+[node name="S0_7" parent="Bodies" unique_id=519863329 instance=ExtResource("8_rock")]
+position = Vector2(2170.41, 337.9122)
+scale = Vector2(1.5793, 1.5793)
+drift_velocity = Vector2(32, 1.2056)
+
+[node name="S0_8" parent="Bodies" unique_id=250652046 instance=ExtResource("8_rock")]
+position = Vector2(12169.911, 532.6383)
+scale = Vector2(0.4784, 0.4784)
+drift_velocity = Vector2(32, -1.6228)
+
+[node name="S0_9" parent="Bodies" unique_id=1807560739 instance=ExtResource("8_rock")]
+position = Vector2(11035.391, 127.2494)
+scale = Vector2(0.8048, 0.8048)
+drift_velocity = Vector2(32, 1.3894)
+
+[node name="S0_10" parent="Bodies" unique_id=38915552 instance=ExtResource("8_rock")]
+position = Vector2(11479.314, 378.9272)
+scale = Vector2(1.4538, 1.4538)
+drift_velocity = Vector2(32, 4.5567)
+
+[node name="S0_11" parent="Bodies" unique_id=875048586 instance=ExtResource("8_rock")]
+position = Vector2(7235.461, 126.9685)
+scale = Vector2(0.6467, 0.6467)
+drift_velocity = Vector2(32, 9.6441)
+
+[node name="S0_12" parent="Bodies" unique_id=537434489 instance=ExtResource("8_rock")]
+position = Vector2(3854.6802, 545.1908)
+scale = Vector2(1.1295, 1.1295)
+drift_velocity = Vector2(32, 4.5093)
+
+[node name="S0_13" parent="Bodies" unique_id=2088964671 instance=ExtResource("8_rock")]
+position = Vector2(6053.3223, 464.0689)
+scale = Vector2(0.7982, 0.7982)
+drift_velocity = Vector2(32, 4.8772)
+
+[node name="S0_14" parent="Bodies" unique_id=2014449829 instance=ExtResource("8_rock")]
+position = Vector2(9891.912, 702.7395)
+scale = Vector2(1.5878, 1.5878)
+drift_velocity = Vector2(32, 5.0802)
+
+[node name="S0_15" parent="Bodies" unique_id=730158549 instance=ExtResource("8_rock")]
+position = Vector2(7820.5923, 665.1265)
+scale = Vector2(1.2973, 1.2973)
+drift_velocity = Vector2(32, 0.226)
+
+[node name="S0_16" parent="Bodies" unique_id=1417247643 instance=ExtResource("8_rock")]
+position = Vector2(9588.713, 442.3523)
+scale = Vector2(1.314, 1.314)
+drift_velocity = Vector2(32, -1.7228)
+
+[node name="S0_17" parent="Bodies" unique_id=706066927 instance=ExtResource("8_rock")]
+position = Vector2(2770.374, 247.0709)
+scale = Vector2(1.6175, 1.6175)
+drift_velocity = Vector2(32, -0.7435)
+
+[node name="S0_18" parent="Bodies" unique_id=794907931 instance=ExtResource("8_rock")]
+position = Vector2(6892.156, 122.7498)
+scale = Vector2(0.55, 0.55)
+drift_velocity = Vector2(32, -8.5774)
+
+[node name="S0_19" parent="Bodies" unique_id=330394013 instance=ExtResource("8_rock")]
+position = Vector2(10964.642, 152.0823)
+scale = Vector2(0.5261, 0.5261)
+drift_velocity = Vector2(32, 4.3444)
+
+[node name="S0_20" parent="Bodies" unique_id=205279897 instance=ExtResource("8_rock")]
+position = Vector2(2569.4954, 674.3708)
+scale = Vector2(1.0397, 1.0397)
+drift_velocity = Vector2(32, 0.8108)
+
+[node name="S0_21" parent="Bodies" unique_id=1093829104 instance=ExtResource("8_rock")]
+position = Vector2(-1857.8289, 238.7698)
+scale = Vector2(0.8918, 0.8918)
+drift_velocity = Vector2(32, -6.7093)
+
+[node name="S0_22" parent="Bodies" unique_id=313635981 instance=ExtResource("8_rock")]
+position = Vector2(2741.7957, 317.4449)
+scale = Vector2(1.253, 1.253)
+drift_velocity = Vector2(32, 5.9821)
+
+[node name="S0_23" parent="Bodies" unique_id=382815810 instance=ExtResource("8_rock")]
+position = Vector2(-1815.3315, 241.9351)
+scale = Vector2(0.9245, 0.9245)
+drift_velocity = Vector2(32, -6.2087)
+
+[node name="S0_24" parent="Bodies" unique_id=1060951017 instance=ExtResource("8_rock")]
+position = Vector2(12014.421, 702.5656)
+scale = Vector2(0.9442, 0.9442)
+drift_velocity = Vector2(32, 9.2569)
+
+[node name="S0_25" parent="Bodies" unique_id=131583695 instance=ExtResource("8_rock")]
+position = Vector2(5881.3066, 534.6935)
+scale = Vector2(1.1357, 1.1357)
+drift_velocity = Vector2(32, 5.7995)
+
+[node name="S0_26" parent="Bodies" unique_id=899446730 instance=ExtResource("8_rock")]
+position = Vector2(3350.4734, 466.3407)
+scale = Vector2(0.7623, 0.7623)
+drift_velocity = Vector2(32, -1.4282)
+
+[node name="S0_27" parent="Bodies" unique_id=867106121 instance=ExtResource("8_rock")]
+position = Vector2(7390.1826, 710.7028)
+scale = Vector2(1.5667, 1.5667)
+drift_velocity = Vector2(32, 6.704)
+
+[node name="S0_28" parent="Bodies" unique_id=816292657 instance=ExtResource("8_rock")]
+position = Vector2(10982.895, 227.7504)
+scale = Vector2(0.6507, 0.6507)
+drift_velocity = Vector2(32, -8.3374)
+
+[node name="S0_29" parent="Bodies" unique_id=570977937 instance=ExtResource("8_rock")]
+position = Vector2(-1180.9722, 685.2318)
+scale = Vector2(1.2957, 1.2957)
+drift_velocity = Vector2(32, -5.5869)
+
+[node name="S0_30" parent="Bodies" unique_id=1365247209 instance=ExtResource("8_rock")]
+position = Vector2(8169.877, 245.1347)
+scale = Vector2(1.6353, 1.6353)
+drift_velocity = Vector2(32, -8.5921)
+
+[node name="S0_31" parent="Bodies" unique_id=114410926 instance=ExtResource("8_rock")]
+position = Vector2(2926.8567, 379.566)
+scale = Vector2(1.3129, 1.3129)
+drift_velocity = Vector2(32, -6.9513)
+
+[node name="S0_32" parent="Bodies" unique_id=1986460485 instance=ExtResource("8_rock")]
+position = Vector2(5685.2324, 316.3189)
+scale = Vector2(1.5721, 1.5721)
+drift_velocity = Vector2(32, -6.7443)
+
+[node name="S0_33" parent="Bodies" unique_id=1925420074 instance=ExtResource("8_rock")]
+position = Vector2(-1199.6187, 587.4226)
+scale = Vector2(0.6845, 0.6845)
+drift_velocity = Vector2(32, -2.0583)
+
+[node name="S0_34" parent="Bodies" unique_id=919358439 instance=ExtResource("8_rock")]
+position = Vector2(-1243.8278, 194.2312)
+scale = Vector2(1.1436, 1.1436)
+drift_velocity = Vector2(32, 6.3209)
+
+[node name="S0_35" parent="Bodies" unique_id=206510688 instance=ExtResource("8_rock")]
+position = Vector2(8760.361, 696.9253)
+scale = Vector2(1.3326, 1.3326)
+drift_velocity = Vector2(32, -1.0161)
+
+[node name="S0_36" parent="Bodies" unique_id=645044114 instance=ExtResource("8_rock")]
+position = Vector2(1062.1721, 403.0108)
+scale = Vector2(1.2752, 1.2752)
+drift_velocity = Vector2(32, -8.8724)
+
+[node name="S0_37" parent="Bodies" unique_id=243493627 instance=ExtResource("8_rock")]
+position = Vector2(6125.6807, 94.1143)
+scale = Vector2(1.2986, 1.2986)
+drift_velocity = Vector2(32, 4.6305)
+
+[node name="S0_38" parent="Bodies" unique_id=1618690738 instance=ExtResource("8_rock")]
+position = Vector2(3629.023, 188.4057)
+scale = Vector2(1.6183, 1.6183)
+drift_velocity = Vector2(32, -8.0161)
+
+[node name="S0_39" parent="Bodies" unique_id=365427184 instance=ExtResource("8_rock")]
+position = Vector2(5090.8765, 431.431)
+scale = Vector2(1.3448, 1.3448)
+drift_velocity = Vector2(32, -6.6892)
+
+[node name="S0_40" parent="Bodies" unique_id=978879958 instance=ExtResource("8_rock")]
+position = Vector2(10921.522, 553.9287)
+scale = Vector2(1.3679, 1.3679)
+drift_velocity = Vector2(32, -4.1484)
+
+[node name="S0_41" parent="Bodies" unique_id=1665955386 instance=ExtResource("8_rock")]
+position = Vector2(-731.7183, 307.1847)
+scale = Vector2(1.2343, 1.2343)
+drift_velocity = Vector2(32, 5.8302)
+
+[node name="S0_42" parent="Bodies" unique_id=393400294 instance=ExtResource("8_rock")]
+position = Vector2(12269.87, 510.1172)
+scale = Vector2(1.3048, 1.3048)
+drift_velocity = Vector2(32, -8.4761)
+
+[node name="S0_43" parent="Bodies" unique_id=1119542775 instance=ExtResource("8_rock")]
+position = Vector2(-2215.0503, 365.7606)
+scale = Vector2(0.5464, 0.5464)
+drift_velocity = Vector2(32, -1.9295)
+
+[node name="S0_44" parent="Bodies" unique_id=888373769 instance=ExtResource("8_rock")]
+position = Vector2(1271.8076, 589.8035)
+scale = Vector2(1.4092, 1.4092)
+drift_velocity = Vector2(32, 6.9356)
+
+[node name="S0_45" parent="Bodies" unique_id=1139778986 instance=ExtResource("8_rock")]
+position = Vector2(7656.979, 611.5771)
+scale = Vector2(1.5326, 1.5326)
+drift_velocity = Vector2(32, 7.8355)
+
+[node name="S0_46" parent="Bodies" unique_id=1138842290 instance=ExtResource("8_rock")]
+position = Vector2(206.7292, 688.5437)
+scale = Vector2(1.5483, 1.5483)
+drift_velocity = Vector2(32, 5.0146)
+
+[node name="S0_47" parent="Bodies" unique_id=2044802585 instance=ExtResource("8_rock")]
+position = Vector2(6369.689, 157.0029)
+scale = Vector2(0.9564, 0.9564)
+drift_velocity = Vector2(32, -3.0014)
+
+[node name="S0_48" parent="Bodies" unique_id=1432384762 instance=ExtResource("8_rock")]
+position = Vector2(5507.0103, 211.4847)
+scale = Vector2(1.1929, 1.1929)
+drift_velocity = Vector2(32, -5.5964)
+
+[node name="S0_49" parent="Bodies" unique_id=342751459 instance=ExtResource("8_rock")]
+position = Vector2(-1493.9594, 721.6253)
+scale = Vector2(1.6364, 1.6364)
+drift_velocity = Vector2(32, 6.4659)
+
+[node name="S0_50" parent="Bodies" unique_id=899913606 instance=ExtResource("8_rock")]
+position = Vector2(6638.1567, 544.4098)
+scale = Vector2(1.2377, 1.2377)
+drift_velocity = Vector2(32, 8.418)
+
+[node name="S0_51" parent="Bodies" unique_id=983152014 instance=ExtResource("8_rock")]
+position = Vector2(6156.137, 155.5313)
+scale = Vector2(1.1098, 1.1098)
+drift_velocity = Vector2(32, -4.1485)
+
+[node name="S0_52" parent="Bodies" unique_id=1316151737 instance=ExtResource("8_rock")]
+position = Vector2(9957.851, 522.3363)
+scale = Vector2(1.0183, 1.0183)
+drift_velocity = Vector2(32, 2.6455)
+
+[node name="S0_53" parent="Bodies" unique_id=837184165 instance=ExtResource("8_rock")]
+position = Vector2(10743.775, 560.9699)
+scale = Vector2(1.4006, 1.4006)
+drift_velocity = Vector2(32, 3.5206)
+
+[node name="S0_54" parent="Bodies" unique_id=1136476720 instance=ExtResource("8_rock")]
+position = Vector2(11721.839, 511.0484)
+scale = Vector2(0.8262, 0.8262)
+drift_velocity = Vector2(32, 2.3589)
+
+[node name="S0_55" parent="Bodies" unique_id=773245786 instance=ExtResource("8_rock")]
+position = Vector2(6981.9536, 155.9581)
+scale = Vector2(0.7372, 0.7372)
+drift_velocity = Vector2(32, 3.5198)
+
+[node name="S0_56" parent="Bodies" unique_id=2039661920 instance=ExtResource("8_rock")]
+position = Vector2(6187.019, 300.2498)
+scale = Vector2(1.5791, 1.5791)
+drift_velocity = Vector2(32, 1.7439)
+
+[node name="S0_57" parent="Bodies" unique_id=926986123 instance=ExtResource("8_rock")]
+position = Vector2(7472.766, 717.4481)
+scale = Vector2(1.1068, 1.1068)
+drift_velocity = Vector2(32, -8.4836)
+
+[node name="S0_58" parent="Bodies" unique_id=171814560 instance=ExtResource("8_rock")]
+position = Vector2(938.477, 263.4275)
+scale = Vector2(0.5848, 0.5848)
+drift_velocity = Vector2(32, 0.1544)
+
+[node name="S0_59" parent="Bodies" unique_id=2098796211 instance=ExtResource("8_rock")]
+position = Vector2(-1683.7958, 170.6785)
+scale = Vector2(1.2203, 1.2203)
+drift_velocity = Vector2(32, 4.4107)
+
+[node name="S0_60" parent="Bodies" unique_id=1337217140 instance=ExtResource("8_rock")]
+position = Vector2(-1112.7382, 723.0122)
+scale = Vector2(0.5978, 0.5978)
+drift_velocity = Vector2(32, 1.9227)
+
+[node name="S0_61" parent="Bodies" unique_id=675223891 instance=ExtResource("8_rock")]
+position = Vector2(8229.749, 237.2817)
+scale = Vector2(0.8461, 0.8461)
+drift_velocity = Vector2(32, -7.3422)
+
+[node name="S0_62" parent="Bodies" unique_id=2018378138 instance=ExtResource("8_rock")]
+position = Vector2(6682.5586, 102.8607)
+scale = Vector2(0.7961, 0.7961)
+drift_velocity = Vector2(32, -6.927)
+
+[node name="S0_63" parent="Bodies" unique_id=1459534430 instance=ExtResource("8_rock")]
+position = Vector2(-1624.7314, 198.0144)
+scale = Vector2(1.0181, 1.0181)
+drift_velocity = Vector2(32, 4.0883)
+
+[node name="S0_64" parent="Bodies" unique_id=375180324 instance=ExtResource("8_rock")]
+position = Vector2(3124.1746, 380.8458)
+scale = Vector2(0.7256, 0.7256)
+drift_velocity = Vector2(32, 4.7938)
+
+[node name="S0_65" parent="Bodies" unique_id=892582235 instance=ExtResource("8_rock")]
+position = Vector2(149.7226, 214.1979)
+scale = Vector2(1.3166, 1.3166)
+drift_velocity = Vector2(32, 4.8694)
+
+[node name="S0_66" parent="Bodies" unique_id=418210535 instance=ExtResource("8_rock")]
+position = Vector2(3816.9373, 545.5283)
+scale = Vector2(0.5893, 0.5893)
+drift_velocity = Vector2(32, -8.5021)
+
+[node name="S0_67" parent="Bodies" unique_id=745164917 instance=ExtResource("8_rock")]
+position = Vector2(8192.853, 602.3952)
+scale = Vector2(1.0235, 1.0235)
+drift_velocity = Vector2(32, -7.2646)
+
+[node name="S0_68" parent="Bodies" unique_id=62773955 instance=ExtResource("8_rock")]
+position = Vector2(7047.754, 107.2351)
+scale = Vector2(1.4988, 1.4988)
+drift_velocity = Vector2(32, 6.9164)
+
+[node name="S0_69" parent="Bodies" unique_id=1239577045 instance=ExtResource("8_rock")]
+position = Vector2(12536.351, 617.9281)
+scale = Vector2(1.5268, 1.5268)
+drift_velocity = Vector2(32, -2.1608)
+
+[node name="S0_70" parent="Bodies" unique_id=190853777 instance=ExtResource("8_rock")]
+position = Vector2(4579.4097, 261.5027)
+scale = Vector2(1.6491, 1.6491)
+drift_velocity = Vector2(32, -2.906)
+
+[node name="S0_71" parent="Bodies" unique_id=988967919 instance=ExtResource("8_rock")]
+position = Vector2(4409.282, 709.2049)
+scale = Vector2(1.0948, 1.0948)
+drift_velocity = Vector2(32, -5.112)
+
+[node name="S0_72" parent="Bodies" unique_id=1532240259 instance=ExtResource("8_rock")]
+position = Vector2(12482.385, 376.2142)
+scale = Vector2(0.9889, 0.9889)
+drift_velocity = Vector2(32, 4.3393)
+
+[node name="S0_73" parent="Bodies" unique_id=2111919085 instance=ExtResource("8_rock")]
+position = Vector2(12597.217, 355.9944)
+scale = Vector2(0.6218, 0.6218)
+drift_velocity = Vector2(32, 3.6627)
+
+[node name="S0_74" parent="Bodies" unique_id=628714319 instance=ExtResource("8_rock")]
+position = Vector2(12335.51, 269.755)
+scale = Vector2(1.3048, 1.3048)
+drift_velocity = Vector2(32, -9.7347)
+
+[node name="S0_75" parent="Bodies" unique_id=1673532017 instance=ExtResource("8_rock")]
+position = Vector2(1826.4836, 232.7858)
+scale = Vector2(1.6415, 1.6415)
+drift_velocity = Vector2(32, -3.2889)
+
+[node name="S0_76" parent="Bodies" unique_id=241553896 instance=ExtResource("8_rock")]
+position = Vector2(3333.9824, 630.2734)
+scale = Vector2(1.2952, 1.2952)
+drift_velocity = Vector2(32, -7.4413)
+
+[node name="S0_77" parent="Bodies" unique_id=495147988 instance=ExtResource("8_rock")]
+position = Vector2(5798.443, 293.8388)
+scale = Vector2(1.4258, 1.4258)
+drift_velocity = Vector2(32, -1.332)
+
+[node name="S0_78" parent="Bodies" unique_id=609636332 instance=ExtResource("8_rock")]
+position = Vector2(9373.921, 617.3449)
+scale = Vector2(1.2825, 1.2825)
+drift_velocity = Vector2(32, 0.7169)
+
+[node name="S0_79" parent="Bodies" unique_id=1208586663 instance=ExtResource("8_rock")]
+position = Vector2(6016.3345, 424.9734)
+scale = Vector2(0.9197, 0.9197)
+drift_velocity = Vector2(32, 5.0995)
+
+[node name="S0_80" parent="Bodies" unique_id=1282497137 instance=ExtResource("8_rock")]
+position = Vector2(6384.7236, 537.5722)
+scale = Vector2(0.8953, 0.8953)
+drift_velocity = Vector2(32, 3.294)
+
+[node name="S1_-16" parent="Bodies" unique_id=1222728964 instance=ExtResource("8_rock")]
+position = Vector2(5293.8228, 122.3157)
+scale = Vector2(1.0499, 1.0499)
+drift_velocity = Vector2(32, -6.9492)
+
+[node name="S1_-15" parent="Bodies" unique_id=2127259482 instance=ExtResource("8_rock")]
+position = Vector2(3449.859, 540.1132)
+scale = Vector2(1.2007, 1.2007)
+drift_velocity = Vector2(32, -0.2956)
+
+[node name="S1_-14" parent="Bodies" unique_id=328925067 instance=ExtResource("8_rock")]
+position = Vector2(5162.399, 583.7052)
+scale = Vector2(0.6197, 0.6197)
+drift_velocity = Vector2(32, 3.0515)
+
+[node name="S1_-13" parent="Bodies" unique_id=1562568460 instance=ExtResource("8_rock")]
+position = Vector2(9061.329, 696.9276)
+scale = Vector2(1.4746, 1.4746)
+drift_velocity = Vector2(32, -1.9623)
+
+[node name="S1_-12" parent="Bodies" unique_id=1336750655 instance=ExtResource("8_rock")]
+position = Vector2(6170.6313, 602.8665)
+scale = Vector2(0.9791, 0.9791)
+drift_velocity = Vector2(32, -0.5392)
+
+[node name="S1_-11" parent="Bodies" unique_id=1876355511 instance=ExtResource("8_rock")]
+position = Vector2(1622.1451, 640.3831)
+scale = Vector2(0.9252, 0.9252)
+drift_velocity = Vector2(32, 0.4831)
+
+[node name="S1_-10" parent="Bodies" unique_id=297678499 instance=ExtResource("8_rock")]
+position = Vector2(2757.5652, 423.2585)
+scale = Vector2(1.4358, 1.4358)
+drift_velocity = Vector2(32, -0.6446)
+
+[node name="S1_-9" parent="Bodies" unique_id=21633217 instance=ExtResource("8_rock")]
+position = Vector2(5209.1567, 493.783)
+scale = Vector2(1.2589, 1.2589)
+drift_velocity = Vector2(32, -5.0955)
+
+[node name="S1_-8" parent="Bodies" unique_id=1816296673 instance=ExtResource("8_rock")]
+position = Vector2(-1597.5631, 495.5904)
+scale = Vector2(0.6294, 0.6294)
+drift_velocity = Vector2(32, -8.9906)
+
+[node name="S1_-7" parent="Bodies" unique_id=303065454 instance=ExtResource("8_rock")]
+position = Vector2(8128.8076, 563.2087)
+scale = Vector2(1.0672, 1.0672)
+drift_velocity = Vector2(32, -9.445)
+
+[node name="S1_-6" parent="Bodies" unique_id=79043906 instance=ExtResource("8_rock")]
+position = Vector2(9973.464, 145.4422)
+scale = Vector2(1.1676, 1.1676)
+drift_velocity = Vector2(32, -8.4332)
+
+[node name="S1_-5" parent="Bodies" unique_id=1542621140 instance=ExtResource("8_rock")]
+position = Vector2(-1661.5146, 486.2275)
+scale = Vector2(0.6575, 0.6575)
+drift_velocity = Vector2(32, -5.9867)
+
+[node name="S1_-4" parent="Bodies" unique_id=484049594 instance=ExtResource("8_rock")]
+position = Vector2(557.3832, 270.7919)
+scale = Vector2(1.1117, 1.1117)
+drift_velocity = Vector2(32, 2.4521)
+
+[node name="S1_-3" parent="Bodies" unique_id=1378904462 instance=ExtResource("8_rock")]
+position = Vector2(5308.0654, 420.1587)
+scale = Vector2(1.4857, 1.4857)
+drift_velocity = Vector2(32, 2.7156)
+
+[node name="S1_-2" parent="Bodies" unique_id=1193355448 instance=ExtResource("8_rock")]
+position = Vector2(12329.898, 442.9192)
+scale = Vector2(0.7359, 0.7359)
+drift_velocity = Vector2(32, 5.5251)
+
+[node name="S1_-1" parent="Bodies" unique_id=294396736 instance=ExtResource("8_rock")]
+position = Vector2(10218.544, 670.8838)
+scale = Vector2(1.2048, 1.2048)
+drift_velocity = Vector2(32, -1.6838)
+
+[node name="S1_0" parent="Bodies" unique_id=1029830146 instance=ExtResource("8_rock")]
+position = Vector2(4329.0576, 265.6356)
+scale = Vector2(1.4017, 1.4017)
+drift_velocity = Vector2(32, -0.6672)
+
+[node name="S1_1" parent="Bodies" unique_id=1116982689 instance=ExtResource("8_rock")]
+position = Vector2(3124.3994, 607.6895)
+scale = Vector2(0.4757, 0.4757)
+drift_velocity = Vector2(32, -8.652)
+
+[node name="S1_2" parent="Bodies" unique_id=58962549 instance=ExtResource("8_rock")]
+position = Vector2(1776.8744, 141.3288)
+scale = Vector2(0.9758, 0.9758)
+drift_velocity = Vector2(32, -7.9522)
+
+[node name="S1_3" parent="Bodies" unique_id=221674110 instance=ExtResource("8_rock")]
+position = Vector2(10195.358, 422.6349)
+scale = Vector2(0.5439, 0.5439)
+drift_velocity = Vector2(32, -6.4727)
+
+[node name="S1_4" parent="Bodies" unique_id=2077887782 instance=ExtResource("8_rock")]
+position = Vector2(2121.1262, 165.4799)
+scale = Vector2(1.2143, 1.2143)
+drift_velocity = Vector2(32, 0.3227)
+
+[node name="S1_5" parent="Bodies" unique_id=2066155022 instance=ExtResource("8_rock")]
+position = Vector2(9068.661, 281.5859)
+scale = Vector2(1.3651, 1.3651)
+drift_velocity = Vector2(32, -7.866)
+
+[node name="S1_6" parent="Bodies" unique_id=1767286760 instance=ExtResource("8_rock")]
+position = Vector2(12940.736, 339.0587)
+scale = Vector2(0.5167, 0.5167)
+drift_velocity = Vector2(32, 7.5222)
+
+[node name="S1_7" parent="Bodies" unique_id=1499187133 instance=ExtResource("8_rock")]
+position = Vector2(-1402.3755, 94.2753)
+scale = Vector2(1.4018, 1.4018)
+drift_velocity = Vector2(32, 4.9686)
+
+[node name="S1_8" parent="Bodies" unique_id=1941926163 instance=ExtResource("8_rock")]
+position = Vector2(12911.587, 196.4178)
+scale = Vector2(0.6296, 0.6296)
+drift_velocity = Vector2(32, -3.7034)
+
+[node name="S1_9" parent="Bodies" unique_id=849357224 instance=ExtResource("8_rock")]
+position = Vector2(3560.1262, 95.5642)
+scale = Vector2(1.4163, 1.4163)
+drift_velocity = Vector2(32, -1.1008)
+
+[node name="S1_10" parent="Bodies" unique_id=1176574394 instance=ExtResource("8_rock")]
+position = Vector2(-682.7296, 388.4675)
+scale = Vector2(0.8675, 0.8675)
+drift_velocity = Vector2(32, 4.4218)
+
+[node name="S1_11" parent="Bodies" unique_id=1491401718 instance=ExtResource("8_rock")]
+position = Vector2(-1225.3232, 420.909)
+scale = Vector2(1.5373, 1.5373)
+drift_velocity = Vector2(32, -7.981)
+
+[node name="S1_12" parent="Bodies" unique_id=1072530535 instance=ExtResource("8_rock")]
+position = Vector2(98.8795, 272.5475)
+scale = Vector2(0.979, 0.979)
+drift_velocity = Vector2(32, 3.0705)
+
+[node name="S1_13" parent="Bodies" unique_id=1864447917 instance=ExtResource("8_rock")]
+position = Vector2(8505.767, 363.2943)
+scale = Vector2(1.5804, 1.5804)
+drift_velocity = Vector2(32, -1.4321)
+
+[node name="S1_14" parent="Bodies" unique_id=1019667731 instance=ExtResource("8_rock")]
+position = Vector2(3921.8208, 320.3619)
+scale = Vector2(0.9677, 0.9677)
+drift_velocity = Vector2(32, 5.8182)
+
+[node name="S1_15" parent="Bodies" unique_id=71224223 instance=ExtResource("8_rock")]
+position = Vector2(6386.358, 696.9733)
+scale = Vector2(0.8656, 0.8656)
+drift_velocity = Vector2(32, -0.6)
+
+[node name="S1_16" parent="Bodies" unique_id=1492047231 instance=ExtResource("8_rock")]
+position = Vector2(-2014.4341, 655.6841)
+scale = Vector2(1.5137, 1.5137)
+drift_velocity = Vector2(32, 3.8122)
+
+[node name="S1_17" parent="Bodies" unique_id=1654778894 instance=ExtResource("8_rock")]
+position = Vector2(-441.3178, 397.4468)
+scale = Vector2(1.5885, 1.5885)
+drift_velocity = Vector2(32, -8.4016)
+
+[node name="S1_18" parent="Bodies" unique_id=1278644196 instance=ExtResource("8_rock")]
+position = Vector2(-1956.54, 194.5452)
+scale = Vector2(0.841, 0.841)
+drift_velocity = Vector2(32, -2.733)
+
+[node name="S1_19" parent="Bodies" unique_id=1252080957 instance=ExtResource("8_rock")]
+position = Vector2(150.0701, 91.0385)
+scale = Vector2(1.4529, 1.4529)
+drift_velocity = Vector2(32, -1.0887)
+
+[node name="S1_20" parent="Bodies" unique_id=1783524317 instance=ExtResource("8_rock")]
+position = Vector2(8791.167, 483.28)
+scale = Vector2(1.1466, 1.1466)
+drift_velocity = Vector2(32, -3.7592)
+
+[node name="S1_21" parent="Bodies" unique_id=1188542467 instance=ExtResource("8_rock")]
+position = Vector2(12141.753, 135.4989)
+scale = Vector2(0.465, 0.465)
+drift_velocity = Vector2(32, -0.936)
+
+[node name="S1_22" parent="Bodies" unique_id=550918976 instance=ExtResource("8_rock")]
+position = Vector2(6461.908, 633.2945)
+scale = Vector2(1.4875, 1.4875)
+drift_velocity = Vector2(32, -8.0253)
+
+[node name="S1_23" parent="Bodies" unique_id=2042317598 instance=ExtResource("8_rock")]
+position = Vector2(5243.88, 272.6906)
+scale = Vector2(1.397, 1.397)
+drift_velocity = Vector2(32, 8.1483)
+
+[node name="S1_24" parent="Bodies" unique_id=1295291662 instance=ExtResource("8_rock")]
+position = Vector2(-2075.6414, 297.0833)
+scale = Vector2(0.7456, 0.7456)
+drift_velocity = Vector2(32, 8.3055)
+
+[node name="S1_25" parent="Bodies" unique_id=1411167683 instance=ExtResource("8_rock")]
+position = Vector2(3288.8237, 234.7524)
+scale = Vector2(0.5926, 0.5926)
+drift_velocity = Vector2(32, -5.3833)
+
+[node name="S1_26" parent="Bodies" unique_id=817592999 instance=ExtResource("8_rock")]
+position = Vector2(4036.922, 454.9526)
+scale = Vector2(1.3612, 1.3612)
+drift_velocity = Vector2(32, 9.657)
+
+[node name="S1_27" parent="Bodies" unique_id=285020862 instance=ExtResource("8_rock")]
+position = Vector2(8081.4634, 571.78)
+scale = Vector2(0.7376, 0.7376)
+drift_velocity = Vector2(32, 6.5989)
+
+[node name="S1_28" parent="Bodies" unique_id=458374405 instance=ExtResource("8_rock")]
+position = Vector2(12343.003, 700.5978)
+scale = Vector2(1.0134, 1.0134)
+drift_velocity = Vector2(32, 3.9621)
+
+[node name="S1_29" parent="Bodies" unique_id=1106301708 instance=ExtResource("8_rock")]
+position = Vector2(2094.8682, 607.9136)
+scale = Vector2(0.8052, 0.8052)
+drift_velocity = Vector2(32, 4.8843)
+
+[node name="S1_30" parent="Bodies" unique_id=2382827 instance=ExtResource("8_rock")]
+position = Vector2(-1027.0931, 562.8848)
+scale = Vector2(1.6119, 1.6119)
+drift_velocity = Vector2(32, -6.8909)
+
+[node name="S1_31" parent="Bodies" unique_id=1864230481 instance=ExtResource("8_rock")]
+position = Vector2(7005.9316, 366.6157)
+scale = Vector2(1.6464, 1.6464)
+drift_velocity = Vector2(32, -5.8013)
+
+[node name="S1_32" parent="Bodies" unique_id=2140868112 instance=ExtResource("8_rock")]
+position = Vector2(1408.4064, 163.2734)
+scale = Vector2(1.2273, 1.2273)
+drift_velocity = Vector2(32, -8.5148)
+
+[node name="S1_33" parent="Bodies" unique_id=542186099 instance=ExtResource("8_rock")]
+position = Vector2(7994.573, 233.6178)
+scale = Vector2(1.3901, 1.3901)
+drift_velocity = Vector2(32, -8.4387)
+
+[node name="S1_34" parent="Bodies" unique_id=1926505836 instance=ExtResource("8_rock")]
+position = Vector2(8060.3564, 78.3545)
+scale = Vector2(1.1624, 1.1624)
+drift_velocity = Vector2(32, 7.8512)
+
+[node name="S1_35" parent="Bodies" unique_id=1611171882 instance=ExtResource("8_rock")]
+position = Vector2(-1382.9379, 675.1884)
+scale = Vector2(1.3984, 1.3984)
+drift_velocity = Vector2(32, -3.7371)
+
+[node name="S1_36" parent="Bodies" unique_id=432770802 instance=ExtResource("8_rock")]
+position = Vector2(8292.151, 662.8284)
+scale = Vector2(1.1448, 1.1448)
+drift_velocity = Vector2(32, -2.664)
+
+[node name="S1_37" parent="Bodies" unique_id=1268879208 instance=ExtResource("8_rock")]
+position = Vector2(-453.3814, 507.8434)
+scale = Vector2(0.9027, 0.9027)
+drift_velocity = Vector2(32, -8.7646)
+
+[node name="S1_38" parent="Bodies" unique_id=1485201823 instance=ExtResource("8_rock")]
+position = Vector2(5499.7466, 332.4572)
+scale = Vector2(1.3629, 1.3629)
+drift_velocity = Vector2(32, -9.9473)
+
+[node name="S1_39" parent="Bodies" unique_id=1905793999 instance=ExtResource("8_rock")]
+position = Vector2(4330.334, 414.7677)
+scale = Vector2(1.6497, 1.6497)
+drift_velocity = Vector2(32, -6.8487)
+
+[node name="S1_40" parent="Bodies" unique_id=1453100763 instance=ExtResource("8_rock")]
+position = Vector2(5645.0576, 578.2304)
+scale = Vector2(1.6005, 1.6005)
+drift_velocity = Vector2(32, 1.6173)
+
+[node name="S1_41" parent="Bodies" unique_id=1180263968 instance=ExtResource("8_rock")]
+position = Vector2(8842.664, 618.4126)
+scale = Vector2(0.7357, 0.7357)
+drift_velocity = Vector2(32, 6.1802)
+
+[node name="S1_42" parent="Bodies" unique_id=186063427 instance=ExtResource("8_rock")]
+position = Vector2(-2170.823, 633.4703)
+scale = Vector2(0.8495, 0.8495)
+drift_velocity = Vector2(32, -0.5103)
+
+[node name="S1_43" parent="Bodies" unique_id=1451515980 instance=ExtResource("8_rock")]
+position = Vector2(6080.508, 315.72)
+scale = Vector2(1.131, 1.131)
+drift_velocity = Vector2(32, 6.5447)
+
+[node name="S1_44" parent="Bodies" unique_id=642583544 instance=ExtResource("8_rock")]
+position = Vector2(-1368.8708, 398.9002)
+scale = Vector2(0.9739, 0.9739)
+drift_velocity = Vector2(32, -0.5921)
+
+[node name="S1_45" parent="Bodies" unique_id=91357064 instance=ExtResource("8_rock")]
+position = Vector2(9414.591, 333.3446)
+scale = Vector2(1.5819, 1.5819)
+drift_velocity = Vector2(32, -4.3972)
+
+[node name="S1_46" parent="Bodies" unique_id=1709385796 instance=ExtResource("8_rock")]
+position = Vector2(11237.581, 245.1955)
+scale = Vector2(1.4702, 1.4702)
+drift_velocity = Vector2(32, -4.8993)
+
+[node name="S1_47" parent="Bodies" unique_id=1202134942 instance=ExtResource("8_rock")]
+position = Vector2(5969.948, 634.5304)
+scale = Vector2(1.0858, 1.0858)
+drift_velocity = Vector2(32, 5.0728)
+
+[node name="S1_48" parent="Bodies" unique_id=812578743 instance=ExtResource("8_rock")]
+position = Vector2(9144.999, 450.5059)
+scale = Vector2(1.1545, 1.1545)
+drift_velocity = Vector2(32, -9.7546)
+
+[node name="S1_49" parent="Bodies" unique_id=586077485 instance=ExtResource("8_rock")]
+position = Vector2(9064.699, 78.4356)
+scale = Vector2(0.7338, 0.7338)
+drift_velocity = Vector2(32, -0.8732)
+
+[node name="S1_50" parent="Bodies" unique_id=350873041 instance=ExtResource("8_rock")]
+position = Vector2(9206.858, 490.8325)
+scale = Vector2(1.03, 1.03)
+drift_velocity = Vector2(32, 2.5975)
+
+[node name="S1_51" parent="Bodies" unique_id=55758618 instance=ExtResource("8_rock")]
+position = Vector2(1770.9319, 523.0303)
+scale = Vector2(1.0599, 1.0599)
+drift_velocity = Vector2(32, -1.9794)
+
+[node name="S1_52" parent="Bodies" unique_id=1911811700 instance=ExtResource("8_rock")]
+position = Vector2(2950.807, 322.6284)
+scale = Vector2(0.5487, 0.5487)
+drift_velocity = Vector2(32, -0.1051)
+
+[node name="S1_53" parent="Bodies" unique_id=757844796 instance=ExtResource("8_rock")]
+position = Vector2(4578.1567, 81.5697)
+scale = Vector2(1.0265, 1.0265)
+drift_velocity = Vector2(32, 2.9134)
+
+[node name="S1_54" parent="Bodies" unique_id=676855212 instance=ExtResource("8_rock")]
+position = Vector2(9784.414, 367.3389)
+scale = Vector2(1.1004, 1.1004)
+drift_velocity = Vector2(32, -8.66)
+
+[node name="S1_55" parent="Bodies" unique_id=857267603 instance=ExtResource("8_rock")]
+position = Vector2(4260.5024, 634.2843)
+scale = Vector2(1.6096, 1.6096)
+drift_velocity = Vector2(32, 5.7091)
+
+[node name="S1_56" parent="Bodies" unique_id=69446585 instance=ExtResource("8_rock")]
+position = Vector2(10531.956, 287.4939)
+scale = Vector2(0.6844, 0.6844)
+drift_velocity = Vector2(32, -0.7478)
+
+[node name="S1_57" parent="Bodies" unique_id=1298837127 instance=ExtResource("8_rock")]
+position = Vector2(6760.7363, 419.3205)
+scale = Vector2(1.5222, 1.5222)
+drift_velocity = Vector2(32, -6.0726)
+
+[node name="S1_58" parent="Bodies" unique_id=202869451 instance=ExtResource("8_rock")]
+position = Vector2(12419.7, 711.4039)
+scale = Vector2(1.6025, 1.6025)
+drift_velocity = Vector2(32, -5.9126)
+
+[node name="S1_59" parent="Bodies" unique_id=1851941810 instance=ExtResource("8_rock")]
+position = Vector2(-1972.9169, 223.2919)
+scale = Vector2(0.4942, 0.4942)
+drift_velocity = Vector2(32, 3.1869)
+
+[node name="S1_60" parent="Bodies" unique_id=1730145918 instance=ExtResource("8_rock")]
+position = Vector2(-1300.9255, 468.1146)
+scale = Vector2(0.8518, 0.8518)
+drift_velocity = Vector2(32, -9.1928)
+
+[node name="S1_61" parent="Bodies" unique_id=1481328185 instance=ExtResource("8_rock")]
+position = Vector2(12201.835, 114.7038)
+scale = Vector2(0.6427, 0.6427)
+drift_velocity = Vector2(32, 0.2929)
+
+[node name="S1_62" parent="Bodies" unique_id=1347880758 instance=ExtResource("8_rock")]
+position = Vector2(3213.3171, 564.5284)
+scale = Vector2(1.288, 1.288)
+drift_velocity = Vector2(32, -5.776)
+
+[node name="S1_63" parent="Bodies" unique_id=1502115738 instance=ExtResource("8_rock")]
+position = Vector2(-423.1071, 480.988)
+scale = Vector2(0.7406, 0.7406)
+drift_velocity = Vector2(32, -4.1511)
+
+[node name="S1_64" parent="Bodies" unique_id=556495694 instance=ExtResource("8_rock")]
+position = Vector2(12875.415, 367.9414)
+scale = Vector2(0.9361, 0.9361)
+drift_velocity = Vector2(32, -4.44)
+
+[node name="S1_65" parent="Bodies" unique_id=1185878622 instance=ExtResource("8_rock")]
+position = Vector2(6676.3574, 505.7921)
+scale = Vector2(0.7136, 0.7136)
+drift_velocity = Vector2(32, 3.5753)
+
+[node name="S1_66" parent="Bodies" unique_id=422539095 instance=ExtResource("8_rock")]
+position = Vector2(-152.3536, 456.896)
+scale = Vector2(1.2571, 1.2571)
+drift_velocity = Vector2(32, 1.1064)
+
+[node name="S1_67" parent="Bodies" unique_id=1795070632 instance=ExtResource("8_rock")]
+position = Vector2(6269.6304, 86.2751)
+scale = Vector2(1.4435, 1.4435)
+drift_velocity = Vector2(32, 1.5032)
+
+[node name="S1_68" parent="Bodies" unique_id=803622658 instance=ExtResource("8_rock")]
+position = Vector2(850.9819, 306.7292)
+scale = Vector2(1.516, 1.516)
+drift_velocity = Vector2(32, 7.1636)
+
+[node name="S1_69" parent="Bodies" unique_id=1176760569 instance=ExtResource("8_rock")]
+position = Vector2(7591.035, 184.1599)
+scale = Vector2(0.711, 0.711)
+drift_velocity = Vector2(32, -7.4078)
+
+[node name="S1_70" parent="Bodies" unique_id=1698080852 instance=ExtResource("8_rock")]
+position = Vector2(-1550.1992, 245.7175)
+scale = Vector2(1.3012, 1.3012)
+drift_velocity = Vector2(32, 3.4438)
+
+[node name="S1_71" parent="Bodies" unique_id=1209586518 instance=ExtResource("8_rock")]
+position = Vector2(4137.704, 539.55)
+scale = Vector2(1.4475, 1.4475)
+drift_velocity = Vector2(32, -9.8608)
+
+[node name="S1_72" parent="Bodies" unique_id=985022451 instance=ExtResource("8_rock")]
+position = Vector2(4719.8633, 595.8084)
+scale = Vector2(1.2377, 1.2377)
+drift_velocity = Vector2(32, 5.5927)
+
+[node name="S1_73" parent="Bodies" unique_id=1352055062 instance=ExtResource("8_rock")]
+position = Vector2(6309.9063, 274.2553)
+scale = Vector2(1.5433, 1.5433)
+drift_velocity = Vector2(32, 5.204)
+
+[node name="S1_74" parent="Bodies" unique_id=1335408637 instance=ExtResource("8_rock")]
+position = Vector2(7695.4917, 293.7235)
+scale = Vector2(1.4307, 1.4307)
+drift_velocity = Vector2(32, -0.6834)
+
+[node name="S1_75" parent="Bodies" unique_id=1009913834 instance=ExtResource("8_rock")]
+position = Vector2(8472.798, 604.4858)
+scale = Vector2(0.7936, 0.7936)
+drift_velocity = Vector2(32, -9.8161)
+
+[node name="S1_76" parent="Bodies" unique_id=807606326 instance=ExtResource("8_rock")]
+position = Vector2(10803.78, 395.4977)
+scale = Vector2(0.549, 0.549)
+drift_velocity = Vector2(32, 0.1368)
+
+[node name="S1_77" parent="Bodies" unique_id=437473542 instance=ExtResource("8_rock")]
+position = Vector2(4560.804, 181.5224)
+scale = Vector2(0.9991, 0.9991)
+drift_velocity = Vector2(32, 1.7379)
+
+[node name="S1_78" parent="Bodies" unique_id=60284455 instance=ExtResource("8_rock")]
+position = Vector2(6016.4453, 229.1823)
+scale = Vector2(0.8455, 0.8455)
+drift_velocity = Vector2(32, -9.5278)
+
+[node name="S1_79" parent="Bodies" unique_id=1002970633 instance=ExtResource("8_rock")]
+position = Vector2(6034.5293, 591.9433)
+scale = Vector2(0.9013, 0.9013)
+drift_velocity = Vector2(32, 5.492)
+
+[node name="S1_80" parent="Bodies" unique_id=1955662189 instance=ExtResource("8_rock")]
+position = Vector2(235.589, 347.8859)
+scale = Vector2(0.8109, 0.8109)
+drift_velocity = Vector2(32, -3.9916)
+
+[node name="S2_-16" parent="Bodies" unique_id=933936030 instance=ExtResource("8_rock")]
+position = Vector2(-2133.858, 530.0243)
+scale = Vector2(0.7041, 0.7041)
+drift_velocity = Vector2(32, -8.0719)
+
+[node name="S2_-15" parent="Bodies" unique_id=90099588 instance=ExtResource("8_rock")]
+position = Vector2(1833.8499, 366.0575)
+scale = Vector2(1.1968, 1.1968)
+drift_velocity = Vector2(32, 7.8809)
+
+[node name="S2_-14" parent="Bodies" unique_id=1062314501 instance=ExtResource("8_rock")]
+position = Vector2(6600.8726, 411.7091)
+scale = Vector2(0.6815, 0.6815)
+drift_velocity = Vector2(32, 9.4257)
+
+[node name="S2_-13" parent="Bodies" unique_id=1809385341 instance=ExtResource("8_rock")]
+position = Vector2(3178.837, 504.9537)
+scale = Vector2(1.3166, 1.3166)
+drift_velocity = Vector2(32, 7.0023)
+
+[node name="S2_-12" parent="Bodies" unique_id=1938514721 instance=ExtResource("8_rock")]
+position = Vector2(-2283.6511, 214.5352)
+scale = Vector2(1.1869, 1.1869)
+drift_velocity = Vector2(32, -2.3394)
+
+[node name="S2_-11" parent="Bodies" unique_id=504730169 instance=ExtResource("8_rock")]
+position = Vector2(6263.714, 468.8204)
+scale = Vector2(1.5165, 1.5165)
+drift_velocity = Vector2(32, 3.5567)
+
+[node name="S2_-10" parent="Bodies" unique_id=137575614 instance=ExtResource("8_rock")]
+position = Vector2(4128.651, 673.2277)
+scale = Vector2(1.5412, 1.5412)
+drift_velocity = Vector2(32, 6.6255)
+
+[node name="S2_-9" parent="Bodies" unique_id=65969636 instance=ExtResource("8_rock")]
+position = Vector2(4095.173, 123.787)
+scale = Vector2(0.6533, 0.6533)
+drift_velocity = Vector2(32, -8.7942)
+
+[node name="S2_-8" parent="Bodies" unique_id=1587392150 instance=ExtResource("8_rock")]
+position = Vector2(7744.2524, 92.8029)
+scale = Vector2(1.3864, 1.3864)
+drift_velocity = Vector2(32, -3.3937)
+
+[node name="S2_-7" parent="Bodies" unique_id=874436610 instance=ExtResource("8_rock")]
+position = Vector2(4105.156, 163.0335)
+scale = Vector2(0.6402, 0.6402)
+drift_velocity = Vector2(32, 1.4336)
+
+[node name="S2_-6" parent="Bodies" unique_id=1119480403 instance=ExtResource("8_rock")]
+position = Vector2(9243.86, 241.3087)
+scale = Vector2(1.6266, 1.6266)
+drift_velocity = Vector2(32, 6.3365)
+
+[node name="S2_-5" parent="Bodies" unique_id=150574789 instance=ExtResource("8_rock")]
+position = Vector2(3699.8628, 112.8555)
+scale = Vector2(0.7677, 0.7677)
+drift_velocity = Vector2(32, -2.1873)
+
+[node name="S2_-4" parent="Bodies" unique_id=1843869632 instance=ExtResource("8_rock")]
+position = Vector2(8178.435, 160.1994)
+scale = Vector2(1.4449, 1.4449)
+drift_velocity = Vector2(32, -5.0111)
+
+[node name="S2_-3" parent="Bodies" unique_id=1614501170 instance=ExtResource("8_rock")]
+position = Vector2(10013.937, 721.7547)
+scale = Vector2(1.2613, 1.2613)
+drift_velocity = Vector2(32, 2.5629)
+
+[node name="S2_-2" parent="Bodies" unique_id=837544511 instance=ExtResource("8_rock")]
+position = Vector2(3758.6753, 82.7875)
+scale = Vector2(0.7638, 0.7638)
+drift_velocity = Vector2(32, 3.6177)
+
+[node name="S2_-1" parent="Bodies" unique_id=1272669232 instance=ExtResource("8_rock")]
+position = Vector2(10144.452, 194.9567)
+scale = Vector2(1.1867, 1.1867)
+drift_velocity = Vector2(32, -9.9979)
+
+[node name="S2_0" parent="Bodies" unique_id=1653452241 instance=ExtResource("8_rock")]
+position = Vector2(9533.19, 651.2193)
+scale = Vector2(0.5001, 0.5001)
+drift_velocity = Vector2(32, -7.9403)
+
+[node name="S2_1" parent="Bodies" unique_id=692268247 instance=ExtResource("8_rock")]
+position = Vector2(5634.982, 416.5963)
+scale = Vector2(0.8346, 0.8346)
+drift_velocity = Vector2(32, -3.039)
+
+[node name="S2_2" parent="Bodies" unique_id=510684652 instance=ExtResource("8_rock")]
+position = Vector2(1725.8064, 315.2102)
+scale = Vector2(0.5742, 0.5742)
+drift_velocity = Vector2(32, -8.0659)
+
+[node name="S2_3" parent="Bodies" unique_id=1974287041 instance=ExtResource("8_rock")]
+position = Vector2(11.0852, 628.6056)
+scale = Vector2(1.3355, 1.3355)
+drift_velocity = Vector2(32, -8.0057)
+
+[node name="S2_4" parent="Bodies" unique_id=339163690 instance=ExtResource("8_rock")]
+position = Vector2(8426.862, 673.0381)
+scale = Vector2(0.9151, 0.9151)
+drift_velocity = Vector2(32, 8.0492)
+
+[node name="S2_5" parent="Bodies" unique_id=1282824304 instance=ExtResource("8_rock")]
+position = Vector2(11438.327, 76.2542)
+scale = Vector2(0.5156, 0.5156)
+drift_velocity = Vector2(32, 4.3252)
+
+[node name="S2_6" parent="Bodies" unique_id=1879995909 instance=ExtResource("8_rock")]
+position = Vector2(3261.1047, 258.6644)
+scale = Vector2(0.5963, 0.5963)
+drift_velocity = Vector2(32, 4.0671)
+
+[node name="S2_7" parent="Bodies" unique_id=968380801 instance=ExtResource("8_rock")]
+position = Vector2(3652.9792, 560.3634)
+scale = Vector2(1.1017, 1.1017)
+drift_velocity = Vector2(32, -1.5165)
+
+[node name="S2_8" parent="Bodies" unique_id=1607147610 instance=ExtResource("8_rock")]
+position = Vector2(5634.3574, 285.2821)
+scale = Vector2(0.9178, 0.9178)
+drift_velocity = Vector2(32, -7.5107)
+
+[node name="S2_9" parent="Bodies" unique_id=977487210 instance=ExtResource("8_rock")]
+position = Vector2(11937.371, 391.3707)
+scale = Vector2(1.6231, 1.6231)
+drift_velocity = Vector2(32, 5.0214)
+
+[node name="S2_10" parent="Bodies" unique_id=1087590723 instance=ExtResource("8_rock")]
+position = Vector2(5721.8022, 211.1232)
+scale = Vector2(0.5657, 0.5657)
+drift_velocity = Vector2(32, 9.2048)
+
+[node name="S2_11" parent="Bodies" unique_id=356276304 instance=ExtResource("8_rock")]
+position = Vector2(8381.668, 340.7458)
+scale = Vector2(1.2079, 1.2079)
+drift_velocity = Vector2(32, 3.8118)
+
+[node name="S2_12" parent="Bodies" unique_id=1726124697 instance=ExtResource("8_rock")]
+position = Vector2(879.6123, 418.3022)
+scale = Vector2(0.6584, 0.6584)
+drift_velocity = Vector2(32, 6.5711)
+
+[node name="S2_13" parent="Bodies" unique_id=541096518 instance=ExtResource("8_rock")]
+position = Vector2(2347.0757, 180.982)
+scale = Vector2(0.6205, 0.6205)
+drift_velocity = Vector2(32, 7.7782)
+
+[node name="S2_14" parent="Bodies" unique_id=1820948847 instance=ExtResource("8_rock")]
+position = Vector2(12068.015, 383.3635)
+scale = Vector2(0.6403, 0.6403)
+drift_velocity = Vector2(32, 6.6615)
+
+[node name="S2_15" parent="Bodies" unique_id=1477632523 instance=ExtResource("8_rock")]
+position = Vector2(-950.9226, 158.2703)
+scale = Vector2(1.615, 1.615)
+drift_velocity = Vector2(32, -5.5454)
+
+[node name="S2_16" parent="Bodies" unique_id=989354548 instance=ExtResource("8_rock")]
+position = Vector2(-815.5553, 130.6986)
+scale = Vector2(1.3159, 1.3159)
+drift_velocity = Vector2(32, 5.0182)
+
+[node name="S2_17" parent="Bodies" unique_id=886632445 instance=ExtResource("8_rock")]
+position = Vector2(-2280.2075, 624.6312)
+scale = Vector2(1.0551, 1.0551)
+drift_velocity = Vector2(32, -4.3078)
+
+[node name="S2_18" parent="Bodies" unique_id=1243741579 instance=ExtResource("8_rock")]
+position = Vector2(2602.3013, 275.5902)
+scale = Vector2(0.6769, 0.6769)
+drift_velocity = Vector2(32, -7.916)
+
+[node name="S2_19" parent="Bodies" unique_id=394812516 instance=ExtResource("8_rock")]
+position = Vector2(10794.522, 338.2737)
+scale = Vector2(1.3246, 1.3246)
+drift_velocity = Vector2(32, -8.4715)
+
+[node name="S2_20" parent="Bodies" unique_id=1064288777 instance=ExtResource("8_rock")]
+position = Vector2(8453.638, 476.4831)
+scale = Vector2(0.7988, 0.7988)
+drift_velocity = Vector2(32, -4.2575)
+
+[node name="S2_21" parent="Bodies" unique_id=1219448403 instance=ExtResource("8_rock")]
+position = Vector2(9293.853, 187.5875)
+scale = Vector2(0.7049, 0.7049)
+drift_velocity = Vector2(32, -6.539)
+
+[node name="S2_22" parent="Bodies" unique_id=1091595838 instance=ExtResource("8_rock")]
+position = Vector2(1018.1872, 508.256)
+scale = Vector2(0.9499, 0.9499)
+drift_velocity = Vector2(32, -1.3354)
+
+[node name="S2_23" parent="Bodies" unique_id=817827205 instance=ExtResource("8_rock")]
+position = Vector2(5219.224, 159.6625)
+scale = Vector2(0.4657, 0.4657)
+drift_velocity = Vector2(32, 6.8442)
+
+[node name="S2_24" parent="Bodies" unique_id=1469060271 instance=ExtResource("8_rock")]
+position = Vector2(2235.2166, 458.8442)
+scale = Vector2(1.3062, 1.3062)
+drift_velocity = Vector2(32, -2.5973)
+
+[node name="S2_25" parent="Bodies" unique_id=2016970723 instance=ExtResource("8_rock")]
+position = Vector2(12630.856, 630.1419)
+scale = Vector2(1.4, 1.4)
+drift_velocity = Vector2(32, -9.6757)
+
+[node name="S2_26" parent="Bodies" unique_id=95134034 instance=ExtResource("8_rock")]
+position = Vector2(3095.0005, 719.765)
+scale = Vector2(1.6158, 1.6158)
+drift_velocity = Vector2(32, -4.5902)
+
+[node name="S2_27" parent="Bodies" unique_id=1325397454 instance=ExtResource("8_rock")]
+position = Vector2(5159.596, 187.3461)
+scale = Vector2(0.5931, 0.5931)
+drift_velocity = Vector2(32, -3.7244)
+
+[node name="S2_28" parent="Bodies" unique_id=601494521 instance=ExtResource("8_rock")]
+position = Vector2(1062.533, 504.5203)
+scale = Vector2(0.6268, 0.6268)
+drift_velocity = Vector2(32, -3.5102)
+
+[node name="S2_29" parent="Bodies" unique_id=19747404 instance=ExtResource("8_rock")]
+position = Vector2(9124.454, 540.0126)
+scale = Vector2(1.495, 1.495)
+drift_velocity = Vector2(32, -6.5502)
+
+[node name="S2_30" parent="Bodies" unique_id=1333836885 instance=ExtResource("8_rock")]
+position = Vector2(338.7481, 483.2641)
+scale = Vector2(0.803, 0.803)
+drift_velocity = Vector2(32, -2.8393)
+
+[node name="S2_31" parent="Bodies" unique_id=1594654047 instance=ExtResource("8_rock")]
+position = Vector2(-508.202, 465.8002)
+scale = Vector2(0.7633, 0.7633)
+drift_velocity = Vector2(32, 8.8783)
+
+[node name="S2_32" parent="Bodies" unique_id=469114193 instance=ExtResource("8_rock")]
+position = Vector2(11575.773, 356.9701)
+scale = Vector2(1.0383, 1.0383)
+drift_velocity = Vector2(32, 6.3164)
+
+[node name="S2_33" parent="Bodies" unique_id=692503245 instance=ExtResource("8_rock")]
+position = Vector2(84.88, 653.2005)
+scale = Vector2(0.8039, 0.8039)
+drift_velocity = Vector2(32, -5.069)
+
+[node name="S2_34" parent="Bodies" unique_id=1115137345 instance=ExtResource("8_rock")]
+position = Vector2(4430.9043, 165.1346)
+scale = Vector2(1.607, 1.607)
+drift_velocity = Vector2(32, 4.582)
+
+[node name="S2_35" parent="Bodies" unique_id=1431886761 instance=ExtResource("8_rock")]
+position = Vector2(7745.758, 387.0322)
+scale = Vector2(1.1213, 1.1213)
+drift_velocity = Vector2(32, 7.5658)
+
+[node name="S2_36" parent="Bodies" unique_id=838419575 instance=ExtResource("8_rock")]
+position = Vector2(11379.497, 111.5709)
+scale = Vector2(0.9634, 0.9634)
+drift_velocity = Vector2(32, -9.5114)
+
+[node name="S2_37" parent="Bodies" unique_id=14315114 instance=ExtResource("8_rock")]
+position = Vector2(-2146.1123, 250.5534)
+scale = Vector2(0.8557, 0.8557)
+drift_velocity = Vector2(32, -3.7685)
+
+[node name="S2_38" parent="Bodies" unique_id=344219390 instance=ExtResource("8_rock")]
+position = Vector2(7476.861, 166.939)
+scale = Vector2(1.3606, 1.3606)
+drift_velocity = Vector2(32, 8.4166)
+
+[node name="S2_39" parent="Bodies" unique_id=1898110852 instance=ExtResource("8_rock")]
+position = Vector2(6973.5347, 298.9166)
+scale = Vector2(1.2243, 1.2243)
+drift_velocity = Vector2(32, -1.5028)
+
+[node name="S2_40" parent="Bodies" unique_id=1721516227 instance=ExtResource("8_rock")]
+position = Vector2(4071.505, 386.9744)
+scale = Vector2(1.5796, 1.5796)
+drift_velocity = Vector2(32, 0.2185)
+
+[node name="S2_41" parent="Bodies" unique_id=864152641 instance=ExtResource("8_rock")]
+position = Vector2(-864.1754, 133.8506)
+scale = Vector2(0.6576, 0.6576)
+drift_velocity = Vector2(32, -4.6286)
+
+[node name="S2_42" parent="Bodies" unique_id=769396195 instance=ExtResource("8_rock")]
+position = Vector2(3871.3699, 385.5852)
+scale = Vector2(0.9984, 0.9984)
+drift_velocity = Vector2(32, -7.8279)
+
+[node name="S2_43" parent="Bodies" unique_id=717133285 instance=ExtResource("8_rock")]
+position = Vector2(8147.123, 606.7631)
+scale = Vector2(1.042, 1.042)
+drift_velocity = Vector2(32, -7.6993)
+
+[node name="S2_44" parent="Bodies" unique_id=1161013767 instance=ExtResource("8_rock")]
+position = Vector2(11444.536, 433.1069)
+scale = Vector2(0.5748, 0.5748)
+drift_velocity = Vector2(32, -8.2196)
+
+[node name="S2_45" parent="Bodies" unique_id=1406237254 instance=ExtResource("8_rock")]
+position = Vector2(9899.531, 116.8086)
+scale = Vector2(1.3477, 1.3477)
+drift_velocity = Vector2(32, -4.05)
+
+[node name="S2_46" parent="Bodies" unique_id=2054288986 instance=ExtResource("8_rock")]
+position = Vector2(9721.69, 565.1035)
+scale = Vector2(1.1103, 1.1103)
+drift_velocity = Vector2(32, 3.542)
+
+[node name="S2_47" parent="Bodies" unique_id=738779013 instance=ExtResource("8_rock")]
+position = Vector2(1539.9833, 580.5021)
+scale = Vector2(0.7476, 0.7476)
+drift_velocity = Vector2(32, 5.5021)
+
+[node name="S2_48" parent="Bodies" unique_id=15799967 instance=ExtResource("8_rock")]
+position = Vector2(-1096.3252, 334.7641)
+scale = Vector2(1.5496, 1.5496)
+drift_velocity = Vector2(32, 4.6892)
+
+[node name="S2_49" parent="Bodies" unique_id=1266036522 instance=ExtResource("8_rock")]
+position = Vector2(12461.594, 262.2778)
+scale = Vector2(0.7116, 0.7116)
+drift_velocity = Vector2(32, 5.5077)
+
+[node name="S2_50" parent="Bodies" unique_id=1212508724 instance=ExtResource("8_rock")]
+position = Vector2(12620.105, 107.3816)
+scale = Vector2(0.5856, 0.5856)
+drift_velocity = Vector2(32, -9.3444)
+
+[node name="S2_51" parent="Bodies" unique_id=520300810 instance=ExtResource("8_rock")]
+position = Vector2(6321.666, 346.5897)
+scale = Vector2(0.5393, 0.5393)
+drift_velocity = Vector2(32, -8.3834)
+
+[node name="S2_52" parent="Bodies" unique_id=39594150 instance=ExtResource("8_rock")]
+position = Vector2(6824.313, 183.5052)
+scale = Vector2(0.7056, 0.7056)
+drift_velocity = Vector2(32, -5.1601)
+
+[node name="S2_53" parent="Bodies" unique_id=690401249 instance=ExtResource("8_rock")]
+position = Vector2(4021.288, 191.7361)
+scale = Vector2(1.5258, 1.5258)
+drift_velocity = Vector2(32, 6.4556)
+
+[node name="S2_54" parent="Bodies" unique_id=1591051547 instance=ExtResource("8_rock")]
+position = Vector2(7807.0503, 137.7696)
+scale = Vector2(0.9711, 0.9711)
+drift_velocity = Vector2(32, 7.7949)
+
+[node name="S2_55" parent="Bodies" unique_id=1416720348 instance=ExtResource("8_rock")]
+position = Vector2(3308.7866, 293.0368)
+scale = Vector2(0.6096, 0.6096)
+drift_velocity = Vector2(32, 6.0873)
+
+[node name="S2_56" parent="Bodies" unique_id=1144529235 instance=ExtResource("8_rock")]
+position = Vector2(1664.2548, 163.3084)
+scale = Vector2(1.5837, 1.5837)
+drift_velocity = Vector2(32, 3.8662)
+
+[node name="S2_57" parent="Bodies" unique_id=1755998856 instance=ExtResource("8_rock")]
+position = Vector2(2875.0842, 99.8368)
+scale = Vector2(1.6298, 1.6298)
+drift_velocity = Vector2(32, -0.6671)
+
+[node name="S2_58" parent="Bodies" unique_id=451593304 instance=ExtResource("8_rock")]
+position = Vector2(-1876.8427, 88.1274)
+scale = Vector2(1.1742, 1.1742)
+drift_velocity = Vector2(32, -0.8401)
+
+[node name="S2_59" parent="Bodies" unique_id=895309554 instance=ExtResource("8_rock")]
+position = Vector2(6516.87, 371.8439)
+scale = Vector2(0.6096, 0.6096)
+drift_velocity = Vector2(32, -0.3376)
+
+[node name="S2_60" parent="Bodies" unique_id=1577940178 instance=ExtResource("8_rock")]
+position = Vector2(3355.9136, 296.351)
+scale = Vector2(0.9156, 0.9156)
+drift_velocity = Vector2(32, 2.4441)
+
+[node name="S2_61" parent="Bodies" unique_id=1911752459 instance=ExtResource("8_rock")]
+position = Vector2(6456.1353, 145.7711)
+scale = Vector2(1.1704, 1.1704)
+drift_velocity = Vector2(32, 4.4507)
+
+[node name="S2_62" parent="Bodies" unique_id=735800463 instance=ExtResource("8_rock")]
+position = Vector2(-2113.667, 471.1762)
+scale = Vector2(1.3838, 1.3838)
+drift_velocity = Vector2(32, -4.7567)
+
+[node name="S2_63" parent="Bodies" unique_id=1685473492 instance=ExtResource("8_rock")]
+position = Vector2(1384.6143, 573.6116)
+scale = Vector2(0.9806, 0.9806)
+drift_velocity = Vector2(32, -9.7093)
+
+[node name="S2_64" parent="Bodies" unique_id=2061885117 instance=ExtResource("8_rock")]
+position = Vector2(4651.3906, 393.7462)
+scale = Vector2(0.6716, 0.6716)
+drift_velocity = Vector2(32, 3.0264)
+
+[node name="S2_65" parent="Bodies" unique_id=693796259 instance=ExtResource("8_rock")]
+position = Vector2(2953.5347, 247.4449)
+scale = Vector2(1.1508, 1.1508)
+drift_velocity = Vector2(32, 0.5549)
+
+[node name="S2_66" parent="Bodies" unique_id=813229411 instance=ExtResource("8_rock")]
+position = Vector2(9442.436, 490.5226)
+scale = Vector2(1.0297, 1.0297)
+drift_velocity = Vector2(32, 7.9423)
+
+[node name="S2_67" parent="Bodies" unique_id=1755753174 instance=ExtResource("8_rock")]
+position = Vector2(3690.9812, 244.2994)
+scale = Vector2(1.0309, 1.0309)
+drift_velocity = Vector2(32, -8.3896)
+
+[node name="S2_68" parent="Bodies" unique_id=941945113 instance=ExtResource("8_rock")]
+position = Vector2(11818.397, 171.9479)
+scale = Vector2(1.0249, 1.0249)
+drift_velocity = Vector2(32, 6.4375)
+
+[node name="S2_69" parent="Bodies" unique_id=104871178 instance=ExtResource("8_rock")]
+position = Vector2(1540.4862, 317.224)
+scale = Vector2(1.5807, 1.5807)
+drift_velocity = Vector2(32, -4.5854)
+
+[node name="S2_70" parent="Bodies" unique_id=1457063886 instance=ExtResource("8_rock")]
+position = Vector2(12520.746, 411.6822)
+scale = Vector2(1.4809, 1.4809)
+drift_velocity = Vector2(32, -4.0869)
+
+[node name="S2_71" parent="Bodies" unique_id=800308613 instance=ExtResource("8_rock")]
+position = Vector2(8748.259, 385.087)
+scale = Vector2(0.6505, 0.6505)
+drift_velocity = Vector2(32, 5.7622)
+
+[node name="S2_72" parent="Bodies" unique_id=2023311069 instance=ExtResource("8_rock")]
+position = Vector2(2513.646, 300.3693)
+scale = Vector2(0.6137, 0.6137)
+drift_velocity = Vector2(32, -5.3378)
+
+[node name="S2_73" parent="Bodies" unique_id=330113986 instance=ExtResource("8_rock")]
+position = Vector2(9113.326, 388.266)
+scale = Vector2(1.1563, 1.1563)
+drift_velocity = Vector2(32, 6.1958)
+
+[node name="S2_74" parent="Bodies" unique_id=188623382 instance=ExtResource("8_rock")]
+position = Vector2(1716.1993, 577.1713)
+scale = Vector2(1.0909, 1.0909)
+drift_velocity = Vector2(32, -6.0374)
+
+[node name="S2_75" parent="Bodies" unique_id=26842446 instance=ExtResource("8_rock")]
+position = Vector2(10559.599, 487.156)
+scale = Vector2(0.8414, 0.8414)
+drift_velocity = Vector2(32, -8.4157)
+
+[node name="S2_76" parent="Bodies" unique_id=1231350740 instance=ExtResource("8_rock")]
+position = Vector2(11235.806, 646.5324)
+scale = Vector2(1.0182, 1.0182)
+drift_velocity = Vector2(32, 2.5718)
+
+[node name="S2_77" parent="Bodies" unique_id=1036806841 instance=ExtResource("8_rock")]
+position = Vector2(7825.612, 392.6453)
+scale = Vector2(0.5348, 0.5348)
+drift_velocity = Vector2(32, 3.198)
+
+[node name="S2_78" parent="Bodies" unique_id=1202556770 instance=ExtResource("8_rock")]
+position = Vector2(7535.849, 574.7601)
+scale = Vector2(0.6945, 0.6945)
+drift_velocity = Vector2(32, -7.8038)
+
+[node name="S2_79" parent="Bodies" unique_id=611200253 instance=ExtResource("8_rock")]
+position = Vector2(6777.453, 309.713)
+scale = Vector2(1.2166, 1.2166)
+drift_velocity = Vector2(32, -9.1071)
+
+[node name="S2_80" parent="Bodies" unique_id=1145884734 instance=ExtResource("8_rock")]
+position = Vector2(2796.0415, 710.8375)
+scale = Vector2(0.9152, 0.9152)
+drift_velocity = Vector2(32, 5.7847)
+
+[node name="S3_-16" parent="Bodies" unique_id=512871603 instance=ExtResource("8_rock")]
+position = Vector2(340.79, 271.8779)
+scale = Vector2(1.2389, 1.2389)
+drift_velocity = Vector2(32, 9.329)
+
+[node name="S3_-15" parent="Bodies" unique_id=1556833123 instance=ExtResource("8_rock")]
+position = Vector2(3833.6167, 682.2684)
+scale = Vector2(1.1473, 1.1473)
+drift_velocity = Vector2(32, 6.2845)
+
+[node name="S3_-14" parent="Bodies" unique_id=340111366 instance=ExtResource("8_rock")]
+position = Vector2(4758.3257, 139.967)
+scale = Vector2(1.5416, 1.5416)
+drift_velocity = Vector2(32, 7.4091)
+
+[node name="S3_-13" parent="Bodies" unique_id=1161205385 instance=ExtResource("8_rock")]
+position = Vector2(-2137.8398, 93.0162)
+scale = Vector2(1.518, 1.518)
+drift_velocity = Vector2(32, 6.5714)
+
+[node name="S3_-12" parent="Bodies" unique_id=208386588 instance=ExtResource("8_rock")]
+position = Vector2(514.2934, 571.0689)
+scale = Vector2(1.0737, 1.0737)
+drift_velocity = Vector2(32, -6.3922)
+
+[node name="S3_-11" parent="Bodies" unique_id=2031006446 instance=ExtResource("8_rock")]
+position = Vector2(1784.2343, 398.9862)
+scale = Vector2(1.1213, 1.1213)
+drift_velocity = Vector2(32, -4.04)
+
+[node name="S3_-10" parent="Bodies" unique_id=412289360 instance=ExtResource("8_rock")]
+position = Vector2(746.8471, 589.1946)
+scale = Vector2(1.056, 1.056)
+drift_velocity = Vector2(32, 6.3479)
+
+[node name="S3_-9" parent="Bodies" unique_id=1173180672 instance=ExtResource("8_rock")]
+position = Vector2(5357.0195, 621.6171)
+scale = Vector2(0.7336, 0.7336)
+drift_velocity = Vector2(32, 4.4573)
+
+[node name="S3_-8" parent="Bodies" unique_id=372423882 instance=ExtResource("8_rock")]
+position = Vector2(-2104.364, 581.733)
+scale = Vector2(1.2621, 1.2621)
+drift_velocity = Vector2(32, 2.778)
+
+[node name="S3_-7" parent="Bodies" unique_id=1292728158 instance=ExtResource("8_rock")]
+position = Vector2(9403.89, 279.8927)
+scale = Vector2(0.6431, 0.6431)
+drift_velocity = Vector2(32, 2.553)
+
+[node name="S3_-6" parent="Bodies" unique_id=1641279394 instance=ExtResource("8_rock")]
+position = Vector2(1227.5746, 692.2841)
+scale = Vector2(0.9662, 0.9662)
+drift_velocity = Vector2(32, 2.8838)
+
+[node name="S3_-5" parent="Bodies" unique_id=906524865 instance=ExtResource("8_rock")]
+position = Vector2(605.0728, 100.8803)
+scale = Vector2(1.59, 1.59)
+drift_velocity = Vector2(32, -4.0237)
+
+[node name="S3_-4" parent="Bodies" unique_id=643244094 instance=ExtResource("8_rock")]
+position = Vector2(3838.3254, 329.1635)
+scale = Vector2(0.9026, 0.9026)
+drift_velocity = Vector2(32, -8.2116)
+
+[node name="S3_-3" parent="Bodies" unique_id=1970904868 instance=ExtResource("8_rock")]
+position = Vector2(-253.3575, 606.2475)
+scale = Vector2(1.1884, 1.1884)
+drift_velocity = Vector2(32, 1.2371)
+
+[node name="S3_-2" parent="Bodies" unique_id=1596182013 instance=ExtResource("8_rock")]
+position = Vector2(9611.495, 506.4594)
+scale = Vector2(0.588, 0.588)
+drift_velocity = Vector2(32, 4.9493)
+
+[node name="S3_-1" parent="Bodies" unique_id=1748818478 instance=ExtResource("8_rock")]
+position = Vector2(9517.148, 343.1246)
+scale = Vector2(1.4923, 1.4923)
+drift_velocity = Vector2(32, -6.7414)
+
+[node name="S3_0" parent="Bodies" unique_id=984135826 instance=ExtResource("8_rock")]
+position = Vector2(12812.459, 701.7945)
+scale = Vector2(0.8894, 0.8894)
+drift_velocity = Vector2(32, -5.5746)
+
+[node name="S3_1" parent="Bodies" unique_id=511599164 instance=ExtResource("8_rock")]
+position = Vector2(-1022.718, 351.4411)
+scale = Vector2(1.3551, 1.3551)
+drift_velocity = Vector2(32, 8.4689)
+
+[node name="S3_2" parent="Bodies" unique_id=891024782 instance=ExtResource("8_rock")]
+position = Vector2(5864.8115, 83.7314)
+scale = Vector2(0.9181, 0.9181)
+drift_velocity = Vector2(32, 1.6294)
+
+[node name="S3_3" parent="Bodies" unique_id=1632456096 instance=ExtResource("8_rock")]
+position = Vector2(7378.3867, 353.0205)
+scale = Vector2(1.4565, 1.4565)
+drift_velocity = Vector2(32, 9.5427)
+
+[node name="S3_4" parent="Bodies" unique_id=1542074129 instance=ExtResource("8_rock")]
+position = Vector2(-1064.9164, 427.5286)
+scale = Vector2(1.0633, 1.0633)
+drift_velocity = Vector2(32, -7.037)
+
+[node name="S3_5" parent="Bodies" unique_id=1355904851 instance=ExtResource("8_rock")]
+position = Vector2(0.9781, 244.9626)
+scale = Vector2(0.8976, 0.8976)
+drift_velocity = Vector2(32, -2.1787)
+
+[node name="S3_6" parent="Bodies" unique_id=228366280 instance=ExtResource("8_rock")]
+position = Vector2(7115.1895, 664.8707)
+scale = Vector2(0.6778, 0.6778)
+drift_velocity = Vector2(32, 6.8135)
+
+[node name="S3_7" parent="Bodies" unique_id=1874520551 instance=ExtResource("8_rock")]
+position = Vector2(9333.026, 272.1222)
+scale = Vector2(1.5521, 1.5521)
+drift_velocity = Vector2(32, -6.6829)
+
+[node name="S3_8" parent="Bodies" unique_id=1979705606 instance=ExtResource("8_rock")]
+position = Vector2(2211.8372, 104.5357)
+scale = Vector2(0.4975, 0.4975)
+drift_velocity = Vector2(32, 2.2233)
+
+[node name="S3_9" parent="Bodies" unique_id=111288085 instance=ExtResource("8_rock")]
+position = Vector2(5038.0845, 148.4965)
+scale = Vector2(1.3127, 1.3127)
+drift_velocity = Vector2(32, -5.573)
+
+[node name="S3_10" parent="Bodies" unique_id=1889429191 instance=ExtResource("8_rock")]
+position = Vector2(3923.3635, 146.3738)
+scale = Vector2(1.5436, 1.5436)
+drift_velocity = Vector2(32, 1.4001)
+
+[node name="S3_11" parent="Bodies" unique_id=387090184 instance=ExtResource("8_rock")]
+position = Vector2(10852.35, 696.589)
+scale = Vector2(1.2738, 1.2738)
+drift_velocity = Vector2(32, 5.6437)
+
+[node name="S3_12" parent="Bodies" unique_id=1099930118 instance=ExtResource("8_rock")]
+position = Vector2(4163.287, 398.8057)
+scale = Vector2(0.5857, 0.5857)
+drift_velocity = Vector2(32, -9.7703)
+
+[node name="S3_13" parent="Bodies" unique_id=673190705 instance=ExtResource("8_rock")]
+position = Vector2(-1752.621, 467.2899)
+scale = Vector2(1.4779, 1.4779)
+drift_velocity = Vector2(32, -6.0243)
+
+[node name="S3_14" parent="Bodies" unique_id=329903002 instance=ExtResource("8_rock")]
+position = Vector2(-127.6414, 254.3012)
+scale = Vector2(0.9674, 0.9674)
+drift_velocity = Vector2(32, 7.435)
+
+[node name="S3_15" parent="Bodies" unique_id=2088004418 instance=ExtResource("8_rock")]
+position = Vector2(5933.219, 424.3212)
+scale = Vector2(1.5529, 1.5529)
+drift_velocity = Vector2(32, 9.3903)
+
+[node name="S3_16" parent="Bodies" unique_id=1551472630 instance=ExtResource("8_rock")]
+position = Vector2(1330.7365, 384.1847)
+scale = Vector2(0.5081, 0.5081)
+drift_velocity = Vector2(32, -1.7543)
+
+[node name="S3_17" parent="Bodies" unique_id=1348908343 instance=ExtResource("8_rock")]
+position = Vector2(9684.101, 187.0004)
+scale = Vector2(0.6354, 0.6354)
+drift_velocity = Vector2(32, -4.2314)
+
+[node name="S3_18" parent="Bodies" unique_id=1419493477 instance=ExtResource("8_rock")]
+position = Vector2(5057.459, 245.9844)
+scale = Vector2(1.1697, 1.1697)
+drift_velocity = Vector2(32, 9.1186)
+
+[node name="S3_19" parent="Bodies" unique_id=101925951 instance=ExtResource("8_rock")]
+position = Vector2(999.1691, 289.499)
+scale = Vector2(1.6375, 1.6375)
+drift_velocity = Vector2(32, -0.0094)
+
+[node name="S3_20" parent="Bodies" unique_id=14994575 instance=ExtResource("8_rock")]
+position = Vector2(2342.3093, 513.5301)
+scale = Vector2(1.0895, 1.0895)
+drift_velocity = Vector2(32, -3.6279)
+
+[node name="S3_21" parent="Bodies" unique_id=1307431706 instance=ExtResource("8_rock")]
+position = Vector2(-1982.637, 324.7815)
+scale = Vector2(1.1621, 1.1621)
+drift_velocity = Vector2(32, 1.0194)
+
+[node name="S3_22" parent="Bodies" unique_id=1296829689 instance=ExtResource("8_rock")]
+position = Vector2(6976.542, 236.7336)
+scale = Vector2(0.6901, 0.6901)
+drift_velocity = Vector2(32, 0.5225)
+
+[node name="S3_23" parent="Bodies" unique_id=1339276200 instance=ExtResource("8_rock")]
+position = Vector2(3542.0435, 377.2479)
+scale = Vector2(0.6289, 0.6289)
+drift_velocity = Vector2(32, -4.7341)
+
+[node name="S3_24" parent="Bodies" unique_id=532105934 instance=ExtResource("8_rock")]
+position = Vector2(12365.707, 640.7082)
+scale = Vector2(0.7555, 0.7555)
+drift_velocity = Vector2(32, -1.6093)
+
+[node name="S3_25" parent="Bodies" unique_id=2029304286 instance=ExtResource("8_rock")]
+position = Vector2(3625.4714, 636.1898)
+scale = Vector2(0.7888, 0.7888)
+drift_velocity = Vector2(32, -8.9353)
+
+[node name="S3_26" parent="Bodies" unique_id=1704845575 instance=ExtResource("8_rock")]
+position = Vector2(8103.7925, 121.326)
+scale = Vector2(0.7949, 0.7949)
+drift_velocity = Vector2(32, -1.7059)
+
+[node name="S3_27" parent="Bodies" unique_id=1604174582 instance=ExtResource("8_rock")]
+position = Vector2(11575.595, 414.1451)
+scale = Vector2(0.5709, 0.5709)
+drift_velocity = Vector2(32, 2.2371)
+
+[node name="S3_28" parent="Bodies" unique_id=2012124256 instance=ExtResource("8_rock")]
+position = Vector2(-1977.0447, 456.7426)
+scale = Vector2(1.0683, 1.0683)
+drift_velocity = Vector2(32, 1.9256)
+
+[node name="S3_29" parent="Bodies" unique_id=1400360737 instance=ExtResource("8_rock")]
+position = Vector2(6960.3823, 499.9848)
+scale = Vector2(0.7237, 0.7237)
+drift_velocity = Vector2(32, -7.4292)
+
+[node name="S3_30" parent="Bodies" unique_id=1138068030 instance=ExtResource("8_rock")]
+position = Vector2(2400.2092, 600.7649)
+scale = Vector2(0.879, 0.879)
+drift_velocity = Vector2(32, 6.2181)
+
+[node name="S3_31" parent="Bodies" unique_id=739423468 instance=ExtResource("8_rock")]
+position = Vector2(-389.1266, 366.192)
+scale = Vector2(0.8446, 0.8446)
+drift_velocity = Vector2(32, -3.2705)
+
+[node name="S3_32" parent="Bodies" unique_id=1659692488 instance=ExtResource("8_rock")]
+position = Vector2(645.5002, 378.4767)
+scale = Vector2(1.4548, 1.4548)
+drift_velocity = Vector2(32, 7.2647)
+
+[node name="S3_33" parent="Bodies" unique_id=962079602 instance=ExtResource("8_rock")]
+position = Vector2(11571.813, 253.686)
+scale = Vector2(1.2224, 1.2224)
+drift_velocity = Vector2(32, -9.7785)
+
+[node name="S3_34" parent="Bodies" unique_id=1596398811 instance=ExtResource("8_rock")]
+position = Vector2(3804.2727, 121.2157)
+scale = Vector2(1.4406, 1.4406)
+drift_velocity = Vector2(32, -7.7458)
+
+[node name="S3_35" parent="Bodies" unique_id=1982169869 instance=ExtResource("8_rock")]
+position = Vector2(575.3883, 424.9199)
+scale = Vector2(0.8354, 0.8354)
+drift_velocity = Vector2(32, -9.4234)
+
+[node name="S3_36" parent="Bodies" unique_id=886235288 instance=ExtResource("8_rock")]
+position = Vector2(4725.5083, 445.6865)
+scale = Vector2(0.6215, 0.6215)
+drift_velocity = Vector2(32, -1.9014)
+
+[node name="S3_37" parent="Bodies" unique_id=218644628 instance=ExtResource("8_rock")]
+position = Vector2(4413.3804, 514.8013)
+scale = Vector2(0.8261, 0.8261)
+drift_velocity = Vector2(32, -6.2963)
+
+[node name="S3_38" parent="Bodies" unique_id=1312541984 instance=ExtResource("8_rock")]
+position = Vector2(11119.644, 242.2471)
+scale = Vector2(1.4224, 1.4224)
+drift_velocity = Vector2(32, 1.6156)
+
+[node name="S3_39" parent="Bodies" unique_id=410641243 instance=ExtResource("8_rock")]
+position = Vector2(10696.145, 231.4938)
+scale = Vector2(0.8345, 0.8345)
+drift_velocity = Vector2(32, -5.5316)
+
+[node name="S3_40" parent="Bodies" unique_id=589857279 instance=ExtResource("8_rock")]
+position = Vector2(5411.324, 206.3458)
+scale = Vector2(1.4735, 1.4735)
+drift_velocity = Vector2(32, -4.6148)
+
+[node name="S3_41" parent="Bodies" unique_id=264239873 instance=ExtResource("8_rock")]
+position = Vector2(3047.962, 645.9132)
+scale = Vector2(0.4849, 0.4849)
+drift_velocity = Vector2(32, -2.5109)
+
+[node name="S3_42" parent="Bodies" unique_id=2103396777 instance=ExtResource("8_rock")]
+position = Vector2(5285.338, 232.3942)
+scale = Vector2(0.6507, 0.6507)
+drift_velocity = Vector2(32, 4.7068)
+
+[node name="S3_43" parent="Bodies" unique_id=1090585209 instance=ExtResource("8_rock")]
+position = Vector2(12951.426, 196.267)
+scale = Vector2(1.2413, 1.2413)
+drift_velocity = Vector2(32, 6.1349)
+
+[node name="S3_44" parent="Bodies" unique_id=2042460967 instance=ExtResource("8_rock")]
+position = Vector2(-1580.8848, 343.5043)
+scale = Vector2(1.2784, 1.2784)
+drift_velocity = Vector2(32, 0.3129)
+
+[node name="S3_45" parent="Bodies" unique_id=1573113820 instance=ExtResource("8_rock")]
+position = Vector2(8417.047, 469.0321)
+scale = Vector2(0.9628, 0.9628)
+drift_velocity = Vector2(32, -5.9655)
+
+[node name="S3_46" parent="Bodies" unique_id=1603749712 instance=ExtResource("8_rock")]
+position = Vector2(4182.0293, 587.8242)
+scale = Vector2(0.5007, 0.5007)
+drift_velocity = Vector2(32, 0.4231)
+
+[node name="S3_47" parent="Bodies" unique_id=1061960847 instance=ExtResource("8_rock")]
+position = Vector2(6870.441, 261.0399)
+scale = Vector2(1.2879, 1.2879)
+drift_velocity = Vector2(32, -7.2082)
+
+[node name="S3_48" parent="Bodies" unique_id=1325286895 instance=ExtResource("8_rock")]
+position = Vector2(-171.0734, 386.6306)
+scale = Vector2(1.0793, 1.0793)
+drift_velocity = Vector2(32, -6.236)
+
+[node name="S3_49" parent="Bodies" unique_id=1713342785 instance=ExtResource("8_rock")]
+position = Vector2(3197.8352, 379.4514)
+scale = Vector2(0.5741, 0.5741)
+drift_velocity = Vector2(32, -0.3244)
+
+[node name="S3_50" parent="Bodies" unique_id=143985373 instance=ExtResource("8_rock")]
+position = Vector2(-1393.1563, 432.121)
+scale = Vector2(0.6615, 0.6615)
+drift_velocity = Vector2(32, 1.6433)
+
+[node name="S3_51" parent="Bodies" unique_id=494729460 instance=ExtResource("8_rock")]
+position = Vector2(8846.387, 471.0167)
+scale = Vector2(1.4427, 1.4427)
+drift_velocity = Vector2(32, 6.8753)
+
+[node name="S3_52" parent="Bodies" unique_id=1869273807 instance=ExtResource("8_rock")]
+position = Vector2(9825.332, 582.5218)
+scale = Vector2(0.6194, 0.6194)
+drift_velocity = Vector2(32, 9.3319)
+
+[node name="S3_53" parent="Bodies" unique_id=1895831797 instance=ExtResource("8_rock")]
+position = Vector2(11532.775, 162.6303)
+scale = Vector2(1.5295, 1.5295)
+drift_velocity = Vector2(32, -4.7738)
+
+[node name="S3_54" parent="Bodies" unique_id=1712107522 instance=ExtResource("8_rock")]
+position = Vector2(7895.4526, 308.2668)
+scale = Vector2(1.243, 1.243)
+drift_velocity = Vector2(32, -5.0317)
+
+[node name="S3_55" parent="Bodies" unique_id=1401932309 instance=ExtResource("8_rock")]
+position = Vector2(12480.91, 578.7226)
+scale = Vector2(1.1948, 1.1948)
+drift_velocity = Vector2(32, -3.1545)
+
+[node name="S3_56" parent="Bodies" unique_id=431896866 instance=ExtResource("8_rock")]
+position = Vector2(11836.962, 255.7721)
+scale = Vector2(1.2252, 1.2252)
+drift_velocity = Vector2(32, 5.0905)
+
+[node name="S3_57" parent="Bodies" unique_id=355701804 instance=ExtResource("8_rock")]
+position = Vector2(4087.3264, 292.1426)
+scale = Vector2(0.5189, 0.5189)
+drift_velocity = Vector2(32, 4.9145)
+
+[node name="S3_58" parent="Bodies" unique_id=1719137525 instance=ExtResource("8_rock")]
+position = Vector2(853.6106, 137.9811)
+scale = Vector2(1.2863, 1.2863)
+drift_velocity = Vector2(32, 2.9713)
+
+[node name="S3_59" parent="Bodies" unique_id=1615266238 instance=ExtResource("8_rock")]
+position = Vector2(2058.709, 98.6716)
+scale = Vector2(1.1017, 1.1017)
+drift_velocity = Vector2(32, 9.9375)
+
+[node name="S3_60" parent="Bodies" unique_id=1968860836 instance=ExtResource("8_rock")]
+position = Vector2(12243.484, 426.1967)
+scale = Vector2(0.9568, 0.9568)
+drift_velocity = Vector2(32, 2.6282)
+
+[node name="S3_61" parent="Bodies" unique_id=1258659425 instance=ExtResource("8_rock")]
+position = Vector2(7438.21, 392.6521)
+scale = Vector2(1.0268, 1.0268)
+drift_velocity = Vector2(32, 3.8599)
+
+[node name="S3_62" parent="Bodies" unique_id=1597343880 instance=ExtResource("8_rock")]
+position = Vector2(12413.809, 491.8052)
+scale = Vector2(1.2388, 1.2388)
+drift_velocity = Vector2(32, 7.3911)
+
+[node name="S3_63" parent="Bodies" unique_id=1181876738 instance=ExtResource("8_rock")]
+position = Vector2(2.7161, 125.6015)
+scale = Vector2(1.3258, 1.3258)
+drift_velocity = Vector2(32, -1.0249)
+
+[node name="S3_64" parent="Bodies" unique_id=573605589 instance=ExtResource("8_rock")]
+position = Vector2(9102.426, 108.06)
+scale = Vector2(0.6132, 0.6132)
+drift_velocity = Vector2(32, 6.5861)
+
+[node name="S3_65" parent="Bodies" unique_id=333339988 instance=ExtResource("8_rock")]
+position = Vector2(2930.3313, 525.2528)
+scale = Vector2(0.7442, 0.7442)
+drift_velocity = Vector2(32, -3.0388)
+
+[node name="S3_66" parent="Bodies" unique_id=1485848980 instance=ExtResource("8_rock")]
+position = Vector2(-2226.9023, 675.2142)
+scale = Vector2(0.9303, 0.9303)
+drift_velocity = Vector2(32, 1.8777)
+
+[node name="S3_67" parent="Bodies" unique_id=495261955 instance=ExtResource("8_rock")]
+position = Vector2(8928.928, 341.0821)
+scale = Vector2(0.9103, 0.9103)
+drift_velocity = Vector2(32, 7.7101)
+
+[node name="S3_68" parent="Bodies" unique_id=801102373 instance=ExtResource("8_rock")]
+position = Vector2(1403.0745, 416.8975)
+scale = Vector2(0.7267, 0.7267)
+drift_velocity = Vector2(32, -8.8264)
+
+[node name="S3_69" parent="Bodies" unique_id=1268955169 instance=ExtResource("8_rock")]
+position = Vector2(3040.8262, 220.9888)
+scale = Vector2(0.7935, 0.7935)
+drift_velocity = Vector2(32, -1.4806)
+
+[node name="S3_70" parent="Bodies" unique_id=974521966 instance=ExtResource("8_rock")]
+position = Vector2(7277.8545, 122.7308)
+scale = Vector2(0.5, 0.5)
+drift_velocity = Vector2(32, 1.5515)
+
+[node name="S3_71" parent="Bodies" unique_id=337417182 instance=ExtResource("8_rock")]
+position = Vector2(4870.1807, 344.3476)
+scale = Vector2(0.7751, 0.7751)
+drift_velocity = Vector2(32, 3.0341)
+
+[node name="S3_72" parent="Bodies" unique_id=1173177239 instance=ExtResource("8_rock")]
+position = Vector2(5347.956, 299.5132)
+scale = Vector2(1.5544, 1.5544)
+drift_velocity = Vector2(32, 0.1874)
+
+[node name="S3_73" parent="Bodies" unique_id=802464164 instance=ExtResource("8_rock")]
+position = Vector2(2.3144, 554.9825)
+scale = Vector2(0.7332, 0.7332)
+drift_velocity = Vector2(32, -7.6117)
+
+[node name="S3_74" parent="Bodies" unique_id=1311966279 instance=ExtResource("8_rock")]
+position = Vector2(10032.304, 242.4976)
+scale = Vector2(1.3374, 1.3374)
+drift_velocity = Vector2(32, 2.8763)
+
+[node name="S3_75" parent="Bodies" unique_id=1206801913 instance=ExtResource("8_rock")]
+position = Vector2(1965.7709, 228.6639)
+scale = Vector2(1.0333, 1.0333)
+drift_velocity = Vector2(32, -7.0652)
+
+[node name="S3_76" parent="Bodies" unique_id=1771395191 instance=ExtResource("8_rock")]
+position = Vector2(9811.416, 629.5719)
+scale = Vector2(1.5511, 1.5511)
+drift_velocity = Vector2(32, -4.387)
+
+[node name="S3_77" parent="Bodies" unique_id=1616053302 instance=ExtResource("8_rock")]
+position = Vector2(11412.211, 673.1349)
+scale = Vector2(0.5325, 0.5325)
+drift_velocity = Vector2(32, -3.2069)
+
+[node name="S3_78" parent="Bodies" unique_id=1694609144 instance=ExtResource("8_rock")]
+position = Vector2(10024.115, 180.4548)
+scale = Vector2(1.4074, 1.4074)
+drift_velocity = Vector2(32, 0.1871)
+
+[node name="S3_79" parent="Bodies" unique_id=1369386520 instance=ExtResource("8_rock")]
+position = Vector2(9556.304, 684.6747)
+scale = Vector2(0.9231, 0.9231)
+drift_velocity = Vector2(32, -3.3032)
+
+[node name="S3_80" parent="Bodies" unique_id=768407215 instance=ExtResource("8_rock")]
+position = Vector2(10224.706, 502.8188)
+scale = Vector2(1.5936, 1.5936)
+drift_velocity = Vector2(32, -7.109)
+
+[node name="S4_-16" parent="Bodies" unique_id=1455234569 instance=ExtResource("8_rock")]
+position = Vector2(985.6307, 469.3079)
+scale = Vector2(1.4313, 1.4313)
+drift_velocity = Vector2(32, 8.9158)
+
+[node name="S4_-15" parent="Bodies" unique_id=1265849918 instance=ExtResource("8_rock")]
+position = Vector2(10341.96, 115.5368)
+scale = Vector2(0.5152, 0.5152)
+drift_velocity = Vector2(32, 2.2624)
+
+[node name="S4_-14" parent="Bodies" unique_id=1528744147 instance=ExtResource("8_rock")]
+position = Vector2(1811.4237, 285.8591)
+scale = Vector2(0.8733, 0.8733)
+drift_velocity = Vector2(32, -5.0044)
+
+[node name="S4_-13" parent="Bodies" unique_id=880437935 instance=ExtResource("8_rock")]
+position = Vector2(6685.3696, 161.2386)
+scale = Vector2(0.9892, 0.9892)
+drift_velocity = Vector2(32, 5.9934)
+
+[node name="S4_-12" parent="Bodies" unique_id=1737875043 instance=ExtResource("8_rock")]
+position = Vector2(12148.146, 86.9189)
+scale = Vector2(0.7907, 0.7907)
+drift_velocity = Vector2(32, 1.4153)
+
+[node name="S4_-11" parent="Bodies" unique_id=1006548899 instance=ExtResource("8_rock")]
+position = Vector2(5736.36, 142.0357)
+scale = Vector2(1.1832, 1.1832)
+drift_velocity = Vector2(32, 9.2856)
+
+[node name="S4_-10" parent="Bodies" unique_id=1705239265 instance=ExtResource("8_rock")]
+position = Vector2(4645.8335, 638.2514)
+scale = Vector2(1.3716, 1.3716)
+drift_velocity = Vector2(32, 3.0194)
+
+[node name="S4_-9" parent="Bodies" unique_id=1260402006 instance=ExtResource("8_rock")]
+position = Vector2(10669.547, 643.0361)
+scale = Vector2(1.011, 1.011)
+drift_velocity = Vector2(32, -9.651)
+
+[node name="S4_-8" parent="Bodies" unique_id=620829980 instance=ExtResource("8_rock")]
+position = Vector2(3599.8364, 488.4141)
+scale = Vector2(1.0977, 1.0977)
+drift_velocity = Vector2(32, -0.188)
+
+[node name="S4_-7" parent="Bodies" unique_id=480410363 instance=ExtResource("8_rock")]
+position = Vector2(7291.718, 221.1256)
+scale = Vector2(1.0161, 1.0161)
+drift_velocity = Vector2(32, 3.7549)
+
+[node name="S4_-6" parent="Bodies" unique_id=1649309901 instance=ExtResource("8_rock")]
+position = Vector2(2837.634, 708.0337)
+scale = Vector2(0.6795, 0.6795)
+drift_velocity = Vector2(32, -1.1924)
+
+[node name="S4_-5" parent="Bodies" unique_id=168605919 instance=ExtResource("8_rock")]
+position = Vector2(5977.406, 305.5342)
+scale = Vector2(0.8693, 0.8693)
+drift_velocity = Vector2(32, -6.4772)
+
+[node name="S4_-4" parent="Bodies" unique_id=427974309 instance=ExtResource("8_rock")]
+position = Vector2(11895.614, 615.463)
+scale = Vector2(0.6712, 0.6712)
+drift_velocity = Vector2(32, -0.1363)
+
+[node name="S4_-3" parent="Bodies" unique_id=1226249696 instance=ExtResource("8_rock")]
+position = Vector2(10784.231, 577.1406)
+scale = Vector2(0.6356, 0.6356)
+drift_velocity = Vector2(32, -1.0843)
+
+[node name="S4_-2" parent="Bodies" unique_id=1358452052 instance=ExtResource("8_rock")]
+position = Vector2(6552.278, 340.6103)
+scale = Vector2(1.3504, 1.3504)
+drift_velocity = Vector2(32, -2.9469)
+
+[node name="S4_-1" parent="Bodies" unique_id=284324251 instance=ExtResource("8_rock")]
+position = Vector2(1713.0063, 156.9423)
+scale = Vector2(0.6537, 0.6537)
+drift_velocity = Vector2(32, 0.6161)
+
+[node name="S4_0" parent="Bodies" unique_id=476607962 instance=ExtResource("8_rock")]
+position = Vector2(5822.92, 411.5421)
+scale = Vector2(0.481, 0.481)
+drift_velocity = Vector2(32, 1.699)
+
+[node name="S4_1" parent="Bodies" unique_id=1222933149 instance=ExtResource("8_rock")]
+position = Vector2(2596.219, 517.2222)
+scale = Vector2(1.5651, 1.5651)
+drift_velocity = Vector2(32, -6.7558)
+
+[node name="S4_2" parent="Bodies" unique_id=1127858403 instance=ExtResource("8_rock")]
+position = Vector2(2065.811, 261.3246)
+scale = Vector2(1.5115, 1.5115)
+drift_velocity = Vector2(32, -0.881)
+
+[node name="S4_3" parent="Bodies" unique_id=266391250 instance=ExtResource("8_rock")]
+position = Vector2(7499.003, 265.1878)
+scale = Vector2(0.9566, 0.9566)
+drift_velocity = Vector2(32, 0.5633)
+
+[node name="S4_4" parent="Bodies" unique_id=2079456846 instance=ExtResource("8_rock")]
+position = Vector2(3540.1897, 304.9117)
+scale = Vector2(1.6057, 1.6057)
+drift_velocity = Vector2(32, 8.8434)
+
+[node name="S4_5" parent="Bodies" unique_id=2101121804 instance=ExtResource("8_rock")]
+position = Vector2(-2267.8115, 286.5649)
+scale = Vector2(0.5972, 0.5972)
+drift_velocity = Vector2(32, 9.7297)
+
+[node name="S4_6" parent="Bodies" unique_id=534814177 instance=ExtResource("8_rock")]
+position = Vector2(5765.7007, 531.5341)
+scale = Vector2(1.1563, 1.1563)
+drift_velocity = Vector2(32, 2.4015)
+
+[node name="S4_7" parent="Bodies" unique_id=1510242631 instance=ExtResource("8_rock")]
+position = Vector2(6220.4507, 584.0685)
+scale = Vector2(1.0938, 1.0938)
+drift_velocity = Vector2(32, 5.9677)
+
+[node name="S4_8" parent="Bodies" unique_id=44766555 instance=ExtResource("8_rock")]
+position = Vector2(-1416.3086, 169.8602)
+scale = Vector2(0.6511, 0.6511)
+drift_velocity = Vector2(32, 4.1435)
+
+[node name="S4_9" parent="Bodies" unique_id=807550575 instance=ExtResource("8_rock")]
+position = Vector2(12060.698, 722.6032)
+scale = Vector2(1.4413, 1.4413)
+drift_velocity = Vector2(32, 1.8354)
+
+[node name="S4_10" parent="Bodies" unique_id=1424289135 instance=ExtResource("8_rock")]
+position = Vector2(547.0619, 717.8263)
+scale = Vector2(0.9167, 0.9167)
+drift_velocity = Vector2(32, 1.8854)
+
+[node name="S4_11" parent="Bodies" unique_id=308943980 instance=ExtResource("8_rock")]
+position = Vector2(8342.702, 251.2604)
+scale = Vector2(0.9086, 0.9086)
+drift_velocity = Vector2(32, 2.0869)
+
+[node name="S4_12" parent="Bodies" unique_id=1824709954 instance=ExtResource("8_rock")]
+position = Vector2(6467.7, 210.2658)
+scale = Vector2(1.1797, 1.1797)
+drift_velocity = Vector2(32, 5.3606)
+
+[node name="S4_13" parent="Bodies" unique_id=1079798418 instance=ExtResource("8_rock")]
+position = Vector2(-583.379, 648.2047)
+scale = Vector2(1.3392, 1.3392)
+drift_velocity = Vector2(32, -2.7606)
+
+[node name="S4_14" parent="Bodies" unique_id=1462430044 instance=ExtResource("8_rock")]
+position = Vector2(10805.393, 164.9878)
+scale = Vector2(1.0701, 1.0701)
+drift_velocity = Vector2(32, -7.4473)
+
+[node name="S4_15" parent="Bodies" unique_id=1503126548 instance=ExtResource("8_rock")]
+position = Vector2(11265.472, 420.1288)
+scale = Vector2(1.301, 1.301)
+drift_velocity = Vector2(32, 5.7323)
+
+[node name="S4_16" parent="Bodies" unique_id=1162967736 instance=ExtResource("8_rock")]
+position = Vector2(3748.9556, 292.8565)
+scale = Vector2(1.535, 1.535)
+drift_velocity = Vector2(32, 2.7278)
+
+[node name="S4_17" parent="Bodies" unique_id=385728522 instance=ExtResource("8_rock")]
+position = Vector2(10310.815, 364.8643)
+scale = Vector2(1.5309, 1.5309)
+drift_velocity = Vector2(32, -2.2009)
+
+[node name="S4_18" parent="Bodies" unique_id=1096993171 instance=ExtResource("8_rock")]
+position = Vector2(10367.373, 85.1165)
+scale = Vector2(0.5205, 0.5205)
+drift_velocity = Vector2(32, 3.2183)
+
+[node name="S4_19" parent="Bodies" unique_id=1784644385 instance=ExtResource("8_rock")]
+position = Vector2(10895.739, 335.1777)
+scale = Vector2(1.2111, 1.2111)
+drift_velocity = Vector2(32, -7.066)
+
+[node name="S4_20" parent="Bodies" unique_id=1226334076 instance=ExtResource("8_rock")]
+position = Vector2(5041.115, 705.8925)
+scale = Vector2(0.8058, 0.8058)
+drift_velocity = Vector2(32, -2.9047)
+
+[node name="S4_21" parent="Bodies" unique_id=203047502 instance=ExtResource("8_rock")]
+position = Vector2(-330.1334, 244.946)
+scale = Vector2(1.5656, 1.5656)
+drift_velocity = Vector2(32, 7.4005)
+
+[node name="S4_22" parent="Bodies" unique_id=2101255128 instance=ExtResource("8_rock")]
+position = Vector2(5416.9077, 347.6342)
+scale = Vector2(1.5802, 1.5802)
+drift_velocity = Vector2(32, -4.5683)
+
+[node name="S4_23" parent="Bodies" unique_id=595411991 instance=ExtResource("8_rock")]
+position = Vector2(7111.2153, 138.0856)
+scale = Vector2(1.6136, 1.6136)
+drift_velocity = Vector2(32, -2.5189)
+
+[node name="S4_24" parent="Bodies" unique_id=1588713496 instance=ExtResource("8_rock")]
+position = Vector2(8961.578, 327.9213)
+scale = Vector2(0.6788, 0.6788)
+drift_velocity = Vector2(32, -6.8309)
+
+[node name="S4_25" parent="Bodies" unique_id=1848886389 instance=ExtResource("8_rock")]
+position = Vector2(10140.494, 693.3314)
+scale = Vector2(1.4491, 1.4491)
+drift_velocity = Vector2(32, 6.0337)
+
+[node name="S4_26" parent="Bodies" unique_id=1097704201 instance=ExtResource("8_rock")]
+position = Vector2(3152.5547, 99.8209)
+scale = Vector2(0.6273, 0.6273)
+drift_velocity = Vector2(32, 7.7805)
+
+[node name="S4_27" parent="Bodies" unique_id=265092103 instance=ExtResource("8_rock")]
+position = Vector2(12857.472, 493.3184)
+scale = Vector2(1.6117, 1.6117)
+drift_velocity = Vector2(32, -3.0695)
+
+[node name="S4_28" parent="Bodies" unique_id=1328540834 instance=ExtResource("8_rock")]
+position = Vector2(-2305.7368, 396.8985)
+scale = Vector2(0.8354, 0.8354)
+drift_velocity = Vector2(32, -0.8484)
+
+[node name="S4_29" parent="Bodies" unique_id=1621690836 instance=ExtResource("8_rock")]
+position = Vector2(8479.463, 115.9808)
+scale = Vector2(1.5713, 1.5713)
+drift_velocity = Vector2(32, -6.8104)
+
+[node name="S4_30" parent="Bodies" unique_id=987122034 instance=ExtResource("8_rock")]
+position = Vector2(9315.5, 718.4172)
+scale = Vector2(1.0265, 1.0265)
+drift_velocity = Vector2(32, -5.8319)
+
+[node name="S4_31" parent="Bodies" unique_id=1403456421 instance=ExtResource("8_rock")]
+position = Vector2(11719.253, 597.06)
+scale = Vector2(0.8633, 0.8633)
+drift_velocity = Vector2(32, 4.6287)
+
+[node name="S4_32" parent="Bodies" unique_id=1258668421 instance=ExtResource("8_rock")]
+position = Vector2(9503.098, 579.379)
+scale = Vector2(1.0631, 1.0631)
+drift_velocity = Vector2(32, 1.3005)
+
+[node name="S4_33" parent="Bodies" unique_id=1269947308 instance=ExtResource("8_rock")]
+position = Vector2(-2209.1467, 311.6594)
+scale = Vector2(1.1753, 1.1753)
+drift_velocity = Vector2(32, 5.2126)
+
+[node name="S4_34" parent="Bodies" unique_id=1040343867 instance=ExtResource("8_rock")]
+position = Vector2(-1087.4607, 130.9006)
+scale = Vector2(0.8486, 0.8486)
+drift_velocity = Vector2(32, 8.8701)
+
+[node name="S4_35" parent="Bodies" unique_id=186168742 instance=ExtResource("8_rock")]
+position = Vector2(7660.3525, 462.7671)
+scale = Vector2(0.73, 0.73)
+drift_velocity = Vector2(32, 4.036)
+
+[node name="S4_36" parent="Bodies" unique_id=331659055 instance=ExtResource("8_rock")]
+position = Vector2(-679.0793, 432.3399)
+scale = Vector2(1.1091, 1.1091)
+drift_velocity = Vector2(32, 8.8311)
+
+[node name="S4_37" parent="Bodies" unique_id=1833320184 instance=ExtResource("8_rock")]
+position = Vector2(3454.4514, 115.7618)
+scale = Vector2(1.426, 1.426)
+drift_velocity = Vector2(32, 2.0815)
+
+[node name="S4_38" parent="Bodies" unique_id=2123775108 instance=ExtResource("8_rock")]
+position = Vector2(501.8606, 259.7685)
+scale = Vector2(1.2907, 1.2907)
+drift_velocity = Vector2(32, -3.2803)
+
+[node name="S4_39" parent="Bodies" unique_id=1446136556 instance=ExtResource("8_rock")]
+position = Vector2(3794.12, 516.0545)
+scale = Vector2(0.5617, 0.5617)
+drift_velocity = Vector2(32, 2.1167)
+
+[node name="S4_40" parent="Bodies" unique_id=131447437 instance=ExtResource("8_rock")]
+position = Vector2(3006.3843, 704.9959)
+scale = Vector2(1.1666, 1.1666)
+drift_velocity = Vector2(32, -1.3264)
+
+[node name="S4_41" parent="Bodies" unique_id=1304896939 instance=ExtResource("8_rock")]
+position = Vector2(7607.7266, 300.3312)
+scale = Vector2(0.8499, 0.8499)
+drift_velocity = Vector2(32, -4.4873)
+
+[node name="S4_42" parent="Bodies" unique_id=353562012 instance=ExtResource("8_rock")]
+position = Vector2(6907.904, 329.3204)
+scale = Vector2(1.6152, 1.6152)
+drift_velocity = Vector2(32, -2.7593)
+
+[node name="S4_43" parent="Bodies" unique_id=292967007 instance=ExtResource("8_rock")]
+position = Vector2(4124.1753, 229.435)
+scale = Vector2(1.643, 1.643)
+drift_velocity = Vector2(32, 1.6094)
+
+[node name="S4_44" parent="Bodies" unique_id=119226996 instance=ExtResource("8_rock")]
+position = Vector2(7980.176, 475.797)
+scale = Vector2(1.6214, 1.6214)
+drift_velocity = Vector2(32, 6.3259)
+
+[node name="S4_45" parent="Bodies" unique_id=922662935 instance=ExtResource("8_rock")]
+position = Vector2(6352.7896, 77.7607)
+scale = Vector2(1.0667, 1.0667)
+drift_velocity = Vector2(32, 9.6475)
+
+[node name="S4_46" parent="Bodies" unique_id=1346184664 instance=ExtResource("8_rock")]
+position = Vector2(12823.689, 645.6723)
+scale = Vector2(0.5191, 0.5191)
+drift_velocity = Vector2(32, -6.2425)
+
+[node name="S4_47" parent="Bodies" unique_id=59607298 instance=ExtResource("8_rock")]
+position = Vector2(12115.312, 652.1535)
+scale = Vector2(1.2082, 1.2082)
+drift_velocity = Vector2(32, 7.8511)
+
+[node name="S4_48" parent="Bodies" unique_id=1363504939 instance=ExtResource("8_rock")]
+position = Vector2(10218.227, 189.2961)
+scale = Vector2(0.6195, 0.6195)
+drift_velocity = Vector2(32, 7.7025)
+
+[node name="S4_49" parent="Bodies" unique_id=601391027 instance=ExtResource("8_rock")]
+position = Vector2(8638.071, 583.2064)
+scale = Vector2(0.6481, 0.6481)
+drift_velocity = Vector2(32, 1.8965)
+
+[node name="S4_50" parent="Bodies" unique_id=626363188 instance=ExtResource("8_rock")]
+position = Vector2(7890.0244, 170.4102)
+scale = Vector2(0.4629, 0.4629)
+drift_velocity = Vector2(32, -7.2639)
+
+[node name="S4_51" parent="Bodies" unique_id=1167523175 instance=ExtResource("8_rock")]
+position = Vector2(-1940.2068, 708.3078)
+scale = Vector2(0.7137, 0.7137)
+drift_velocity = Vector2(32, -0.5892)
+
+[node name="S4_52" parent="Bodies" unique_id=741364367 instance=ExtResource("8_rock")]
+position = Vector2(2181.1572, 714.398)
+scale = Vector2(1.3695, 1.3695)
+drift_velocity = Vector2(32, 3.2474)
+
+[node name="S4_53" parent="Bodies" unique_id=50494716 instance=ExtResource("8_rock")]
+position = Vector2(847.2754, 674.7215)
+scale = Vector2(1.2696, 1.2696)
+drift_velocity = Vector2(32, -1.1842)
+
+[node name="S4_54" parent="Bodies" unique_id=1816118663 instance=ExtResource("8_rock")]
+position = Vector2(-1546.7639, 566.7565)
+scale = Vector2(1.3226, 1.3226)
+drift_velocity = Vector2(32, -9.2048)
+
+[node name="S4_55" parent="Bodies" unique_id=940119314 instance=ExtResource("8_rock")]
+position = Vector2(-2225.682, 158.2261)
+scale = Vector2(1.5699, 1.5699)
+drift_velocity = Vector2(32, -2.2698)
+
+[node name="S4_56" parent="Bodies" unique_id=2108657553 instance=ExtResource("8_rock")]
+position = Vector2(9697.31, 110.8063)
+scale = Vector2(0.9632, 0.9632)
+drift_velocity = Vector2(32, -9.412)
+
+[node name="S4_57" parent="Bodies" unique_id=1677044801 instance=ExtResource("8_rock")]
+position = Vector2(10249.53, 166.6596)
+scale = Vector2(0.8415, 0.8415)
+drift_velocity = Vector2(32, -9.1407)
+
+[node name="S4_58" parent="Bodies" unique_id=82044781 instance=ExtResource("8_rock")]
+position = Vector2(-475.0739, 139.5681)
+scale = Vector2(1.4737, 1.4737)
+drift_velocity = Vector2(32, 3.3393)
+
+[node name="S4_59" parent="Bodies" unique_id=503421310 instance=ExtResource("8_rock")]
+position = Vector2(7408.178, 459.4823)
+scale = Vector2(1.3892, 1.3892)
+drift_velocity = Vector2(32, 7.0417)
+
+[node name="S4_60" parent="Bodies" unique_id=2027980949 instance=ExtResource("8_rock")]
+position = Vector2(3611.8743, 427.2381)
+scale = Vector2(0.4857, 0.4857)
+drift_velocity = Vector2(32, 3.7269)
+
+[node name="S4_61" parent="Bodies" unique_id=360128736 instance=ExtResource("8_rock")]
+position = Vector2(11455.23, 688.2452)
+scale = Vector2(0.9184, 0.9184)
+drift_velocity = Vector2(32, 5.7411)
+
+[node name="S4_62" parent="Bodies" unique_id=563429948 instance=ExtResource("8_rock")]
+position = Vector2(10452.118, 480.5533)
+scale = Vector2(0.4878, 0.4878)
+drift_velocity = Vector2(32, 2.459)
+
+[node name="S4_63" parent="Bodies" unique_id=983452129 instance=ExtResource("8_rock")]
+position = Vector2(4674.105, 120.2531)
+scale = Vector2(1.4145, 1.4145)
+drift_velocity = Vector2(32, 8.5623)
+
+[node name="S4_64" parent="Bodies" unique_id=828605193 instance=ExtResource("8_rock")]
+position = Vector2(10734.562, 78.5066)
+scale = Vector2(1.2054, 1.2054)
+drift_velocity = Vector2(32, 7.9315)
+
+[node name="S4_65" parent="Bodies" unique_id=722662886 instance=ExtResource("8_rock")]
+position = Vector2(6979.922, 634.9258)
+scale = Vector2(0.9484, 0.9484)
+drift_velocity = Vector2(32, -5.8249)
+
+[node name="S4_66" parent="Bodies" unique_id=319455842 instance=ExtResource("8_rock")]
+position = Vector2(5058.536, 641.9505)
+scale = Vector2(1.2186, 1.2186)
+drift_velocity = Vector2(32, -9.1887)
+
+[node name="S4_67" parent="Bodies" unique_id=192427707 instance=ExtResource("8_rock")]
+position = Vector2(2422.3816, 263.1987)
+scale = Vector2(0.7749, 0.7749)
+drift_velocity = Vector2(32, 9.4066)
+
+[node name="S4_68" parent="Bodies" unique_id=1285763406 instance=ExtResource("8_rock")]
+position = Vector2(6814.849, 609.2318)
+scale = Vector2(1.4893, 1.4893)
+drift_velocity = Vector2(32, 1.7766)
+
+[node name="S4_69" parent="Bodies" unique_id=1914731580 instance=ExtResource("8_rock")]
+position = Vector2(-1814.8289, 372.4406)
+scale = Vector2(1.0539, 1.0539)
+drift_velocity = Vector2(32, 2.3231)
+
+[node name="S4_70" parent="Bodies" unique_id=541314253 instance=ExtResource("8_rock")]
+position = Vector2(513.8745, 197.601)
+scale = Vector2(1.5048, 1.5048)
+drift_velocity = Vector2(32, 1.1602)
+
+[node name="S4_71" parent="Bodies" unique_id=1262218129 instance=ExtResource("8_rock")]
+position = Vector2(2551.4038, 265.6522)
+scale = Vector2(0.9473, 0.9473)
+drift_velocity = Vector2(32, 7.8801)
+
+[node name="S4_72" parent="Bodies" unique_id=43050545 instance=ExtResource("8_rock")]
+position = Vector2(-737.962, 706.8001)
+scale = Vector2(0.7849, 0.7849)
+drift_velocity = Vector2(32, -6.0057)
+
+[node name="S4_73" parent="Bodies" unique_id=1644816193 instance=ExtResource("8_rock")]
+position = Vector2(9650.6875, 634.8416)
+scale = Vector2(1.5722, 1.5722)
+drift_velocity = Vector2(32, -5.3703)
+
+[node name="S4_74" parent="Bodies" unique_id=1364053206 instance=ExtResource("8_rock")]
+position = Vector2(5706.283, 692.3028)
+scale = Vector2(0.4917, 0.4917)
+drift_velocity = Vector2(32, -4.8922)
+
+[node name="S4_75" parent="Bodies" unique_id=2050821775 instance=ExtResource("8_rock")]
+position = Vector2(4077.67, 683.9417)
+scale = Vector2(0.6892, 0.6892)
+drift_velocity = Vector2(32, 1.4683)
+
+[node name="S4_76" parent="Bodies" unique_id=1022714433 instance=ExtResource("8_rock")]
+position = Vector2(5357.735, 565.2501)
+scale = Vector2(0.6238, 0.6238)
+drift_velocity = Vector2(32, -4.4119)
+
+[node name="S4_77" parent="Bodies" unique_id=2118211016 instance=ExtResource("8_rock")]
+position = Vector2(5402.4097, 706.7415)
+scale = Vector2(0.7381, 0.7381)
+drift_velocity = Vector2(32, 1.3003)
+
+[node name="S4_78" parent="Bodies" unique_id=158823382 instance=ExtResource("8_rock")]
+position = Vector2(-1668.2935, 303.7816)
+scale = Vector2(0.8056, 0.8056)
+drift_velocity = Vector2(32, -7.0525)
+
+[node name="S4_79" parent="Bodies" unique_id=1873666724 instance=ExtResource("8_rock")]
+position = Vector2(7726.2827, 156.2865)
+scale = Vector2(1.5531, 1.5531)
+drift_velocity = Vector2(32, 9.7354)
+
+[node name="S4_80" parent="Bodies" unique_id=425071541 instance=ExtResource("8_rock")]
+position = Vector2(8769.276, 571.5794)
+scale = Vector2(1.4418, 1.4418)
+drift_velocity = Vector2(32, -2.0183)
+
+[node name="Wanderer" type="CharacterBody2D" parent="." unique_id=1717412150]
+z_index = 20
+position = Vector2(320, 400)
+motion_mode = 1
+script = ExtResource("5_wanderer")
+
+[node name="Sprite" type="Sprite2D" parent="Wanderer" unique_id=750067835]
+scale = Vector2(0.5, 0.5)
+texture = ExtResource("4_wanderer")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Wanderer" unique_id=391632887]
+shape = SubResource("CircleShape2D_wanderer")
+
+[node name="Camera2D" type="Camera2D" parent="Wanderer" unique_id=1258142106]
+position_smoothing_enabled = true
+position_smoothing_speed = 8.0
