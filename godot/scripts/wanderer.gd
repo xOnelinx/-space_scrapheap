@@ -16,6 +16,10 @@ const CHARGE_TIME := 0.85
 const DOOM_INPUT_GRACE := 0.35
 const RESPAWN_INPUT_PAUSE := 0.45
 const LOST_DOOM_DELAY := 6.0
+const OXYGEN_SECONDS := 300.0
+const OXYGEN_COLOR := Color(0.4, 0.78, 1.0)
+const LOST_DEATH_TEXT := "Вы умерли.\nБесконечно скитаясь в космосе.\n\nНажмите мышь — начать снова"
+const OXYGEN_DEATH_TEXT := "В космосе нет кислорода, как и в ваших легких\n\nНажмите мышь — начать снова"
 const MASS := 26.0 * 26.0
 const HIT_FRICTION := 0.35
 
@@ -35,6 +39,8 @@ var _self_radius := 0.0
 var _dead := false
 var _controls_locked := true
 var _lost_time := 0.0
+var _oxygen := OXYGEN_SECONDS
+var _oxygen_label: Label
 
 
 func _ready() -> void:
@@ -43,6 +49,7 @@ func _ready() -> void:
 	_controls_locked = true
 	_clear_charge()
 	_free_orphan_doom_overlays()
+	_build_oxygen_hud()
 	call_deferred("_spawn_on_start_rock")
 	call_deferred("_unlock_controls_when_ready")
 
@@ -147,16 +154,45 @@ func _will_meet_rock(rock: Node2D) -> bool:
 	return closest.length() <= radius
 
 
-func _begin_doom() -> void:
+func _build_oxygen_hud() -> void:
+	var layer := CanvasLayer.new()
+	layer.layer = 40
+	layer.name = "OxygenHud"
+	add_child(layer)
+
+	_oxygen_label = Label.new()
+	_oxygen_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_oxygen_label.position = Vector2(20, 14)
+	_oxygen_label.add_theme_font_size_override("font_size", 48)
+	_oxygen_label.add_theme_color_override("font_color", OXYGEN_COLOR)
+	layer.add_child(_oxygen_label)
+	_refresh_oxygen_label()
+
+
+func _tick_oxygen(delta: float) -> bool:
+	_oxygen = maxf(0.0, _oxygen - delta)
+	_refresh_oxygen_label()
+	if _oxygen > 0.0:
+		return false
+	_begin_doom(OXYGEN_DEATH_TEXT)
+	return true
+
+
+func _refresh_oxygen_label() -> void:
+	var seconds := 0 if _oxygen <= 0.0 else ceili(_oxygen)
+	_oxygen_label.text = str(seconds)
+
+
+func _begin_doom(message: String = LOST_DEATH_TEXT) -> void:
 	if _dead:
 		return
 	_dead = true
 	set_physics_process(false)
 	set_process_unhandled_input(false)
-	call_deferred("_show_doom_and_restart")
+	call_deferred("_show_doom_and_restart", message)
 
 
-func _show_doom_and_restart() -> void:
+func _show_doom_and_restart(message: String) -> void:
 	var layer := CanvasLayer.new()
 	layer.layer = 100
 	layer.name = "DoomOverlay"
@@ -178,7 +214,8 @@ func _show_doom_and_restart() -> void:
 	label.grow_vertical = Control.GROW_DIRECTION_BOTH
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	label.text = "Вы умерли.\nБесконечно скитаясь в космосе.\n\nНажмите мышь — начать снова"
+	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	label.text = message
 	label.add_theme_font_size_override("font_size", 36)
 	label.add_theme_color_override("font_color", Color(0.92, 0.93, 1.0))
 	label.position = Vector2(-420, -90)
@@ -225,6 +262,8 @@ func _surface_outward() -> Vector2:
 
 func _physics_process(delta: float) -> void:
 	if _dead:
+		return
+	if _tick_oxygen(delta):
 		return
 	if docked:
 		_lost_time = 0.0
