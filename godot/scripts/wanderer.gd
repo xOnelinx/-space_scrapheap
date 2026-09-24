@@ -16,8 +16,11 @@ const CHARGE_TIME := 0.85
 const DOOM_INPUT_GRACE := 0.35
 const RESPAWN_INPUT_PAUSE := 0.45
 const LOST_DOOM_DELAY := 6.0
-const OXYGEN_SECONDS := 300.0
+const OXYGEN_SECONDS := 1800.0
+const OXYGEN_START := 200.0
+const OXYGEN_DOUBLE_PER_HOLD := 5.0
 const OXYGEN_COLOR := Color(0.4, 0.78, 1.0)
+const OXYGEN_DOUBLE_COLOR := Color(1.0, 0.62, 0.28)
 const LOST_DEATH_TEXT := "Вы умерли.\nБесконечно скитаясь в космосе.\n\nНажмите мышь — начать снова"
 const OXYGEN_DEATH_TEXT := "В космосе нет кислорода, как и в ваших легких\n\nНажмите мышь — начать снова"
 const MASS := 26.0 * 26.0
@@ -35,16 +38,20 @@ var _dock_angle := 0.0
 
 var _charging := false
 var _charge := 0.0
+var _hold_time := 0.0
+var _oxygen_double := 0.0
 var _self_radius := 0.0
 var _dead := false
 var _controls_locked := true
 var _lost_time := 0.0
-var _oxygen := OXYGEN_SECONDS
+var _oxygen := OXYGEN_START
+var _oxygen_flash := 0.0
 var _oxygen_label: Label
 
 
 func _ready() -> void:
 	motion_mode = MOTION_MODE_FLOATING
+	add_to_group("wanderer")
 	_self_radius = _own_hit_radius()
 	_controls_locked = true
 	_clear_charge()
@@ -94,6 +101,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			if docked:
 				_charging = true
 				_charge = 0.0
+				_hold_time = 0.0
 				get_viewport().set_input_as_handled()
 		else:
 			if _charging:
@@ -119,6 +127,7 @@ func _release_push() -> void:
 		rock.apply_impulse(impulse, global_position)
 	else:
 		velocity = desired + _space_velocity(left_rock)
+	_oxygen_double += _hold_time * OXYGEN_DOUBLE_PER_HOLD
 	_clear_charge()
 	undock()
 
@@ -169,13 +178,44 @@ func _build_oxygen_hud() -> void:
 	_refresh_oxygen_label()
 
 
-func _tick_oxygen(delta: float) -> bool:
-	_oxygen = maxf(0.0, _oxygen - delta)
+func grant_oxygen(seconds: float) -> bool:
+	## Полный запас не забирает баллон: касание впустую его не съедает.
+	if _dead or _controls_locked or seconds <= 0.0:
+		return false
+	var room := OXYGEN_SECONDS - _oxygen
+	if room < 1.0:
+		return false
+	_oxygen += minf(seconds, room)
+	_oxygen_flash = 0.45
 	_refresh_oxygen_label()
+	return true
+
+
+func _tick_oxygen(delta: float) -> bool:
+	var rate := 1.0
+	if _oxygen_double > 0.0:
+		rate = 2.0
+		_oxygen_double = maxf(0.0, _oxygen_double - delta)
+	_oxygen = maxf(0.0, _oxygen - delta * rate)
+	_refresh_oxygen_label()
+	_tick_oxygen_flash(delta)
 	if _oxygen > 0.0:
 		return false
 	_begin_doom(OXYGEN_DEATH_TEXT)
 	return true
+
+
+func _tick_oxygen_flash(delta: float) -> void:
+	if _oxygen_label == null:
+		return
+	if _oxygen_flash > 0.0:
+		_oxygen_flash = maxf(0.0, _oxygen_flash - delta)
+		var t := clampf(_oxygen_flash / 0.45, 0.0, 1.0)
+		_oxygen_label.add_theme_color_override("font_color", OXYGEN_COLOR.lerp(Color(0.9, 0.97, 1.0), t))
+	elif _oxygen_double > 0.0:
+		_oxygen_label.add_theme_color_override("font_color", OXYGEN_DOUBLE_COLOR)
+	else:
+		_oxygen_label.add_theme_color_override("font_color", OXYGEN_COLOR)
 
 
 func _refresh_oxygen_label() -> void:
@@ -273,6 +313,7 @@ func _physics_process(delta: float) -> void:
 			_face_on_surface()
 			return
 		if _charging:
+			_hold_time += delta
 			_charge = minf(1.0, _charge + delta / CHARGE_TIME)
 		else:
 			_walk_on_surface(delta)
@@ -399,6 +440,7 @@ func undock() -> void:
 func _clear_charge() -> void:
 	_charging = false
 	_charge = 0.0
+	_hold_time = 0.0
 
 
 func _own_hit_radius() -> float:
