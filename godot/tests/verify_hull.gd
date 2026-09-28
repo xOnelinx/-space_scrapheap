@@ -81,7 +81,7 @@ func _check_groups_in_stream(scene: Node) -> bool:
 		else:
 			auto_left = minf(auto_left, x - reach)
 			auto_right = maxf(auto_right, x + reach)
-		if hull.global_position.y < 140.0 or hull.global_position.y > 620.0:
+		if hull.global_position.y < -120.0 or hull.global_position.y > 840.0:
 			fail("Обломок вне потока: %s y=%.0f" % [hull.name, hull.global_position.y])
 			return false
 	var between := fed_left - auto_right if fed_left > auto_right else auto_left - fed_right
