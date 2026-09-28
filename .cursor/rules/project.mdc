@@ -1,0 +1,18 @@
+---
+description: Карта репозитория и официальный стиль GDScript
+alwaysApply: true
+---
+
+# Космическая свалка
+
+Задумка и текущий шаг — в `GAME.md`. Стек, запуск, управление — в `README.md`. Не дублируй их здесь и не выходи за шаг в `GAME.md`.
+
+Код игры — каталог `godot/`. Сцены — `godot/scenes/`, скрипты — `godot/scripts/`, ассеты — `godot/assets/`. Проверка механики — `godot/tests/verify_*.gd` на `scene_check.gd`: `boot()`, затем `fail("...")`. Запуск: `godot/run.sh`. Godot: `~/.local/bin/godot`.
+
+GDScript пиши по [официальному style guide](https://docs.godotengine.org/en/stable/tutorials/scripting/gdscript/gdscript_styleguide.html). Текущие скрипты ему не обязаны соответствовать: не копируй их укладку как норму.
+
+- Файлы: `snake_case`. Классы и узлы в дереве: `PascalCase`. Функции, поля, сигналы: `snake_case`. Константы: `CONSTANT_CASE`. Сигналы — прошедшее время (`door_opened`).
+- `class_name` — если тип зовут из другого скрипта. Отступы — табы. Типы на сигнатурах.
+- Порядок в файле как в гайде: `class_name` / `extends` / `##`, сигналы, enum, константы, `@export`, поля, `@onready`, затем `_init`, `_ready`, `_physics_process` и остальные виртуальные, потом публичные методы, потом с `_`.
+- Одно `_` — виртуальные колбэки движка и приватные члены. Сцена к скрипту: `wanderer.tscn` и `wanderer.gd`.
+- Класс узла Godot (`CharacterBody2D`, `RigidBody2D` и т.д.) задаёт сцена и задача, не это правило.

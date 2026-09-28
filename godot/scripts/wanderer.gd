@@ -1,9 +1,11 @@
 class_name Wanderer
 extends CharacterBody2D
 
-## Без ранца: на теле ходишь и отталкиваешься с разной силой.
-## В пустоте — только инерция. Курс без пересечения с телами → гибель.
-## Крутится только спрайт — камера ровная.
+## Без ранца: отталкиваешься с разной силой. В пустоте — только инерция.
+## По кромке астероида — A/D. По корпусу — WASD.
+## Магнитные ботинки: к обломку цепляется при любом ударе.
+## С любой точки корпуса прыжок в любую сторону.
+## Курс без пересечения с телами → гибель. Крутится только спрайт.
 
 const FACE_EPS := 1.0
 const RESTITUTION := 0.55
@@ -25,19 +27,19 @@ const LOST_DEATH_TEXT := "Вы умерли.\nБесконечно скитая�
 const OXYGEN_DEATH_TEXT := "В космосе нет кислорода, как и в ваших легких\n\nНажмите мышь — начать снова"
 const MASS := 26.0 * 26.0
 const HIT_FRICTION := 0.35
+## Верх спрайта — прямоугольный рюкзак, это спина. Низ — ноги, ими встаём на камень.
+const FOOT_EXTENT := 10.0
 
 @export var start_rock_path: NodePath = ^"../Bodies/StaticNear"
 
 @onready var _sprite: Sprite2D = $Sprite
 
-var docked := false
-var _dock_body: Node2D = null
-var _dock_local := Vector2.ZERO
-var _dock_radius := 0.0
-var _dock_angle := 0.0
+var dock := Dock.new()
 
 var _charging := false
 var _charge := 0.0
+## Корпус, с которого только что прыгнули: круг ещё внутри, столкновение выключено.
+var _slip_body: Node2D = null
 var _hold_time := 0.0
 var _oxygen_double := 0.0
 var _self_radius := 0.0
@@ -68,10 +70,6 @@ func _free_orphan_doom_overlays() -> void:
 			child.queue_free()
 
 
-func reseat_on_start() -> void:
-	_spawn_on_start_rock()
-
-
 func _spawn_on_start_rock() -> void:
 	var rock := get_node_or_null(start_rock_path) as Node2D
 	if rock == null:
@@ -98,7 +96,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
 		if event.pressed:
-			if docked:
+			if dock.docked:
 				_charging = true
 				_charge = 0.0
 				_hold_time = 0.0
@@ -110,26 +108,76 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _release_push() -> void:
-	if not docked:
-		_clear_charge()
-		return
-	var left_rock := _dock_body
 	var to_target := get_global_mouse_position() - global_position
 	if to_target.length_squared() <= 0.01:
-		to_target = _surface_outward()
+		to_target = dock.outward()
+	_commit_push(to_target)
+
+
+func _commit_push(to_target: Vector2) -> void:
+	if not dock.docked:
+		_clear_charge()
+		return
+	var left := dock.body
+	if to_target.length_squared() <= 0.01:
+		to_target = dock.outward()
+	var rock := left as SpaceRock
+	var aim := to_target.normalized()
 	var speed := lerpf(PUSH_MIN, PUSH_MAX, clampf(_charge, 0.0, 1.0))
-	var desired := to_target.normalized() * speed
-	var rock := left_rock as SpaceRock
+	var desired := aim * speed
 	if rock != null:
 		var share := rock.get_mass() / (MASS + rock.get_mass())
-		velocity = rock.velocity_at(global_position) + desired * share
+		velocity = _velocity_at(rock, global_position) + desired * share
 		var impulse := -desired * MASS * share
 		rock.apply_impulse(impulse, global_position)
 	else:
-		velocity = desired + _space_velocity(left_rock)
+		velocity = desired + _velocity_at(left, global_position)
 	_oxygen_double += _hold_time * OXYGEN_DOUBLE_PER_HOLD
 	_clear_charge()
 	undock()
+	if rock != null and rock.hull:
+		_begin_slip(rock)
+
+
+func _begin_slip(body: Node2D) -> void:
+	_end_slip()
+	if body == null:
+		return
+	_slip_body = body
+	_set_body_shape_disabled(true)
+
+
+func _end_slip() -> void:
+	if _slip_body == null:
+		return
+	_slip_body = null
+	if not dock.docked:
+		_set_body_shape_disabled(false)
+
+
+func _release_slip_if_clear() -> void:
+	if _slip_body == null:
+		return
+	if not is_instance_valid(_slip_body):
+		_slip_body = null
+		return
+	var rock := _slip_body as SpaceRock
+	if rock == null or _cleared_hull(rock):
+		_end_slip()
+
+
+func _cleared_hull(rock: SpaceRock) -> bool:
+	## Круг уже снаружи контура — можно снова сталкиваться с этим корпусом.
+	if rock.outline == null:
+		return true
+	var local := rock.to_local(global_position)
+	if Geometry2D.is_point_in_polygon(local, rock.outline.points):
+		return false
+	var rim := rock.outline.nearest_rim(local)
+	var gap: float = rim.distance
+	if gap == INF:
+		return true
+	return gap * rock.uniform_scale() >= _self_radius + DOCK_SEPARATION
 
 
 func course_is_lost() -> bool:
@@ -144,16 +192,12 @@ func course_is_lost() -> bool:
 
 func _will_meet_rock(rock: Node2D) -> bool:
 	var body := rock as SpaceRock
-	var rock_vel := Vector2.ZERO
-	var hit_radius := 0.0
-	if body != null:
-		rock_vel = body.get_space_velocity()
-		hit_radius = body.get_hit_radius()
+	var hit_radius := body.get_hit_radius() if body != null else 0.0
 	var to_center := rock.global_position - global_position
 	var radius := _self_radius + hit_radius
 	if to_center.length() <= radius:
 		return true
-	var rel := velocity - rock_vel
+	var rel := velocity - _velocity_at(rock, rock.global_position)
 	if rel.length_squared() < 0.0001:
 		return false
 	var t := to_center.dot(rel) / rel.length_squared()
@@ -291,21 +335,13 @@ func _show_doom_and_restart(message: String) -> void:
 	root.gui_input.connect(on_click)
 
 
-func _surface_outward() -> Vector2:
-	if _dock_local.length_squared() < 0.01:
-		return Vector2.UP
-	var outward := _dock_local.normalized()
-	if _dock_body != null:
-		outward = outward.rotated(_dock_body.global_rotation)
-	return outward
-
-
 func _physics_process(delta: float) -> void:
 	if _dead:
 		return
 	if _tick_oxygen(delta):
 		return
-	if docked:
+	_release_slip_if_clear()
+	if dock.docked:
 		_lost_time = 0.0
 		if _controls_locked:
 			_clear_charge()
@@ -326,7 +362,7 @@ func _physics_process(delta: float) -> void:
 	var collision := move_and_collide(velocity * delta)
 	if collision != null:
 		_resolve_hit(collision)
-		if docked or _dead:
+		if dock.docked or _dead:
 			_lost_time = 0.0
 			return
 
@@ -338,31 +374,76 @@ func _physics_process(delta: float) -> void:
 	else:
 		_lost_time = 0.0
 
+	_sprite.position = Vector2.ZERO
 	if velocity.length_squared() > FACE_EPS * FACE_EPS:
-		_sprite.rotation = velocity.angle() + PI / 2.0
+		_sprite.rotation = velocity.angle() - PI / 2.0
 
 
-func _walk_axis() -> float:
-	var axis := 0.0
+func _screen_dir() -> Vector2:
+	## Экранные оси: W вверх, S вниз, A влево, D вправо. Y экрана вниз.
+	var dir := Vector2.ZERO
 	if Input.is_physical_key_pressed(KEY_A) or Input.is_physical_key_pressed(KEY_LEFT):
-		axis -= 1.0
+		dir.x -= 1.0
 	if Input.is_physical_key_pressed(KEY_D) or Input.is_physical_key_pressed(KEY_RIGHT):
-		axis += 1.0
-	return axis
+		dir.x += 1.0
+	if Input.is_physical_key_pressed(KEY_W) or Input.is_physical_key_pressed(KEY_UP):
+		dir.y -= 1.0
+	if Input.is_physical_key_pressed(KEY_S) or Input.is_physical_key_pressed(KEY_DOWN):
+		dir.y += 1.0
+	return dir
 
 
 func _walk_on_surface(delta: float) -> void:
-	var axis := _walk_axis()
+	var dir := _screen_dir()
+	if dock.has_outline():
+		if dir.length_squared() < 0.01:
+			return
+		_step_on_hull(dir.normalized(), delta)
+		return
+	_walk_rim(dir.x, delta)
+
+
+func _walk_rim(axis: float, delta: float) -> void:
 	if absf(axis) < 0.01:
 		return
-	var radius := maxf(_dock_radius, 1.0)
-	_dock_angle += axis * (WALK_SPEED / radius) * delta
-	_dock_local = Vector2.from_angle(_dock_angle) * _dock_radius
+	var radius := maxf(dock.radius, 1.0)
+	dock.angle += axis * (WALK_SPEED / radius) * delta
+	dock.local = Vector2.from_angle(dock.angle) * dock.radius
+	dock.normal_local = dock.local.normalized()
+
+
+func _step_on_hull(screen_dir: Vector2, delta: float) -> void:
+	var rock := dock.rock()
+	if rock == null or rock.outline == null or screen_dir.length_squared() < 0.01:
+		return
+	var screen_delta := screen_dir.normalized() * WALK_SPEED * delta
+	var local_delta := _world_delta_to_local(rock, screen_delta)
+	var margin := rock.outline.fit_margin(dock.local, _hull_margin(rock))
+	var next := rock.outline.slide(dock.local, local_delta, margin)
+	if next.distance_squared_to(dock.local) < 0.01:
+		return
+	dock.local = next
+	dock.hull_face = screen_dir.angle() - PI / 2.0
+
+
+func _world_delta_to_local(body: Node2D, world_delta: Vector2) -> Vector2:
+	return body.to_local(body.global_position + world_delta)
+
+
+func _hull_margin(rock: SpaceRock) -> float:
+	return _self_radius / rock.uniform_scale()
 
 
 func _face_on_surface() -> void:
-	var outward := _surface_outward()
+	if dock.has_hull():
+		_sprite.position = Vector2.ZERO
+		_sprite.rotation = dock.hull_face
+		return
+	var outward := dock.outward()
+	## +PI/2 кладёт низ спрайта (ноги) на камень, рюкзак наружу.
 	_sprite.rotation = outward.angle() + PI / 2.0
+	var feet_gap := maxf(_self_radius - FOOT_EXTENT, 0.0)
+	_sprite.position = -outward * feet_gap
 
 
 func _resolve_hit(collision: KinematicCollision2D) -> void:
@@ -370,14 +451,17 @@ func _resolve_hit(collision: KinematicCollision2D) -> void:
 	var normal := collision.get_normal()
 	var rock := collider as SpaceRock
 	var contact := collision.get_position()
-	var body_vel := rock.velocity_at(contact) if rock != null else _space_velocity(collider)
+	var body_vel := _velocity_at(collider, contact)
 	var relative := velocity - body_vel
 	var approach := -relative.dot(normal)
-	var dock_limit := DOCK_SPEED
-	if rock != null:
-		dock_limit *= minf(rock.get_mass() / MASS, 1.0)
+	var sticks := rock != null and rock.hull
+	if not sticks:
+		var dock_limit := DOCK_SPEED
+		if rock != null:
+			dock_limit *= minf(rock.get_mass() / MASS, 1.0)
+		sticks = approach <= dock_limit
 
-	if approach <= dock_limit:
+	if sticks:
 		dock_to(collider, normal)
 		return
 
@@ -387,54 +471,62 @@ func _resolve_hit(collision: KinematicCollision2D) -> void:
 		return
 
 	var inv_sum := 1.0 / MASS + 1.0 / rock.get_mass()
-	var jn := (1.0 + RESTITUTION) * approach / inv_sum
+	var tangent := Vector2(-normal.y, normal.x)
+	var jn := SpaceRock.normal_impulse(approach, inv_sum, RESTITUTION)
 	velocity += normal * jn / MASS
 	rock.apply_impulse(-normal * jn, contact)
-	var tangent := Vector2(-normal.y, normal.x)
-	var slip := (velocity - rock.velocity_at(contact)).dot(tangent)
+	var slip := (velocity - _velocity_at(rock, contact)).dot(tangent)
 	var radius := rock.get_hit_radius()
 	var inv_t := inv_sum + (radius * radius) / rock.get_inertia()
-	var jt := clampf(slip / inv_t, -HIT_FRICTION * jn, HIT_FRICTION * jn)
+	var jt := SpaceRock.friction_impulse(slip, inv_t, jn, HIT_FRICTION)
 	velocity -= tangent * jt / MASS
 	rock.apply_impulse(tangent * jt, contact)
 	global_position += normal * DOCK_SEPARATION
-	var shove := collision.get_depth() * MASS / (MASS + rock.get_mass())
+	var shove := SpaceRock.separation_share(collision.get_depth(), rock.get_mass(), MASS)
 	rock.global_position -= normal * shove
 
 
 func dock_to(body: Node2D, normal: Vector2) -> void:
 	if body == null:
 		return
-	docked = true
-	_dock_body = body
-	global_position += normal * DOCK_SEPARATION
-	_dock_local = body.to_local(global_position)
-	_dock_radius = maxf(_dock_local.length(), 1.0)
-	_dock_angle = _dock_local.angle()
-	_dock_local = Vector2.from_angle(_dock_angle) * _dock_radius
-	var rock := body as SpaceRock
-	velocity = rock.velocity_at(global_position) if rock != null else _space_velocity(body)
+	dock.docked = true
+	dock.body = body
+	var rock := dock.rock()
+	if dock.has_outline():
+		var inward := -normal.rotated(-rock.global_rotation)
+		dock.local = rock.outline.seat(rock.to_local(global_position), inward, _hull_margin(rock))
+		dock.hull_face = 0.0
+		global_position = body.to_global(dock.local)
+	else:
+		global_position += normal * DOCK_SEPARATION
+		dock.local = body.to_local(global_position)
+		dock.radius = maxf(dock.local.length(), 1.0)
+		dock.angle = dock.local.angle()
+		dock.local = Vector2.from_angle(dock.angle) * dock.radius
+		dock.normal_local = dock.local.normalized()
+	velocity = _velocity_at(body, global_position)
+	_set_body_shape_disabled(true)
 	_clear_charge()
 	_lost_time = 0.0
 	_face_on_surface()
 
 
 func follow_dock() -> void:
-	if _dock_body == null or not is_instance_valid(_dock_body):
+	if not dock.follow(self):
 		undock()
-		return
-	global_position = _dock_body.to_global(_dock_local)
-	var rock := _dock_body as SpaceRock
-	velocity = rock.velocity_at(global_position) if rock != null else _space_velocity(_dock_body)
 
 
 func undock() -> void:
-	docked = false
-	_dock_body = null
-	_dock_local = Vector2.ZERO
-	_dock_radius = 0.0
-	_dock_angle = 0.0
+	dock.clear()
+	_set_body_shape_disabled(false)
 	_clear_charge()
+
+
+func _set_body_shape_disabled(disabled: bool) -> void:
+	## Пока стоишь, корпус не выталкивает круг из контура каждый кадр.
+	var shape_node := get_node_or_null("CollisionShape2D") as CollisionShape2D
+	if shape_node != null:
+		shape_node.disabled = disabled
 
 
 func _clear_charge() -> void:
@@ -451,10 +543,5 @@ func _own_hit_radius() -> float:
 	return circle.radius * maxf(absf(scale.x), absf(scale.y))
 
 
-func _space_velocity(body: Node) -> Vector2:
-	if body == null:
-		return Vector2.ZERO
-	var rock := body as SpaceRock
-	if rock == null:
-		return Vector2.ZERO
-	return rock.get_space_velocity()
+func _velocity_at(body: Node, at: Vector2) -> Vector2:
+	return Dock.velocity_at(body, at)

@@ -1,7 +1,7 @@
 class_name GameMenu
 extends CanvasLayer
 
-## Стартовое меню, пауза по Esc и настройка плотности потока.
+## Стартовое меню и пауза по Esc.
 ## start_immediately переживает reload сцены.
 
 static var start_immediately := false
@@ -9,19 +9,10 @@ static var start_immediately := false
 const _TITLE := "Космическая свалка"
 
 var _root: Control
-var _main_box: Control
-var _settings_box: Control
 var _primary: Button
 var _hint: Label
-var _count_label: Label
-var _density_blurb: Label
-var _minus: Button
-var _plus: Button
-var _back: Button
-var _settings_hint: Label
 var _open := false
 var _pause_mode := false
-var _settings_open := false
 
 
 func _ready() -> void:
@@ -46,9 +37,7 @@ func _input(event: InputEvent) -> void:
 	if not event.is_action_pressed(&"ui_cancel"):
 		return
 	if _open:
-		if _settings_open:
-			_show_main_page()
-		elif _pause_mode:
+		if _pause_mode:
 			_close()
 	else:
 		_show_pause()
@@ -59,34 +48,18 @@ func _show_start() -> void:
 	_pause_mode = false
 	_primary.text = "Начать игру"
 	_hint.visible = false
-	_show_main_page()
 	_set_open(true)
 	get_tree().paused = true
+	_primary.grab_focus()
 
 
 func _show_pause() -> void:
 	_pause_mode = true
 	_primary.text = "Начать заново"
 	_hint.visible = true
-	_show_main_page()
 	_set_open(true)
 	get_tree().paused = true
-
-
-func _show_main_page() -> void:
-	_settings_open = false
-	_main_box.visible = true
-	_settings_box.visible = false
 	_primary.grab_focus()
-
-
-func _show_settings() -> void:
-	_settings_open = true
-	_main_box.visible = false
-	_settings_box.visible = true
-	_settings_hint.visible = _pause_mode
-	_refresh_density()
-	_back.grab_focus()
 
 
 func _close() -> void:
@@ -103,35 +76,11 @@ func _on_primary() -> void:
 	if _pause_mode:
 		restart(get_tree())
 		return
-	_apply_density()
 	_close()
 
 
 func _on_quit() -> void:
 	get_tree().quit()
-
-
-func _change_density(delta: int) -> void:
-	RockRiver.flow_density = clampi(
-		RockRiver.flow_density + delta, RockRiver.DENSITY_MIN, RockRiver.DENSITY_MAX
-	)
-	_refresh_density()
-	if not _pause_mode:
-		_apply_density()
-
-
-func _refresh_density() -> void:
-	_count_label.text = str(RockRiver.flow_density)
-	_density_blurb.text = "Пока отключено: на сцене все потоки"
-	_minus.disabled = true
-	_plus.disabled = true
-
-
-func _apply_density() -> void:
-	var river := get_parent().get_node_or_null("Bodies") as RockRiver
-	if river == null:
-		return
-	river.apply_density(RockRiver.flow_density)
 
 
 func _build() -> void:
@@ -151,14 +100,9 @@ func _build() -> void:
 	center.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_root.add_child(center)
 
-	_main_box = _make_column()
-	center.add_child(_main_box)
-	_fill_main_page()
-
-	_settings_box = _make_column()
-	_settings_box.visible = false
-	center.add_child(_settings_box)
-	_fill_settings_page()
+	var column := _make_column()
+	center.add_child(column)
+	_fill_main_page(column)
 
 
 func _make_column() -> VBoxContainer:
@@ -169,74 +113,21 @@ func _make_column() -> VBoxContainer:
 	return box
 
 
-func _fill_main_page() -> void:
-	_main_box.add_child(_make_title(_TITLE))
-	_main_box.add_child(_make_gap())
+func _fill_main_page(column: Control) -> void:
+	column.add_child(_make_title(_TITLE))
+	column.add_child(_make_gap())
 
 	_primary = _make_button("Начать игру")
 	_primary.pressed.connect(_on_primary)
-	_main_box.add_child(_primary)
-
-	var settings := _make_button("Настройки")
-	settings.pressed.connect(_show_settings)
-	_main_box.add_child(settings)
+	column.add_child(_primary)
 
 	var quit := _make_button("Выйти")
 	quit.pressed.connect(_on_quit)
-	_main_box.add_child(quit)
+	column.add_child(quit)
 
 	_hint = _make_hint("Esc — продолжить")
 	_hint.visible = false
-	_main_box.add_child(_hint)
-
-
-func _fill_settings_page() -> void:
-	_settings_box.add_child(_make_title("Настройки"))
-	_settings_box.add_child(_make_gap())
-
-	var caption := Label.new()
-	caption.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	caption.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	caption.text = "Плотность потока"
-	caption.add_theme_font_size_override("font_size", 22)
-	caption.add_theme_color_override("font_color", Color(0.92, 0.93, 1.0))
-	_settings_box.add_child(caption)
-
-	var row := HBoxContainer.new()
-	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	row.alignment = BoxContainer.ALIGNMENT_CENTER
-	row.add_theme_constant_override("separation", 16)
-	_settings_box.add_child(row)
-
-	_minus = _make_button("−", Vector2(72, 52))
-	_minus.pressed.connect(_change_density.bind(-1))
-	row.add_child(_minus)
-
-	_count_label = Label.new()
-	_count_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_count_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_count_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	_count_label.custom_minimum_size = Vector2(72, 52)
-	_count_label.add_theme_font_size_override("font_size", 32)
-	_count_label.add_theme_color_override("font_color", Color(0.94, 0.95, 1.0))
-	row.add_child(_count_label)
-
-	_plus = _make_button("+", Vector2(72, 52))
-	_plus.pressed.connect(_change_density.bind(1))
-	row.add_child(_plus)
-
-	_density_blurb = _make_hint("")
-	_density_blurb.custom_minimum_size = Vector2(420, 0)
-	_settings_box.add_child(_density_blurb)
-	_refresh_density()
-
-	_settings_hint = _make_hint("Применится, когда начнёте заново")
-	_settings_hint.visible = false
-	_settings_box.add_child(_settings_hint)
-
-	_back = _make_button("Назад")
-	_back.pressed.connect(_show_main_page)
-	_settings_box.add_child(_back)
+	column.add_child(_hint)
 
 
 func _make_title(text: String) -> Label:

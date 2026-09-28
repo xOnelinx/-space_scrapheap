@@ -1,4 +1,4 @@
-extends SceneTree
+extends "res://tests/scene_check.gd"
 
 ## Глубина без наложений на старте, масса от размера, удар одного слоя.
 
@@ -8,23 +8,18 @@ func _initialize() -> void:
 
 
 func _run() -> void:
-	var err := change_scene_to_file("res://scenes/main.tscn")
-	if err != OK:
-		quit(1)
+	var scene := await boot()
+	if scene == null:
 		return
-	for _i in 4:
-		await process_frame
 
 	var rocks := get_nodes_in_group("space_rocks")
 	if rocks.size() < 2:
-		push_error("Нет астероидов")
-		quit(1)
+		fail("Нет астероидов")
 		return
 
-	var start := get_current_scene().get_node("Bodies/StaticNear") as SpaceRock
+	var start := scene.get_node("Bodies/StaticNear") as SpaceRock
 	if start.spin != 0.0:
-		push_error("Стартовая скала не должна крутиться")
-		quit(1)
+		fail("Стартовая скала не должна крутиться")
 		return
 
 	var heavy: SpaceRock = null
@@ -32,8 +27,7 @@ func _run() -> void:
 	for node in rocks:
 		var rock := node as SpaceRock
 		if rock.depth < 0 or rock.depth >= SpaceRock.DEPTH_COUNT:
-			push_error("Глубина вне 0..9: %s" % rock.name)
-			quit(1)
+			fail("Глубина вне 0..9: %s" % rock.name)
 			return
 		if heavy == null or rock.get_hit_radius() > heavy.get_hit_radius():
 			heavy = rock
@@ -41,8 +35,7 @@ func _run() -> void:
 			light = rock
 
 	if heavy.get_mass() <= light.get_mass():
-		push_error("Крупный должен быть тяжелее мелкого")
-		quit(1)
+		fail("Крупный должен быть тяжелее мелкого")
 		return
 
 	for i in rocks.size():
@@ -53,8 +46,7 @@ func _run() -> void:
 				continue
 			var gap := a.global_position.distance_to(b.global_position) - a.get_hit_radius() - b.get_hit_radius()
 			if gap < -0.5:
-				push_error("Наложение на одном слое: %s %s" % [a.name, b.name])
-				quit(1)
+				fail("Наложение на одном слое: %s %s" % [a.name, b.name])
 				return
 
 	var saved_a := light.global_position
@@ -72,8 +64,7 @@ func _run() -> void:
 	heavy.global_position = Vector2(light.get_hit_radius() + heavy.get_hit_radius() - 4.0, 0)
 	SpaceRock.bounce(light, heavy)
 	if light.drift_velocity.x >= 80.0 or heavy.drift_velocity.x <= 0.0:
-		push_error("Удар не передал импульс: %.1f -> %.1f" % [light.drift_velocity.x, heavy.drift_velocity.x])
-		quit(1)
+		fail("Удар не передал импульс: %.1f -> %.1f" % [light.drift_velocity.x, heavy.drift_velocity.x])
 		return
 	var before := heavy.drift_velocity.x
 	light.depth = 1
@@ -86,8 +77,7 @@ func _run() -> void:
 	if absf(heavy.drift_velocity.x - before) < 0.01 and heavy.drift_velocity.x != 0.0:
 		pass
 	if heavy.drift_velocity.x != 0.0:
-		push_error("Чужой слой не должен сталкиваться")
-		quit(1)
+		fail("Чужой слой не должен сталкиваться")
 		return
 
 	light.global_position = saved_a
