@@ -9,6 +9,14 @@
 [ext_resource type="Script" uid="uid://bo1yamnrlqi0y" path="res://scripts/menu.gd" id="7_menu"]
 [ext_resource type="PackedScene" uid="uid://cspacerock01" path="res://scenes/space_rock.tscn" id="8_rock"]
 [ext_resource type="Script" uid="uid://bc800lgo1y05g" path="res://scripts/rock_river.gd" id="9_river"]
+[ext_resource type="Texture2D" uid="uid://bdlhoojdjos30" path="res://assets/hulls/federation_bomber_01.png" id="10_fed01"]
+[ext_resource type="Texture2D" uid="uid://y7pc1vbnben3" path="res://assets/hulls/federation_bomber_02.png" id="11_fed02"]
+[ext_resource type="Texture2D" uid="uid://c2q0vmreosgno" path="res://assets/hulls/federation_bomber_03.png" id="12_fed03"]
+[ext_resource type="Texture2D" uid="uid://udf8ggpmmiem" path="res://assets/hulls/federation_bomber_04.png" id="13_fed04"]
+[ext_resource type="Texture2D" uid="uid://dxvjgwvpjrmh7" path="res://assets/hulls/auto_assault_01.png" id="14_auto01"]
+[ext_resource type="Texture2D" uid="uid://bo3piexnxyreh" path="res://assets/hulls/auto_assault_02.png" id="15_auto02"]
+[ext_resource type="Texture2D" uid="uid://babcl4yyl16rt" path="res://assets/hulls/auto_assault_03.png" id="16_auto03"]
+[ext_resource type="Texture2D" uid="uid://4styiwchytwu" path="res://assets/hulls/auto_assault_04.png" id="17_auto04"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_wanderer"]
 radius = 12.0
@@ -64,7 +72,7 @@ scale = Vector2(1.1348, 1.1348)
 drift_velocity = Vector2(32, -1.2968)
 
 [node name="S0_-10" parent="Bodies" unique_id=1641703748 instance=ExtResource("8_rock")]
-position = Vector2(1799.3943, 586.314)
+position = Vector2(1839.3362, 586.314)
 scale = Vector2(1.5937, 1.5937)
 drift_velocity = Vector2(32, 9.2362)
 
@@ -74,7 +82,7 @@ scale = Vector2(0.7312, 0.7312)
 drift_velocity = Vector2(32, -4.817)
 
 [node name="S0_-8" parent="Bodies" unique_id=973949286 instance=ExtResource("8_rock")]
-position = Vector2(8839.035, 276.1391)
+position = Vector2(8816.7295, 276.1391)
 scale = Vector2(0.5604, 0.5604)
 drift_velocity = Vector2(32, 6.8013)
 
@@ -84,7 +92,7 @@ scale = Vector2(0.7585, 0.7585)
 drift_velocity = Vector2(32, -1.0134)
 
 [node name="S0_-6" parent="Bodies" unique_id=1865138529 instance=ExtResource("8_rock")]
-position = Vector2(2041.8708, 348.4857)
+position = Vector2(2068, 253)
 scale = Vector2(1.562, 1.562)
 drift_velocity = Vector2(32, -4.4264)
 
@@ -119,7 +127,7 @@ scale = Vector2(1.35, 1.35)
 drift_velocity = Vector2(32, 8.411)
 
 [node name="StaticMid" parent="Bodies" unique_id=1541486983 instance=ExtResource("8_rock")]
-position = Vector2(8580.093, 606.7927)
+position = Vector2(8706.632, 606.7927)
 scale = Vector2(0.9589, 0.9589)
 drift_velocity = Vector2(32, 1.4428)
 
@@ -134,7 +142,7 @@ scale = Vector2(1.4212, 1.4212)
 drift_velocity = Vector2(32, -6.0681)
 
 [node name="S0_4" parent="Bodies" unique_id=1962996335 instance=ExtResource("8_rock")]
-position = Vector2(2156.3684, 514.299)
+position = Vector2(2357.5232, 514.299)
 scale = Vector2(1.2932, 1.2932)
 drift_velocity = Vector2(32, 2.5414)
 
@@ -149,7 +157,7 @@ scale = Vector2(0.913, 0.913)
 drift_velocity = Vector2(32, -7.3894)
 
 [node name="S0_7" parent="Bodies" unique_id=519863329 instance=ExtResource("8_rock")]
-position = Vector2(2170.41, 337.9122)
+position = Vector2(2273, 240.99997)
 scale = Vector2(1.5793, 1.5793)
 drift_velocity = Vector2(32, 1.2056)
 
@@ -169,7 +177,7 @@ scale = Vector2(1.4538, 1.4538)
 drift_velocity = Vector2(32, 4.5567)
 
 [node name="S0_11" parent="Bodies" unique_id=875048586 instance=ExtResource("8_rock")]
-position = Vector2(7235.461, 126.9685)
+position = Vector2(7218.686, 126.9685)
 scale = Vector2(0.6467, 0.6467)
 drift_velocity = Vector2(32, 9.6441)
 
@@ -189,7 +197,7 @@ scale = Vector2(1.5878, 1.5878)
 drift_velocity = Vector2(32, 5.0802)
 
 [node name="S0_15" parent="Bodies" unique_id=730158549 instance=ExtResource("8_rock")]
-position = Vector2(7820.5923, 665.1265)
+position = Vector2(7874.0005, 720)
 scale = Vector2(1.2973, 1.2973)
 drift_velocity = Vector2(32, 0.226)
 
@@ -199,7 +207,7 @@ scale = Vector2(1.314, 1.314)
 drift_velocity = Vector2(32, -1.7228)
 
 [node name="S0_17" parent="Bodies" unique_id=706066927 instance=ExtResource("8_rock")]
-position = Vector2(2770.374, 247.0709)
+position = Vector2(2930, 125.999985)
 scale = Vector2(1.6175, 1.6175)
 drift_velocity = Vector2(32, -0.7435)
 
@@ -214,7 +222,7 @@ scale = Vector2(0.5261, 0.5261)
 drift_velocity = Vector2(32, 4.3444)
 
 [node name="S0_20" parent="Bodies" unique_id=205279897 instance=ExtResource("8_rock")]
-position = Vector2(2569.4954, 674.3708)
+position = Vector2(2467.0679, 674.3708)
 scale = Vector2(1.0397, 1.0397)
 drift_velocity = Vector2(32, 0.8108)
 
@@ -224,7 +232,7 @@ scale = Vector2(0.8918, 0.8918)
 drift_velocity = Vector2(32, -6.7093)
 
 [node name="S0_22" parent="Bodies" unique_id=313635981 instance=ExtResource("8_rock")]
-position = Vector2(2741.7957, 317.4449)
+position = Vector2(2938.478, 317.4449)
 scale = Vector2(1.253, 1.253)
 drift_velocity = Vector2(32, 5.9821)
 
@@ -244,12 +252,12 @@ scale = Vector2(1.1357, 1.1357)
 drift_velocity = Vector2(32, 5.7995)
 
 [node name="S0_26" parent="Bodies" unique_id=899446730 instance=ExtResource("8_rock")]
-position = Vector2(3350.4734, 466.3407)
+position = Vector2(3507.6199, 466.3407)
 scale = Vector2(0.7623, 0.7623)
 drift_velocity = Vector2(32, -1.4282)
 
 [node name="S0_27" parent="Bodies" unique_id=867106121 instance=ExtResource("8_rock")]
-position = Vector2(7390.1826, 710.7028)
+position = Vector2(7366, 625.00006)
 scale = Vector2(1.5667, 1.5667)
 drift_velocity = Vector2(32, 6.704)
 
@@ -264,12 +272,12 @@ scale = Vector2(1.2957, 1.2957)
 drift_velocity = Vector2(32, -5.5869)
 
 [node name="S0_30" parent="Bodies" unique_id=1365247209 instance=ExtResource("8_rock")]
-position = Vector2(8169.877, 245.1347)
+position = Vector2(8219.018, 245.1347)
 scale = Vector2(1.6353, 1.6353)
 drift_velocity = Vector2(32, -8.5921)
 
 [node name="S0_31" parent="Bodies" unique_id=114410926 instance=ExtResource("8_rock")]
-position = Vector2(2926.8567, 379.566)
+position = Vector2(2841.0002, 508.00003)
 scale = Vector2(1.3129, 1.3129)
 drift_velocity = Vector2(32, -6.9513)
 
@@ -339,7 +347,7 @@ scale = Vector2(1.4092, 1.4092)
 drift_velocity = Vector2(32, 6.9356)
 
 [node name="S0_45" parent="Bodies" unique_id=1139778986 instance=ExtResource("8_rock")]
-position = Vector2(7656.979, 611.5771)
+position = Vector2(7832.0005, 571)
 scale = Vector2(1.5326, 1.5326)
 drift_velocity = Vector2(32, 7.8355)
 
@@ -399,7 +407,7 @@ scale = Vector2(1.5791, 1.5791)
 drift_velocity = Vector2(32, 1.7439)
 
 [node name="S0_57" parent="Bodies" unique_id=926986123 instance=ExtResource("8_rock")]
-position = Vector2(7472.766, 717.4481)
+position = Vector2(7673.277, 717.4481)
 scale = Vector2(1.1068, 1.1068)
 drift_velocity = Vector2(32, -8.4836)
 
@@ -419,7 +427,7 @@ scale = Vector2(0.5978, 0.5978)
 drift_velocity = Vector2(32, 1.9227)
 
 [node name="S0_61" parent="Bodies" unique_id=675223891 instance=ExtResource("8_rock")]
-position = Vector2(8229.749, 237.2817)
+position = Vector2(8514, 89.000015)
 scale = Vector2(0.8461, 0.8461)
 drift_velocity = Vector2(32, -7.3422)
 
@@ -434,7 +442,7 @@ scale = Vector2(1.0181, 1.0181)
 drift_velocity = Vector2(32, 4.0883)
 
 [node name="S0_64" parent="Bodies" unique_id=375180324 instance=ExtResource("8_rock")]
-position = Vector2(3124.1746, 380.8458)
+position = Vector2(3053.3345, 380.8458)
 scale = Vector2(0.7256, 0.7256)
 drift_velocity = Vector2(32, 4.7938)
 
@@ -449,7 +457,7 @@ scale = Vector2(0.5893, 0.5893)
 drift_velocity = Vector2(32, -8.5021)
 
 [node name="S0_67" parent="Bodies" unique_id=745164917 instance=ExtResource("8_rock")]
-position = Vector2(8192.853, 602.3952)
+position = Vector2(8203.111, 602.3952)
 scale = Vector2(1.0235, 1.0235)
 drift_velocity = Vector2(32, -7.2646)
 
@@ -489,12 +497,12 @@ scale = Vector2(1.3048, 1.3048)
 drift_velocity = Vector2(32, -9.7347)
 
 [node name="S0_75" parent="Bodies" unique_id=1673532017 instance=ExtResource("8_rock")]
-position = Vector2(1826.4836, 232.7858)
+position = Vector2(1725, 199)
 scale = Vector2(1.6415, 1.6415)
 drift_velocity = Vector2(32, -3.2889)
 
 [node name="S0_76" parent="Bodies" unique_id=241553896 instance=ExtResource("8_rock")]
-position = Vector2(3333.9824, 630.2734)
+position = Vector2(3521.475, 630.2734)
 scale = Vector2(1.2952, 1.2952)
 drift_velocity = Vector2(32, -7.4413)
 
@@ -524,7 +532,7 @@ scale = Vector2(1.0499, 1.0499)
 drift_velocity = Vector2(32, -6.9492)
 
 [node name="S1_-15" parent="Bodies" unique_id=2127259482 instance=ExtResource("8_rock")]
-position = Vector2(3449.859, 540.1132)
+position = Vector2(3519.0183, 540.1132)
 scale = Vector2(1.2007, 1.2007)
 drift_velocity = Vector2(32, -0.2956)
 
@@ -534,7 +542,7 @@ scale = Vector2(0.6197, 0.6197)
 drift_velocity = Vector2(32, 3.0515)
 
 [node name="S1_-13" parent="Bodies" unique_id=1562568460 instance=ExtResource("8_rock")]
-position = Vector2(9061.329, 696.9276)
+position = Vector2(9287.04, 696.9276)
 scale = Vector2(1.4746, 1.4746)
 drift_velocity = Vector2(32, -1.9623)
 
@@ -544,12 +552,12 @@ scale = Vector2(0.9791, 0.9791)
 drift_velocity = Vector2(32, -0.5392)
 
 [node name="S1_-11" parent="Bodies" unique_id=1876355511 instance=ExtResource("8_rock")]
-position = Vector2(1622.1451, 640.3831)
+position = Vector2(1516, 481)
 scale = Vector2(0.9252, 0.9252)
 drift_velocity = Vector2(32, 0.4831)
 
 [node name="S1_-10" parent="Bodies" unique_id=297678499 instance=ExtResource("8_rock")]
-position = Vector2(2757.5652, 423.2585)
+position = Vector2(3432, 176)
 scale = Vector2(1.4358, 1.4358)
 drift_velocity = Vector2(32, -0.6446)
 
@@ -564,7 +572,7 @@ scale = Vector2(0.6294, 0.6294)
 drift_velocity = Vector2(32, -8.9906)
 
 [node name="S1_-7" parent="Bodies" unique_id=303065454 instance=ExtResource("8_rock")]
-position = Vector2(8128.8076, 563.2087)
+position = Vector2(8204.247, 563.2087)
 scale = Vector2(1.0672, 1.0672)
 drift_velocity = Vector2(32, -9.445)
 
@@ -604,12 +612,12 @@ scale = Vector2(1.4017, 1.4017)
 drift_velocity = Vector2(32, -0.6672)
 
 [node name="S1_1" parent="Bodies" unique_id=1116982689 instance=ExtResource("8_rock")]
-position = Vector2(3124.3994, 607.6895)
+position = Vector2(3059.8318, 607.6895)
 scale = Vector2(0.4757, 0.4757)
 drift_velocity = Vector2(32, -8.652)
 
 [node name="S1_2" parent="Bodies" unique_id=58962549 instance=ExtResource("8_rock")]
-position = Vector2(1776.8744, 141.3288)
+position = Vector2(1804, 190)
 scale = Vector2(0.9758, 0.9758)
 drift_velocity = Vector2(32, -7.9522)
 
@@ -619,12 +627,12 @@ scale = Vector2(0.5439, 0.5439)
 drift_velocity = Vector2(32, -6.4727)
 
 [node name="S1_4" parent="Bodies" unique_id=2077887782 instance=ExtResource("8_rock")]
-position = Vector2(2121.1262, 165.4799)
+position = Vector2(2090, 145)
 scale = Vector2(1.2143, 1.2143)
 drift_velocity = Vector2(32, 0.3227)
 
 [node name="S1_5" parent="Bodies" unique_id=2066155022 instance=ExtResource("8_rock")]
-position = Vector2(9068.661, 281.5859)
+position = Vector2(9284.192, 281.5859)
 scale = Vector2(1.3651, 1.3651)
 drift_velocity = Vector2(32, -7.866)
 
@@ -664,7 +672,7 @@ scale = Vector2(0.979, 0.979)
 drift_velocity = Vector2(32, 3.0705)
 
 [node name="S1_13" parent="Bodies" unique_id=1864447917 instance=ExtResource("8_rock")]
-position = Vector2(8505.767, 363.2943)
+position = Vector2(8722.79, 363.2943)
 scale = Vector2(1.5804, 1.5804)
 drift_velocity = Vector2(32, -1.4321)
 
@@ -724,7 +732,7 @@ scale = Vector2(0.7456, 0.7456)
 drift_velocity = Vector2(32, 8.3055)
 
 [node name="S1_25" parent="Bodies" unique_id=1411167683 instance=ExtResource("8_rock")]
-position = Vector2(3288.8237, 234.7524)
+position = Vector2(3503.2075, 234.7524)
 scale = Vector2(0.5926, 0.5926)
 drift_velocity = Vector2(32, -5.3833)
 
@@ -734,7 +742,7 @@ scale = Vector2(1.3612, 1.3612)
 drift_velocity = Vector2(32, 9.657)
 
 [node name="S1_27" parent="Bodies" unique_id=285020862 instance=ExtResource("8_rock")]
-position = Vector2(8081.4634, 571.78)
+position = Vector2(8601, 619)
 scale = Vector2(0.7376, 0.7376)
 drift_velocity = Vector2(32, 6.5989)
 
@@ -744,7 +752,7 @@ scale = Vector2(1.0134, 1.0134)
 drift_velocity = Vector2(32, 3.9621)
 
 [node name="S1_29" parent="Bodies" unique_id=1106301708 instance=ExtResource("8_rock")]
-position = Vector2(2094.8682, 607.9136)
+position = Vector2(1935.1648, 607.9136)
 scale = Vector2(0.8052, 0.8052)
 drift_velocity = Vector2(32, 4.8843)
 
@@ -754,22 +762,22 @@ scale = Vector2(1.6119, 1.6119)
 drift_velocity = Vector2(32, -6.8909)
 
 [node name="S1_31" parent="Bodies" unique_id=1864230481 instance=ExtResource("8_rock")]
-position = Vector2(7005.9316, 366.6157)
+position = Vector2(7194.9995, 310)
 scale = Vector2(1.6464, 1.6464)
 drift_velocity = Vector2(32, -5.8013)
 
 [node name="S1_32" parent="Bodies" unique_id=2140868112 instance=ExtResource("8_rock")]
-position = Vector2(1408.4064, 163.2734)
+position = Vector2(1370.1902, 163.2734)
 scale = Vector2(1.2273, 1.2273)
 drift_velocity = Vector2(32, -8.5148)
 
 [node name="S1_33" parent="Bodies" unique_id=542186099 instance=ExtResource("8_rock")]
-position = Vector2(7994.573, 233.6178)
+position = Vector2(8735, 110.999985)
 scale = Vector2(1.3901, 1.3901)
 drift_velocity = Vector2(32, -8.4387)
 
 [node name="S1_34" parent="Bodies" unique_id=1926505836 instance=ExtResource("8_rock")]
-position = Vector2(8060.3564, 78.3545)
+position = Vector2(8206.723, 78.3545)
 scale = Vector2(1.1624, 1.1624)
 drift_velocity = Vector2(32, 7.8512)
 
@@ -779,7 +787,7 @@ scale = Vector2(1.3984, 1.3984)
 drift_velocity = Vector2(32, -3.7371)
 
 [node name="S1_36" parent="Bodies" unique_id=432770802 instance=ExtResource("8_rock")]
-position = Vector2(8292.151, 662.8284)
+position = Vector2(8288.535, 662.8284)
 scale = Vector2(1.1448, 1.1448)
 drift_velocity = Vector2(32, -2.664)
 
@@ -804,7 +812,7 @@ scale = Vector2(1.6005, 1.6005)
 drift_velocity = Vector2(32, 1.6173)
 
 [node name="S1_41" parent="Bodies" unique_id=1180263968 instance=ExtResource("8_rock")]
-position = Vector2(8842.664, 618.4126)
+position = Vector2(8812.172, 618.4126)
 scale = Vector2(0.7357, 0.7357)
 drift_velocity = Vector2(32, 6.1802)
 
@@ -824,7 +832,7 @@ scale = Vector2(0.9739, 0.9739)
 drift_velocity = Vector2(32, -0.5921)
 
 [node name="S1_45" parent="Bodies" unique_id=91357064 instance=ExtResource("8_rock")]
-position = Vector2(9414.591, 333.3446)
+position = Vector2(9399.001, 405.00003)
 scale = Vector2(1.5819, 1.5819)
 drift_velocity = Vector2(32, -4.3972)
 
@@ -839,27 +847,27 @@ scale = Vector2(1.0858, 1.0858)
 drift_velocity = Vector2(32, 5.0728)
 
 [node name="S1_48" parent="Bodies" unique_id=812578743 instance=ExtResource("8_rock")]
-position = Vector2(9144.999, 450.5059)
+position = Vector2(9278.717, 450.5059)
 scale = Vector2(1.1545, 1.1545)
 drift_velocity = Vector2(32, -9.7546)
 
 [node name="S1_49" parent="Bodies" unique_id=586077485 instance=ExtResource("8_rock")]
-position = Vector2(9064.699, 78.4356)
+position = Vector2(9267.778, 78.4356)
 scale = Vector2(0.7338, 0.7338)
 drift_velocity = Vector2(32, -0.8732)
 
 [node name="S1_50" parent="Bodies" unique_id=350873041 instance=ExtResource("8_rock")]
-position = Vector2(9206.858, 490.8325)
+position = Vector2(9238, 598)
 scale = Vector2(1.03, 1.03)
 drift_velocity = Vector2(32, 2.5975)
 
 [node name="S1_51" parent="Bodies" unique_id=55758618 instance=ExtResource("8_rock")]
-position = Vector2(1770.9319, 523.0303)
+position = Vector2(1934.9999, 475.99994)
 scale = Vector2(1.0599, 1.0599)
 drift_velocity = Vector2(32, -1.9794)
 
 [node name="S1_52" parent="Bodies" unique_id=1911811700 instance=ExtResource("8_rock")]
-position = Vector2(2950.807, 322.6284)
+position = Vector2(2929, 233.00003)
 scale = Vector2(0.5487, 0.5487)
 drift_velocity = Vector2(32, -0.1051)
 
@@ -909,7 +917,7 @@ scale = Vector2(0.6427, 0.6427)
 drift_velocity = Vector2(32, 0.2929)
 
 [node name="S1_62" parent="Bodies" unique_id=1347880758 instance=ExtResource("8_rock")]
-position = Vector2(3213.3171, 564.5284)
+position = Vector2(3317.0002, 613)
 scale = Vector2(1.288, 1.288)
 drift_velocity = Vector2(32, -5.776)
 
@@ -944,7 +952,7 @@ scale = Vector2(1.516, 1.516)
 drift_velocity = Vector2(32, 7.1636)
 
 [node name="S1_69" parent="Bodies" unique_id=1176760569 instance=ExtResource("8_rock")]
-position = Vector2(7591.035, 184.1599)
+position = Vector2(7662.986, 184.1599)
 scale = Vector2(0.711, 0.711)
 drift_velocity = Vector2(32, -7.4078)
 
@@ -969,12 +977,12 @@ scale = Vector2(1.5433, 1.5433)
 drift_velocity = Vector2(32, 5.204)
 
 [node name="S1_74" parent="Bodies" unique_id=1335408637 instance=ExtResource("8_rock")]
-position = Vector2(7695.4917, 293.7235)
+position = Vector2(7627.0005, 317)
 scale = Vector2(1.4307, 1.4307)
 drift_velocity = Vector2(32, -0.6834)
 
 [node name="S1_75" parent="Bodies" unique_id=1009913834 instance=ExtResource("8_rock")]
-position = Vector2(8472.798, 604.4858)
+position = Vector2(8425.999, 669)
 scale = Vector2(0.7936, 0.7936)
 drift_velocity = Vector2(32, -9.8161)
 
@@ -1019,7 +1027,7 @@ scale = Vector2(0.6815, 0.6815)
 drift_velocity = Vector2(32, 9.4257)
 
 [node name="S2_-13" parent="Bodies" unique_id=1809385341 instance=ExtResource("8_rock")]
-position = Vector2(3178.837, 504.9537)
+position = Vector2(3200, 663)
 scale = Vector2(1.3166, 1.3166)
 drift_velocity = Vector2(32, 7.0023)
 
@@ -1054,7 +1062,7 @@ scale = Vector2(0.6402, 0.6402)
 drift_velocity = Vector2(32, 1.4336)
 
 [node name="S2_-6" parent="Bodies" unique_id=1119480403 instance=ExtResource("8_rock")]
-position = Vector2(9243.86, 241.3087)
+position = Vector2(9427, 95)
 scale = Vector2(1.6266, 1.6266)
 drift_velocity = Vector2(32, 6.3365)
 
@@ -1064,7 +1072,7 @@ scale = Vector2(0.7677, 0.7677)
 drift_velocity = Vector2(32, -2.1873)
 
 [node name="S2_-4" parent="Bodies" unique_id=1843869632 instance=ExtResource("8_rock")]
-position = Vector2(8178.435, 160.1994)
+position = Vector2(8350.001, 100.000015)
 scale = Vector2(1.4449, 1.4449)
 drift_velocity = Vector2(32, -5.0111)
 
@@ -1094,7 +1102,7 @@ scale = Vector2(0.8346, 0.8346)
 drift_velocity = Vector2(32, -3.039)
 
 [node name="S2_2" parent="Bodies" unique_id=510684652 instance=ExtResource("8_rock")]
-position = Vector2(1725.8064, 315.2102)
+position = Vector2(1812.8292, 315.2102)
 scale = Vector2(0.5742, 0.5742)
 drift_velocity = Vector2(32, -8.0659)
 
@@ -1104,7 +1112,7 @@ scale = Vector2(1.3355, 1.3355)
 drift_velocity = Vector2(32, -8.0057)
 
 [node name="S2_4" parent="Bodies" unique_id=339163690 instance=ExtResource("8_rock")]
-position = Vector2(8426.862, 673.0381)
+position = Vector2(8528, 683)
 scale = Vector2(0.9151, 0.9151)
 drift_velocity = Vector2(32, 8.0492)
 
@@ -1114,7 +1122,7 @@ scale = Vector2(0.5156, 0.5156)
 drift_velocity = Vector2(32, 4.3252)
 
 [node name="S2_6" parent="Bodies" unique_id=1879995909 instance=ExtResource("8_rock")]
-position = Vector2(3261.1047, 258.6644)
+position = Vector2(3056.6963, 258.6644)
 scale = Vector2(0.5963, 0.5963)
 drift_velocity = Vector2(32, 4.0671)
 
@@ -1139,7 +1147,7 @@ scale = Vector2(0.5657, 0.5657)
 drift_velocity = Vector2(32, 9.2048)
 
 [node name="S2_11" parent="Bodies" unique_id=356276304 instance=ExtResource("8_rock")]
-position = Vector2(8381.668, 340.7458)
+position = Vector2(8286.895, 340.7458)
 scale = Vector2(1.2079, 1.2079)
 drift_velocity = Vector2(32, 3.8118)
 
@@ -1174,7 +1182,7 @@ scale = Vector2(1.0551, 1.0551)
 drift_velocity = Vector2(32, -4.3078)
 
 [node name="S2_18" parent="Bodies" unique_id=1243741579 instance=ExtResource("8_rock")]
-position = Vector2(2602.3013, 275.5902)
+position = Vector2(2476.5005, 275.5902)
 scale = Vector2(0.6769, 0.6769)
 drift_velocity = Vector2(32, -7.916)
 
@@ -1184,7 +1192,7 @@ scale = Vector2(1.3246, 1.3246)
 drift_velocity = Vector2(32, -8.4715)
 
 [node name="S2_20" parent="Bodies" unique_id=1064288777 instance=ExtResource("8_rock")]
-position = Vector2(8453.638, 476.4831)
+position = Vector2(8297.531, 476.4831)
 scale = Vector2(0.7988, 0.7988)
 drift_velocity = Vector2(32, -4.2575)
 
@@ -1204,7 +1212,7 @@ scale = Vector2(0.4657, 0.4657)
 drift_velocity = Vector2(32, 6.8442)
 
 [node name="S2_24" parent="Bodies" unique_id=1469060271 instance=ExtResource("8_rock")]
-position = Vector2(2235.2166, 458.8442)
+position = Vector2(2208, 497)
 scale = Vector2(1.3062, 1.3062)
 drift_velocity = Vector2(32, -2.5973)
 
@@ -1214,7 +1222,7 @@ scale = Vector2(1.4, 1.4)
 drift_velocity = Vector2(32, -9.6757)
 
 [node name="S2_26" parent="Bodies" unique_id=95134034 instance=ExtResource("8_rock")]
-position = Vector2(3095.0005, 719.765)
+position = Vector2(3389.0002, 710.00006)
 scale = Vector2(1.6158, 1.6158)
 drift_velocity = Vector2(32, -4.5902)
 
@@ -1229,7 +1237,7 @@ scale = Vector2(0.6268, 0.6268)
 drift_velocity = Vector2(32, -3.5102)
 
 [node name="S2_29" parent="Bodies" unique_id=19747404 instance=ExtResource("8_rock")]
-position = Vector2(9124.454, 540.0126)
+position = Vector2(9050, 711)
 scale = Vector2(1.495, 1.495)
 drift_velocity = Vector2(32, -6.5502)
 
@@ -1274,7 +1282,7 @@ scale = Vector2(0.8557, 0.8557)
 drift_velocity = Vector2(32, -3.7685)
 
 [node name="S2_38" parent="Bodies" unique_id=344219390 instance=ExtResource("8_rock")]
-position = Vector2(7476.861, 166.939)
+position = Vector2(7679.8755, 166.939)
 scale = Vector2(1.3606, 1.3606)
 drift_velocity = Vector2(32, 8.4166)
 
@@ -1299,7 +1307,7 @@ scale = Vector2(0.9984, 0.9984)
 drift_velocity = Vector2(32, -7.8279)
 
 [node name="S2_43" parent="Bodies" unique_id=717133285 instance=ExtResource("8_rock")]
-position = Vector2(8147.123, 606.7631)
+position = Vector2(8644, 716.00006)
 scale = Vector2(1.042, 1.042)
 drift_velocity = Vector2(32, -7.6993)
 
@@ -1319,7 +1327,7 @@ scale = Vector2(1.1103, 1.1103)
 drift_velocity = Vector2(32, 3.542)
 
 [node name="S2_47" parent="Bodies" unique_id=738779013 instance=ExtResource("8_rock")]
-position = Vector2(1539.9833, 580.5021)
+position = Vector2(1382.6624, 580.5021)
 scale = Vector2(0.7476, 0.7476)
 drift_velocity = Vector2(32, 5.5021)
 
@@ -1354,22 +1362,22 @@ scale = Vector2(1.5258, 1.5258)
 drift_velocity = Vector2(32, 6.4556)
 
 [node name="S2_54" parent="Bodies" unique_id=1591051547 instance=ExtResource("8_rock")]
-position = Vector2(7807.0503, 137.7696)
+position = Vector2(8121.0005, 274)
 scale = Vector2(0.9711, 0.9711)
 drift_velocity = Vector2(32, 7.7949)
 
 [node name="S2_55" parent="Bodies" unique_id=1416720348 instance=ExtResource("8_rock")]
-position = Vector2(3308.7866, 293.0368)
+position = Vector2(3503.6497, 293.0368)
 scale = Vector2(0.6096, 0.6096)
 drift_velocity = Vector2(32, 6.0873)
 
 [node name="S2_56" parent="Bodies" unique_id=1144529235 instance=ExtResource("8_rock")]
-position = Vector2(1664.2548, 163.3084)
+position = Vector2(1522, 133)
 scale = Vector2(1.5837, 1.5837)
 drift_velocity = Vector2(32, 3.8662)
 
 [node name="S2_57" parent="Bodies" unique_id=1755998856 instance=ExtResource("8_rock")]
-position = Vector2(2875.0842, 99.8368)
+position = Vector2(3223, 160)
 scale = Vector2(1.6298, 1.6298)
 drift_velocity = Vector2(32, -0.6671)
 
@@ -1384,7 +1392,7 @@ scale = Vector2(0.6096, 0.6096)
 drift_velocity = Vector2(32, -0.3376)
 
 [node name="S2_60" parent="Bodies" unique_id=1577940178 instance=ExtResource("8_rock")]
-position = Vector2(3355.9136, 296.351)
+position = Vector2(3511.6057, 296.351)
 scale = Vector2(0.9156, 0.9156)
 drift_velocity = Vector2(32, 2.4441)
 
@@ -1399,7 +1407,7 @@ scale = Vector2(1.3838, 1.3838)
 drift_velocity = Vector2(32, -4.7567)
 
 [node name="S2_63" parent="Bodies" unique_id=1685473492 instance=ExtResource("8_rock")]
-position = Vector2(1384.6143, 573.6116)
+position = Vector2(1376.6044, 573.6116)
 scale = Vector2(0.9806, 0.9806)
 drift_velocity = Vector2(32, -9.7093)
 
@@ -1409,7 +1417,7 @@ scale = Vector2(0.6716, 0.6716)
 drift_velocity = Vector2(32, 3.0264)
 
 [node name="S2_65" parent="Bodies" unique_id=693796259 instance=ExtResource("8_rock")]
-position = Vector2(2953.5347, 247.4449)
+position = Vector2(2790, 139.99997)
 scale = Vector2(1.1508, 1.1508)
 drift_velocity = Vector2(32, 0.5549)
 
@@ -1429,7 +1437,7 @@ scale = Vector2(1.0249, 1.0249)
 drift_velocity = Vector2(32, 6.4375)
 
 [node name="S2_69" parent="Bodies" unique_id=104871178 instance=ExtResource("8_rock")]
-position = Vector2(1540.4862, 317.224)
+position = Vector2(1361.0018, 317.224)
 scale = Vector2(1.5807, 1.5807)
 drift_velocity = Vector2(32, -4.5854)
 
@@ -1439,22 +1447,22 @@ scale = Vector2(1.4809, 1.4809)
 drift_velocity = Vector2(32, -4.0869)
 
 [node name="S2_71" parent="Bodies" unique_id=800308613 instance=ExtResource("8_rock")]
-position = Vector2(8748.259, 385.087)
+position = Vector2(8945, 617)
 scale = Vector2(0.6505, 0.6505)
 drift_velocity = Vector2(32, 5.7622)
 
 [node name="S2_72" parent="Bodies" unique_id=2023311069 instance=ExtResource("8_rock")]
-position = Vector2(2513.646, 300.3693)
+position = Vector2(2794, 231.00003)
 scale = Vector2(0.6137, 0.6137)
 drift_velocity = Vector2(32, -5.3378)
 
 [node name="S2_73" parent="Bodies" unique_id=330113986 instance=ExtResource("8_rock")]
-position = Vector2(9113.326, 388.266)
+position = Vector2(8986.001, 147.00002)
 scale = Vector2(1.1563, 1.1563)
 drift_velocity = Vector2(32, 6.1958)
 
 [node name="S2_74" parent="Bodies" unique_id=188623382 instance=ExtResource("8_rock")]
-position = Vector2(1716.1993, 577.1713)
+position = Vector2(1495.9999, 643)
 scale = Vector2(1.0909, 1.0909)
 drift_velocity = Vector2(32, -6.0374)
 
@@ -1469,12 +1477,12 @@ scale = Vector2(1.0182, 1.0182)
 drift_velocity = Vector2(32, 2.5718)
 
 [node name="S2_77" parent="Bodies" unique_id=1036806841 instance=ExtResource("8_rock")]
-position = Vector2(7825.612, 392.6453)
+position = Vector2(7769.595, 392.6453)
 scale = Vector2(0.5348, 0.5348)
 drift_velocity = Vector2(32, 3.198)
 
 [node name="S2_78" parent="Bodies" unique_id=1202556770 instance=ExtResource("8_rock")]
-position = Vector2(7535.849, 574.7601)
+position = Vector2(7662.557, 574.7601)
 scale = Vector2(0.6945, 0.6945)
 drift_velocity = Vector2(32, -7.8038)
 
@@ -1484,7 +1492,7 @@ scale = Vector2(1.2166, 1.2166)
 drift_velocity = Vector2(32, -9.1071)
 
 [node name="S2_80" parent="Bodies" unique_id=1145884734 instance=ExtResource("8_rock")]
-position = Vector2(2796.0415, 710.8375)
+position = Vector2(2929.6953, 710.8375)
 scale = Vector2(0.9152, 0.9152)
 drift_velocity = Vector2(32, 5.7847)
 
@@ -1514,7 +1522,7 @@ scale = Vector2(1.0737, 1.0737)
 drift_velocity = Vector2(32, -6.3922)
 
 [node name="S3_-11" parent="Bodies" unique_id=2031006446 instance=ExtResource("8_rock")]
-position = Vector2(1784.2343, 398.9862)
+position = Vector2(1666, 539)
 scale = Vector2(1.1213, 1.1213)
 drift_velocity = Vector2(32, -4.04)
 
@@ -1584,7 +1592,7 @@ scale = Vector2(0.9181, 0.9181)
 drift_velocity = Vector2(32, 1.6294)
 
 [node name="S3_3" parent="Bodies" unique_id=1632456096 instance=ExtResource("8_rock")]
-position = Vector2(7378.3867, 353.0205)
+position = Vector2(7550, 749)
 scale = Vector2(1.4565, 1.4565)
 drift_velocity = Vector2(32, 9.5427)
 
@@ -1604,12 +1612,12 @@ scale = Vector2(0.6778, 0.6778)
 drift_velocity = Vector2(32, 6.8135)
 
 [node name="S3_7" parent="Bodies" unique_id=1874520551 instance=ExtResource("8_rock")]
-position = Vector2(9333.026, 272.1222)
+position = Vector2(9169, 145)
 scale = Vector2(1.5521, 1.5521)
 drift_velocity = Vector2(32, -6.6829)
 
 [node name="S3_8" parent="Bodies" unique_id=1979705606 instance=ExtResource("8_rock")]
-position = Vector2(2211.8372, 104.5357)
+position = Vector2(2336.835, 104.5357)
 scale = Vector2(0.4975, 0.4975)
 drift_velocity = Vector2(32, 2.2233)
 
@@ -1669,7 +1677,7 @@ scale = Vector2(1.6375, 1.6375)
 drift_velocity = Vector2(32, -0.0094)
 
 [node name="S3_20" parent="Bodies" unique_id=14994575 instance=ExtResource("8_rock")]
-position = Vector2(2342.3093, 513.5301)
+position = Vector2(2352.227, 513.5301)
 scale = Vector2(1.0895, 1.0895)
 drift_velocity = Vector2(32, -3.6279)
 
@@ -1699,7 +1707,7 @@ scale = Vector2(0.7888, 0.7888)
 drift_velocity = Vector2(32, -8.9353)
 
 [node name="S3_26" parent="Bodies" unique_id=1704845575 instance=ExtResource("8_rock")]
-position = Vector2(8103.7925, 121.326)
+position = Vector2(8260, 153)
 scale = Vector2(0.7949, 0.7949)
 drift_velocity = Vector2(32, -1.7059)
 
@@ -1719,7 +1727,7 @@ scale = Vector2(0.7237, 0.7237)
 drift_velocity = Vector2(32, -7.4292)
 
 [node name="S3_30" parent="Bodies" unique_id=1138068030 instance=ExtResource("8_rock")]
-position = Vector2(2400.2092, 600.7649)
+position = Vector2(2767, 620)
 scale = Vector2(0.879, 0.879)
 drift_velocity = Vector2(32, 6.2181)
 
@@ -1794,7 +1802,7 @@ scale = Vector2(1.2784, 1.2784)
 drift_velocity = Vector2(32, 0.3129)
 
 [node name="S3_45" parent="Bodies" unique_id=1573113820 instance=ExtResource("8_rock")]
-position = Vector2(8417.047, 469.0321)
+position = Vector2(8293.268, 469.0321)
 scale = Vector2(0.9628, 0.9628)
 drift_velocity = Vector2(32, -5.9655)
 
@@ -1814,7 +1822,7 @@ scale = Vector2(1.0793, 1.0793)
 drift_velocity = Vector2(32, -6.236)
 
 [node name="S3_49" parent="Bodies" unique_id=1713342785 instance=ExtResource("8_rock")]
-position = Vector2(3197.8352, 379.4514)
+position = Vector2(3057.2734, 379.4514)
 scale = Vector2(0.5741, 0.5741)
 drift_velocity = Vector2(32, -0.3244)
 
@@ -1824,7 +1832,7 @@ scale = Vector2(0.6615, 0.6615)
 drift_velocity = Vector2(32, 1.6433)
 
 [node name="S3_51" parent="Bodies" unique_id=494729460 instance=ExtResource("8_rock")]
-position = Vector2(8846.387, 471.0167)
+position = Vector2(9096, 590)
 scale = Vector2(1.4427, 1.4427)
 drift_velocity = Vector2(32, 6.8753)
 
@@ -1839,7 +1847,7 @@ scale = Vector2(1.5295, 1.5295)
 drift_velocity = Vector2(32, -4.7738)
 
 [node name="S3_54" parent="Bodies" unique_id=1712107522 instance=ExtResource("8_rock")]
-position = Vector2(7895.4526, 308.2668)
+position = Vector2(7751.182, 308.2668)
 scale = Vector2(1.243, 1.243)
 drift_velocity = Vector2(32, -5.0317)
 
@@ -1864,7 +1872,7 @@ scale = Vector2(1.2863, 1.2863)
 drift_velocity = Vector2(32, 2.9713)
 
 [node name="S3_59" parent="Bodies" unique_id=1615266238 instance=ExtResource("8_rock")]
-position = Vector2(2058.709, 98.6716)
+position = Vector2(1927.4558, 98.6716)
 scale = Vector2(1.1017, 1.1017)
 drift_velocity = Vector2(32, 9.9375)
 
@@ -1874,7 +1882,7 @@ scale = Vector2(0.9568, 0.9568)
 drift_velocity = Vector2(32, 2.6282)
 
 [node name="S3_61" parent="Bodies" unique_id=1258659425 instance=ExtResource("8_rock")]
-position = Vector2(7438.21, 392.6521)
+position = Vector2(7552.0005, 182.00003)
 scale = Vector2(1.0268, 1.0268)
 drift_velocity = Vector2(32, 3.8599)
 
@@ -1889,7 +1897,7 @@ scale = Vector2(1.3258, 1.3258)
 drift_velocity = Vector2(32, -1.0249)
 
 [node name="S3_64" parent="Bodies" unique_id=573605589 instance=ExtResource("8_rock")]
-position = Vector2(9102.426, 108.06)
+position = Vector2(9304, 128)
 scale = Vector2(0.6132, 0.6132)
 drift_velocity = Vector2(32, 6.5861)
 
@@ -1904,12 +1912,12 @@ scale = Vector2(0.9303, 0.9303)
 drift_velocity = Vector2(32, 1.8777)
 
 [node name="S3_67" parent="Bodies" unique_id=495261955 instance=ExtResource("8_rock")]
-position = Vector2(8928.928, 341.0821)
+position = Vector2(8807.632, 341.0821)
 scale = Vector2(0.9103, 0.9103)
 drift_velocity = Vector2(32, 7.7101)
 
 [node name="S3_68" parent="Bodies" unique_id=801102373 instance=ExtResource("8_rock")]
-position = Vector2(1403.0745, 416.8975)
+position = Vector2(1383.2058, 416.8975)
 scale = Vector2(0.7267, 0.7267)
 drift_velocity = Vector2(32, -8.8264)
 
@@ -1919,7 +1927,7 @@ scale = Vector2(0.7935, 0.7935)
 drift_velocity = Vector2(32, -1.4806)
 
 [node name="S3_70" parent="Bodies" unique_id=974521966 instance=ExtResource("8_rock")]
-position = Vector2(7277.8545, 122.7308)
+position = Vector2(7222.5, 122.7308)
 scale = Vector2(0.5, 0.5)
 drift_velocity = Vector2(32, 1.5515)
 
@@ -1944,7 +1952,7 @@ scale = Vector2(1.3374, 1.3374)
 drift_velocity = Vector2(32, 2.8763)
 
 [node name="S3_75" parent="Bodies" unique_id=1206801913 instance=ExtResource("8_rock")]
-position = Vector2(1965.7709, 228.6639)
+position = Vector2(1929.2343, 228.6639)
 scale = Vector2(1.0333, 1.0333)
 drift_velocity = Vector2(32, -7.0652)
 
@@ -1984,7 +1992,7 @@ scale = Vector2(0.5152, 0.5152)
 drift_velocity = Vector2(32, 2.2624)
 
 [node name="S4_-14" parent="Bodies" unique_id=1528744147 instance=ExtResource("8_rock")]
-position = Vector2(1811.4237, 285.8591)
+position = Vector2(1820.6058, 285.8591)
 scale = Vector2(0.8733, 0.8733)
 drift_velocity = Vector2(32, -5.0044)
 
@@ -2019,12 +2027,12 @@ scale = Vector2(1.0977, 1.0977)
 drift_velocity = Vector2(32, -0.188)
 
 [node name="S4_-7" parent="Bodies" unique_id=480410363 instance=ExtResource("8_rock")]
-position = Vector2(7291.718, 221.1256)
+position = Vector2(7209.0815, 221.1256)
 scale = Vector2(1.0161, 1.0161)
 drift_velocity = Vector2(32, 3.7549)
 
 [node name="S4_-6" parent="Bodies" unique_id=1649309901 instance=ExtResource("8_rock")]
-position = Vector2(2837.634, 708.0337)
+position = Vector2(2923.567, 708.0337)
 scale = Vector2(0.6795, 0.6795)
 drift_velocity = Vector2(32, -1.1924)
 
@@ -2049,7 +2057,7 @@ scale = Vector2(1.3504, 1.3504)
 drift_velocity = Vector2(32, -2.9469)
 
 [node name="S4_-1" parent="Bodies" unique_id=284324251 instance=ExtResource("8_rock")]
-position = Vector2(1713.0063, 156.9423)
+position = Vector2(1738.0001, 96)
 scale = Vector2(0.6537, 0.6537)
 drift_velocity = Vector2(32, 0.6161)
 
@@ -2059,17 +2067,17 @@ scale = Vector2(0.481, 0.481)
 drift_velocity = Vector2(32, 1.699)
 
 [node name="S4_1" parent="Bodies" unique_id=1222933149 instance=ExtResource("8_rock")]
-position = Vector2(2596.219, 517.2222)
+position = Vector2(2453.4075, 517.2222)
 scale = Vector2(1.5651, 1.5651)
 drift_velocity = Vector2(32, -6.7558)
 
 [node name="S4_2" parent="Bodies" unique_id=1127858403 instance=ExtResource("8_rock")]
-position = Vector2(2065.811, 261.3246)
+position = Vector2(2009, 372)
 scale = Vector2(1.5115, 1.5115)
 drift_velocity = Vector2(32, -0.881)
 
 [node name="S4_3" parent="Bodies" unique_id=266391250 instance=ExtResource("8_rock")]
-position = Vector2(7499.003, 265.1878)
+position = Vector2(8040.0005, 665)
 scale = Vector2(0.9566, 0.9566)
 drift_velocity = Vector2(32, 0.5633)
 
@@ -2109,7 +2117,7 @@ scale = Vector2(0.9167, 0.9167)
 drift_velocity = Vector2(32, 1.8854)
 
 [node name="S4_11" parent="Bodies" unique_id=308943980 instance=ExtResource("8_rock")]
-position = Vector2(8342.702, 251.2604)
+position = Vector2(8294.677, 251.2604)
 scale = Vector2(0.9086, 0.9086)
 drift_velocity = Vector2(32, 2.0869)
 
@@ -2169,12 +2177,12 @@ scale = Vector2(1.5802, 1.5802)
 drift_velocity = Vector2(32, -4.5683)
 
 [node name="S4_23" parent="Bodies" unique_id=595411991 instance=ExtResource("8_rock")]
-position = Vector2(7111.2153, 138.0856)
+position = Vector2(7332.9995, 119)
 scale = Vector2(1.6136, 1.6136)
 drift_velocity = Vector2(32, -2.5189)
 
 [node name="S4_24" parent="Bodies" unique_id=1588713496 instance=ExtResource("8_rock")]
-position = Vector2(8961.578, 327.9213)
+position = Vector2(8813.651, 327.9213)
 scale = Vector2(0.6788, 0.6788)
 drift_velocity = Vector2(32, -6.8309)
 
@@ -2184,7 +2192,7 @@ scale = Vector2(1.4491, 1.4491)
 drift_velocity = Vector2(32, 6.0337)
 
 [node name="S4_26" parent="Bodies" unique_id=1097704201 instance=ExtResource("8_rock")]
-position = Vector2(3152.5547, 99.8209)
+position = Vector2(3055.8901, 99.8209)
 scale = Vector2(0.6273, 0.6273)
 drift_velocity = Vector2(32, 7.7805)
 
@@ -2199,7 +2207,7 @@ scale = Vector2(0.8354, 0.8354)
 drift_velocity = Vector2(32, -0.8484)
 
 [node name="S4_29" parent="Bodies" unique_id=1621690836 instance=ExtResource("8_rock")]
-position = Vector2(8479.463, 115.9808)
+position = Vector2(8667.001, 221)
 scale = Vector2(1.5713, 1.5713)
 drift_velocity = Vector2(32, -6.8104)
 
@@ -2229,7 +2237,7 @@ scale = Vector2(0.8486, 0.8486)
 drift_velocity = Vector2(32, 8.8701)
 
 [node name="S4_35" parent="Bodies" unique_id=186168742 instance=ExtResource("8_rock")]
-position = Vector2(7660.3525, 462.7671)
+position = Vector2(7663.48, 462.7671)
 scale = Vector2(0.73, 0.73)
 drift_velocity = Vector2(32, 4.036)
 
@@ -2239,7 +2247,7 @@ scale = Vector2(1.1091, 1.1091)
 drift_velocity = Vector2(32, 8.8311)
 
 [node name="S4_37" parent="Bodies" unique_id=1833320184 instance=ExtResource("8_rock")]
-position = Vector2(3454.4514, 115.7618)
+position = Vector2(3524.876, 115.7618)
 scale = Vector2(1.426, 1.426)
 drift_velocity = Vector2(32, 2.0815)
 
@@ -2259,12 +2267,12 @@ scale = Vector2(1.1666, 1.1666)
 drift_velocity = Vector2(32, -1.3264)
 
 [node name="S4_41" parent="Bodies" unique_id=1304896939 instance=ExtResource("8_rock")]
-position = Vector2(7607.7266, 300.3312)
+position = Vector2(8025, 148.00002)
 scale = Vector2(0.8499, 0.8499)
 drift_velocity = Vector2(32, -4.4873)
 
 [node name="S4_42" parent="Bodies" unique_id=353562012 instance=ExtResource("8_rock")]
-position = Vector2(6907.904, 329.3204)
+position = Vector2(6896, 390.00003)
 scale = Vector2(1.6152, 1.6152)
 drift_velocity = Vector2(32, -2.7593)
 
@@ -2274,7 +2282,7 @@ scale = Vector2(1.643, 1.643)
 drift_velocity = Vector2(32, 1.6094)
 
 [node name="S4_44" parent="Bodies" unique_id=119226996 instance=ExtResource("8_rock")]
-position = Vector2(7980.176, 475.797)
+position = Vector2(8150, 430.99997)
 scale = Vector2(1.6214, 1.6214)
 drift_velocity = Vector2(32, 6.3259)
 
@@ -2299,12 +2307,12 @@ scale = Vector2(0.6195, 0.6195)
 drift_velocity = Vector2(32, 7.7025)
 
 [node name="S4_49" parent="Bodies" unique_id=601391027 instance=ExtResource("8_rock")]
-position = Vector2(8638.071, 583.2064)
+position = Vector2(8698.551, 583.2064)
 scale = Vector2(0.6481, 0.6481)
 drift_velocity = Vector2(32, 1.8965)
 
 [node name="S4_50" parent="Bodies" unique_id=626363188 instance=ExtResource("8_rock")]
-position = Vector2(7890.0244, 170.4102)
+position = Vector2(7771.465, 170.4102)
 scale = Vector2(0.4629, 0.4629)
 drift_velocity = Vector2(32, -7.2639)
 
@@ -2314,7 +2322,7 @@ scale = Vector2(0.7137, 0.7137)
 drift_velocity = Vector2(32, -0.5892)
 
 [node name="S4_52" parent="Bodies" unique_id=741364367 instance=ExtResource("8_rock")]
-position = Vector2(2181.1572, 714.398)
+position = Vector2(2166.0002, 611)
 scale = Vector2(1.3695, 1.3695)
 drift_velocity = Vector2(32, 3.2474)
 
@@ -2349,7 +2357,7 @@ scale = Vector2(1.4737, 1.4737)
 drift_velocity = Vector2(32, 3.3393)
 
 [node name="S4_59" parent="Bodies" unique_id=503421310 instance=ExtResource("8_rock")]
-position = Vector2(7408.178, 459.4823)
+position = Vector2(7199.381, 459.4823)
 scale = Vector2(1.3892, 1.3892)
 drift_velocity = Vector2(32, 7.0417)
 
@@ -2409,7 +2417,7 @@ scale = Vector2(1.5048, 1.5048)
 drift_velocity = Vector2(32, 1.1602)
 
 [node name="S4_71" parent="Bodies" unique_id=1262218129 instance=ExtResource("8_rock")]
-position = Vector2(2551.4038, 265.6522)
+position = Vector2(2605.9998, 187.99997)
 scale = Vector2(0.9473, 0.9473)
 drift_velocity = Vector2(32, 7.8801)
 
@@ -2449,7 +2457,7 @@ scale = Vector2(0.8056, 0.8056)
 drift_velocity = Vector2(32, -7.0525)
 
 [node name="S4_79" parent="Bodies" unique_id=1873666724 instance=ExtResource("8_rock")]
-position = Vector2(7726.2827, 156.2865)
+position = Vector2(7941.0005, 115.000015)
 scale = Vector2(1.5531, 1.5531)
 drift_velocity = Vector2(32, 9.7354)
 
@@ -2457,6 +2465,86 @@ drift_velocity = Vector2(32, 9.7354)
 position = Vector2(8769.276, 571.5794)
 scale = Vector2(1.4418, 1.4418)
 drift_velocity = Vector2(32, -2.0183)
+
+[node name="HullFed02" parent="Bodies" unique_id=305402531 instance=ExtResource("8_rock")]
+position = Vector2(7440, 381)
+rotation = 0.4
+scale = Vector2(1.6456, 1.6456)
+drift_velocity = Vector2(32, 8.411)
+hull_texture = ExtResource("11_fed02")
+
+[node name="Sprite" parent="Bodies/HullFed02" index="0"]
+texture = ExtResource("11_fed02")
+
+[node name="HullFed04" parent="Bodies" unique_id=1721864346 instance=ExtResource("8_rock")]
+position = Vector2(7980, 381)
+rotation = -1.1
+scale = Vector2(1.2322, 1.2322)
+drift_velocity = Vector2(32, 8.411)
+hull_texture = ExtResource("13_fed04")
+
+[node name="Sprite" parent="Bodies/HullFed04" index="0"]
+texture = ExtResource("13_fed04")
+
+[node name="HullFed01" parent="Bodies" unique_id=1705547159 instance=ExtResource("8_rock")]
+position = Vector2(8500, 381)
+rotation = 1.7
+scale = Vector2(1.413, 1.413)
+drift_velocity = Vector2(32, 8.411)
+hull_texture = ExtResource("10_fed01")
+
+[node name="Sprite" parent="Bodies/HullFed01" index="0"]
+texture = ExtResource("10_fed01")
+
+[node name="HullFed03" parent="Bodies" unique_id=1892036957 instance=ExtResource("8_rock")]
+position = Vector2(9040, 381)
+rotation = -0.3
+scale = Vector2(1.0924, 1.0924)
+drift_velocity = Vector2(32, 8.411)
+hull_texture = ExtResource("12_fed03")
+
+[node name="Sprite" parent="Bodies/HullFed03" index="0"]
+texture = ExtResource("12_fed03")
+
+[node name="HullAuto04" parent="Bodies" unique_id=1167589411 instance=ExtResource("8_rock")]
+position = Vector2(1600, 381)
+rotation = 0.9
+scale = Vector2(1.8182, 1.8182)
+drift_velocity = Vector2(32, 8.411)
+hull_texture = ExtResource("17_auto04")
+
+[node name="Sprite" parent="Bodies/HullAuto04" index="0"]
+texture = ExtResource("17_auto04")
+
+[node name="HullAuto02" parent="Bodies" unique_id=272418289 instance=ExtResource("8_rock")]
+position = Vector2(2140, 381)
+rotation = -0.6
+scale = Vector2(2.1848, 2.1848)
+drift_velocity = Vector2(32, 8.411)
+hull_texture = ExtResource("15_auto02")
+
+[node name="Sprite" parent="Bodies/HullAuto02" index="0"]
+texture = ExtResource("15_auto02")
+
+[node name="HullAuto01" parent="Bodies" unique_id=1041751599 instance=ExtResource("8_rock")]
+position = Vector2(2700, 381)
+rotation = 2.2
+scale = Vector2(1.5854, 1.5854)
+drift_velocity = Vector2(32, 8.411)
+hull_texture = ExtResource("14_auto01")
+
+[node name="Sprite" parent="Bodies/HullAuto01" index="0"]
+texture = ExtResource("14_auto01")
+
+[node name="HullAuto03" parent="Bodies" unique_id=37890667 instance=ExtResource("8_rock")]
+position = Vector2(3280, 381)
+rotation = 0.2
+scale = Vector2(1.656, 1.656)
+drift_velocity = Vector2(32, 8.411)
+hull_texture = ExtResource("16_auto03")
+
+[node name="Sprite" parent="Bodies/HullAuto03" index="0"]
+texture = ExtResource("16_auto03")
 
 [node name="Wanderer" type="CharacterBody2D" parent="." unique_id=1717412150]
 z_index = 20
