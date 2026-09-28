@@ -6,6 +6,7 @@
 [ext_resource type="Texture2D" uid="uid://dbadnu2t04lxh" path="res://assets/zvezdets2.png" id="3_star"]
 [ext_resource type="Texture2D" uid="uid://6vjqtrisigxv" path="res://assets/cosmoman2.png" id="4_wanderer"]
 [ext_resource type="Script" uid="uid://djnm554bi5ccd" path="res://scripts/wanderer.gd" id="5_wanderer"]
+[ext_resource type="Script" uid="uid://cf5f4xei38j3h" path="res://scripts/jump_aim.gd" id="18_jump_aim"]
 [ext_resource type="Script" uid="uid://bo1yamnrlqi0y" path="res://scripts/menu.gd" id="7_menu"]
 [ext_resource type="PackedScene" uid="uid://cspacerock01" path="res://scenes/space_rock.tscn" id="8_rock"]
 [ext_resource type="Script" uid="uid://bc800lgo1y05g" path="res://scripts/rock_river.gd" id="9_river"]
@@ -2534,6 +2535,10 @@ texture = ExtResource("4_wanderer")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Wanderer" unique_id=391632887]
 shape = SubResource("CircleShape2D_wanderer")
+
+[node name="JumpAim" type="Node2D" parent="Wanderer" unique_id=1938472610]
+z_index = -1
+script = ExtResource("18_jump_aim")
 
 [node name="Camera2D" type="Camera2D" parent="Wanderer" unique_id=1258142106]
 position_smoothing_enabled = true

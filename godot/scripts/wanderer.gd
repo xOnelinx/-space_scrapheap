@@ -6,6 +6,7 @@ extends CharacterBody2D
 ## Магнитные ботинки: к обломку цепляется при любом ударе.
 ## С любой точки корпуса прыжок в любую сторону.
 ## Курс без пересечения с телами → гибель. Крутится только спрайт.
+## ПКМ — курс до края экрана и стрелка скорости (спин опоры).
 
 const FACE_EPS := 1.0
 const RESTITUTION := 0.55
@@ -20,6 +21,7 @@ const RESPAWN_INPUT_PAUSE := 0.45
 const LOST_DOOM_DELAY := 6.0
 const MASS := 26.0 * 26.0
 const HIT_FRICTION := 0.35
+const AIM_HORIZON := 3.0
 ## Верх спрайта — прямоугольный рюкзак, это спина. Низ — ноги, ими встаём на камень.
 const FOOT_EXTENT := 10.0
 
@@ -80,6 +82,12 @@ func _unlock_controls_when_ready() -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if _dead or _controls_locked:
 		return
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_RIGHT:
+		if dock.docked:
+			if not event.pressed:
+				_cancel_aim_charge()
+			get_viewport().set_input_as_handled()
+		return
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
 		if event.pressed:
 			if dock.docked:
@@ -107,16 +115,11 @@ func _commit_push(to_target: Vector2) -> void:
 	if to_target.length_squared() <= 0.01:
 		to_target = dock.outward()
 	var rock := left as SpaceRock
-	var aim := to_target.normalized()
-	var speed := lerpf(PUSH_MIN, PUSH_MAX, clampf(_charge, 0.0, 1.0))
-	var desired := aim * speed
+	velocity = launch_velocity(to_target, _charge)
 	if rock != null:
+		var desired := push_desired(to_target, _charge)
 		var share := rock.get_mass() / (MASS + rock.get_mass())
-		velocity = _velocity_at(rock, global_position) + desired * share
-		var impulse := -desired * MASS * share
-		rock.apply_impulse(impulse, global_position)
-	else:
-		velocity = desired + _velocity_at(left, global_position)
+		rock.apply_impulse(-desired * MASS * share, global_position)
 	_clear_charge()
 	undock()
 	if rock != null and rock.hull:
@@ -374,14 +377,7 @@ func _resolve_hit(collision: KinematicCollision2D) -> void:
 	var body_vel := _velocity_at(collider, contact)
 	var relative := velocity - body_vel
 	var approach := -relative.dot(normal)
-	var sticks := rock != null and rock.hull
-	if not sticks:
-		var dock_limit := DOCK_SPEED
-		if rock != null:
-			dock_limit *= minf(rock.get_mass() / MASS, 1.0)
-		sticks = approach <= dock_limit
-
-	if sticks:
+	if approach <= asteroid_dock_speed(rock):
 		dock_to(collider, normal)
 		return
 
@@ -404,6 +400,106 @@ func _resolve_hit(collision: KinematicCollision2D) -> void:
 	global_position += normal * DOCK_SEPARATION
 	var shove := SpaceRock.separation_share(collision.get_depth(), rock.get_mass(), MASS)
 	rock.global_position -= normal * shove
+
+
+func is_aiming() -> bool:
+	if _dead or _controls_locked or not dock.docked:
+		return false
+	return Input.is_mouse_button_pressed(MOUSE_BUTTON_RIGHT)
+
+
+func aim_charge() -> float:
+	if _charging:
+		return clampf(_charge, 0.0, 1.0)
+	return 0.0
+
+
+func aim_target() -> Vector2:
+	var to_target := get_global_mouse_position() - global_position
+	if to_target.length_squared() <= 0.01:
+		return dock.outward()
+	return to_target
+
+
+func launch_velocity(to_target: Vector2, charge: float) -> Vector2:
+	if not dock.docked or dock.body == null:
+		return Vector2.ZERO
+	if to_target.length_squared() <= 0.01:
+		to_target = dock.outward()
+	var desired := push_desired(to_target, charge)
+	var rock := dock.rock()
+	if rock != null:
+		var share := rock.get_mass() / (MASS + rock.get_mass())
+		return _velocity_at(rock, global_position) + desired * share
+	return desired + _velocity_at(dock.body, global_position)
+
+
+func push_desired(to_target: Vector2, charge: float) -> Vector2:
+	if to_target.length_squared() <= 0.01:
+		to_target = dock.outward()
+	var speed := lerpf(PUSH_MIN, PUSH_MAX, clampf(charge, 0.0, 1.0))
+	return to_target.normalized() * speed
+
+
+func first_aim_hit(launch_vel: Vector2, horizon: float) -> float:
+	var rock := first_aim_rock(launch_vel, horizon)
+	if rock == null:
+		return INF
+	return _aim_hit_time(rock, launch_vel)
+
+
+func first_aim_rock(launch_vel: Vector2, horizon: float) -> SpaceRock:
+	## Ближайшее чужое тело на курсе. Опору, с которой толкаемся, пропускаем.
+	var best := INF
+	var found: SpaceRock = null
+	for node in get_tree().get_nodes_in_group("space_rocks"):
+		var rock := node as SpaceRock
+		if rock == null or rock == dock.body:
+			continue
+		var hit_t := _aim_hit_time(rock, launch_vel)
+		if hit_t > 0.0 and hit_t <= horizon and hit_t < best:
+			best = hit_t
+			found = rock
+	return found
+
+
+func aim_relative_velocity(launch_vel: Vector2, horizon: float) -> Vector2:
+	## Скорость относительно тела на курсе. Нет тела — нулевой вектор, не мировая |v|.
+	var rock := first_aim_rock(launch_vel, horizon)
+	if rock == null:
+		return Vector2.ZERO
+	return launch_vel - _body_vel_at_aim_hit(rock, launch_vel)
+
+
+func aim_approach_into(rock: SpaceRock, launch_vel: Vector2) -> float:
+	## Скорость входа в поверхность — тот же смысл, что approach в _resolve_hit.
+	if rock == null:
+		return 0.0
+	var rel := launch_vel - _body_vel_at_aim_hit(rock, launch_vel)
+	var hit_t := _aim_hit_time(rock, launch_vel)
+	if hit_t >= INF:
+		return 0.0
+	var at := global_position + launch_vel * hit_t
+	var center := rock.global_position + rock.get_space_velocity() * hit_t
+	var away := at - center
+	if away.length_squared() < 0.0001:
+		return rel.length()
+	return -rel.dot(away.normalized())
+
+
+func asteroid_dock_speed(rock: SpaceRock) -> float:
+	if rock == null:
+		return DOCK_SPEED
+	if rock.hull:
+		return INF
+	return DOCK_SPEED * minf(rock.get_mass() / MASS, 1.0)
+
+
+func aim_too_fast_for_meteor(launch_vel: Vector2, horizon: float = AIM_HORIZON) -> bool:
+	var rock := first_aim_rock(launch_vel, horizon)
+	if rock == null or rock.hull:
+		return false
+	return aim_approach_into(rock, launch_vel) > asteroid_dock_speed(rock)
 
 
 func dock_to(body: Node2D, normal: Vector2) -> void:
@@ -449,9 +545,46 @@ func _set_body_shape_disabled(disabled: bool) -> void:
 		shape_node.disabled = disabled
 
 
+func _body_vel_at_aim_hit(rock: SpaceRock, launch_vel: Vector2) -> Vector2:
+	var hit_t := _aim_hit_time(rock, launch_vel)
+	if hit_t >= INF:
+		return rock.get_space_velocity()
+	var at := global_position + launch_vel * hit_t
+	var center := rock.global_position + rock.get_space_velocity() * hit_t
+	var offset := at - center
+	return rock.get_space_velocity() + rock.spin * Vector2(-offset.y, offset.x)
+
+
+func _aim_hit_time(rock: SpaceRock, launch_vel: Vector2) -> float:
+	var to_center := rock.global_position - global_position
+	var radius := _self_radius + rock.get_hit_radius()
+	var rel := launch_vel - rock.get_space_velocity()
+	if rel.length_squared() < 0.0001:
+		return INF
+	var a := rel.length_squared()
+	var b := -2.0 * to_center.dot(rel)
+	var c := to_center.length_squared() - radius * radius
+	var disc := b * b - 4.0 * a * c
+	if disc < 0.0:
+		return INF
+	var root := sqrt(disc)
+	var t_enter := (-b - root) / (2.0 * a)
+	if t_enter > 0.0001:
+		return t_enter
+	var t_exit := (-b + root) / (2.0 * a)
+	if t_exit > 0.0001:
+		return t_exit
+	return INF
+
+
 func _clear_charge() -> void:
 	_charging = false
 	_charge = 0.0
+
+
+func _cancel_aim_charge() -> void:
+	## Отпустили ПКМ: заряд сгорает, прыжка нет. Нужен новый зажим ЛКМ.
+	_clear_charge()
 
 
 func _own_hit_radius() -> float:
