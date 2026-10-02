@@ -19,6 +19,13 @@ const CHARGE_TIME := 0.85
 const DOOM_INPUT_GRACE := 0.35
 const RESPAWN_INPUT_PAUSE := 0.45
 const LOST_DOOM_DELAY := 6.0
+const OXYGEN_SECONDS := 1800.0
+const OXYGEN_START := 200.0
+const OXYGEN_DOUBLE_PER_HOLD := 5.0
+const OXYGEN_COLOR := Color(0.4, 0.78, 1.0)
+const OXYGEN_DOUBLE_COLOR := Color(1.0, 0.62, 0.28)
+const LOST_DEATH_TEXT := "Вы умерли.\nБесконечно скитаясь в космосе.\n\nНажмите мышь — начать снова"
+const OXYGEN_DEATH_TEXT := "В космосе нет кислорода, как и в ваших легких\n\nНажмите мышь — начать снова"
 const MASS := 26.0 * 26.0
 const HIT_FRICTION := 0.35
 const AIM_HORIZON := 3.0
@@ -35,18 +42,25 @@ var _charging := false
 var _charge := 0.0
 ## Корпус, с которого только что прыгнули: круг ещё внутри, столкновение выключено.
 var _slip_body: Node2D = null
+var _hold_time := 0.0
+var _oxygen_double := 0.0
 var _self_radius := 0.0
 var _dead := false
 var _controls_locked := true
 var _lost_time := 0.0
+var _oxygen := OXYGEN_START
+var _oxygen_flash := 0.0
+var _oxygen_label: Label
 
 
 func _ready() -> void:
 	motion_mode = MOTION_MODE_FLOATING
+	add_to_group("wanderer")
 	_self_radius = _own_hit_radius()
 	_controls_locked = true
 	_clear_charge()
 	_free_orphan_doom_overlays()
+	_build_oxygen_hud()
 	call_deferred("_spawn_on_start_rock")
 	call_deferred("_unlock_controls_when_ready")
 
@@ -93,6 +107,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			if dock.docked:
 				_charging = true
 				_charge = 0.0
+				_hold_time = 0.0
 				get_viewport().set_input_as_handled()
 		else:
 			if _charging:
@@ -120,6 +135,7 @@ func _commit_push(to_target: Vector2) -> void:
 		var desired := push_desired(to_target, _charge)
 		var share := rock.get_mass() / (MASS + rock.get_mass())
 		rock.apply_impulse(-desired * MASS * share, global_position)
+	_oxygen_double += _hold_time * OXYGEN_DOUBLE_PER_HOLD
 	_clear_charge()
 	undock()
 	if rock != null and rock.hull:
@@ -194,16 +210,76 @@ func _will_meet_rock(rock: Node2D) -> bool:
 	return closest.length() <= radius
 
 
-func _begin_doom() -> void:
+func _build_oxygen_hud() -> void:
+	var layer := CanvasLayer.new()
+	layer.layer = 40
+	layer.name = "OxygenHud"
+	add_child(layer)
+
+	_oxygen_label = Label.new()
+	_oxygen_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_oxygen_label.position = Vector2(20, 14)
+	_oxygen_label.add_theme_font_size_override("font_size", 48)
+	_oxygen_label.add_theme_color_override("font_color", OXYGEN_COLOR)
+	layer.add_child(_oxygen_label)
+	_refresh_oxygen_label()
+
+
+func grant_oxygen(seconds: float) -> bool:
+	## Полный запас не забирает баллон: касание впустую его не съедает.
+	if _dead or _controls_locked or seconds <= 0.0:
+		return false
+	var room := OXYGEN_SECONDS - _oxygen
+	if room < 1.0:
+		return false
+	_oxygen += minf(seconds, room)
+	_oxygen_flash = 0.45
+	_refresh_oxygen_label()
+	return true
+
+
+func _tick_oxygen(delta: float) -> bool:
+	var rate := 1.0
+	if _oxygen_double > 0.0:
+		rate = 2.0
+		_oxygen_double = maxf(0.0, _oxygen_double - delta)
+	_oxygen = maxf(0.0, _oxygen - delta * rate)
+	_refresh_oxygen_label()
+	_tick_oxygen_flash(delta)
+	if _oxygen > 0.0:
+		return false
+	_begin_doom(OXYGEN_DEATH_TEXT)
+	return true
+
+
+func _tick_oxygen_flash(delta: float) -> void:
+	if _oxygen_label == null:
+		return
+	if _oxygen_flash > 0.0:
+		_oxygen_flash = maxf(0.0, _oxygen_flash - delta)
+		var t := clampf(_oxygen_flash / 0.45, 0.0, 1.0)
+		_oxygen_label.add_theme_color_override("font_color", OXYGEN_COLOR.lerp(Color(0.9, 0.97, 1.0), t))
+	elif _oxygen_double > 0.0:
+		_oxygen_label.add_theme_color_override("font_color", OXYGEN_DOUBLE_COLOR)
+	else:
+		_oxygen_label.add_theme_color_override("font_color", OXYGEN_COLOR)
+
+
+func _refresh_oxygen_label() -> void:
+	var seconds := 0 if _oxygen <= 0.0 else ceili(_oxygen)
+	_oxygen_label.text = str(seconds)
+
+
+func _begin_doom(message: String = LOST_DEATH_TEXT) -> void:
 	if _dead:
 		return
 	_dead = true
 	set_physics_process(false)
 	set_process_unhandled_input(false)
-	call_deferred("_show_doom_and_restart")
+	call_deferred("_show_doom_and_restart", message)
 
 
-func _show_doom_and_restart() -> void:
+func _show_doom_and_restart(message: String) -> void:
 	var layer := CanvasLayer.new()
 	layer.layer = 100
 	layer.name = "DoomOverlay"
@@ -225,7 +301,8 @@ func _show_doom_and_restart() -> void:
 	label.grow_vertical = Control.GROW_DIRECTION_BOTH
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	label.text = "Вы умерли.\nБесконечно скитаясь в космосе.\n\nНажмите мышь — начать снова"
+	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	label.text = message
 	label.add_theme_font_size_override("font_size", 36)
 	label.add_theme_color_override("font_color", Color(0.92, 0.93, 1.0))
 	label.position = Vector2(-420, -90)
@@ -264,6 +341,8 @@ func _show_doom_and_restart() -> void:
 func _physics_process(delta: float) -> void:
 	if _dead:
 		return
+	if _tick_oxygen(delta):
+		return
 	_release_slip_if_clear()
 	if dock.docked:
 		_lost_time = 0.0
@@ -273,6 +352,7 @@ func _physics_process(delta: float) -> void:
 			_face_on_surface()
 			return
 		if _charging:
+			_hold_time += delta
 			_charge = minf(1.0, _charge + delta / CHARGE_TIME)
 		else:
 			_walk_on_surface(delta)
@@ -580,6 +660,7 @@ func _aim_hit_time(rock: SpaceRock, launch_vel: Vector2) -> float:
 func _clear_charge() -> void:
 	_charging = false
 	_charge = 0.0
+	_hold_time = 0.0
 
 
 func _cancel_aim_charge() -> void:
