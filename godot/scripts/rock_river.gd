@@ -3,12 +3,11 @@ extends Node2D
 
 ## Астероиды расставлены в сцене. Здесь слои и столкновения одного слоя.
 
-const _ROCK_SCENE := preload("res://scenes/space_rock.tscn")
 const _LOOT_SCENE := preload("res://scenes/loot.tscn")
 const _START_ROCK_NAME := "StaticNear"
+const CELL := 128.0
 const DENSITY_MIN := 2
 const DENSITY_MAX := 5
-const CELL := 128.0
 
 static var flow_density := 3
 

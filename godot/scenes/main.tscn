@@ -7,6 +7,7 @@
 [ext_resource type="Texture2D" uid="uid://6vjqtrisigxv" path="res://assets/cosmoman2.png" id="4_wanderer"]
 [ext_resource type="Script" uid="uid://djnm554bi5ccd" path="res://scripts/wanderer.gd" id="5_wanderer"]
 [ext_resource type="Script" uid="uid://cf5f4xei38j3h" path="res://scripts/jump_aim.gd" id="18_jump_aim"]
+[ext_resource type="Script" uid="uid://cvfblak56xx1a" path="res://scripts/lost_warning.gd" id="19_lost_warning"]
 [ext_resource type="Script" uid="uid://bo1yamnrlqi0y" path="res://scripts/menu.gd" id="7_menu"]
 [ext_resource type="PackedScene" uid="uid://cspacerock01" path="res://scenes/space_rock.tscn" id="8_rock"]
 [ext_resource type="Script" uid="uid://bc800lgo1y05g" path="res://scripts/rock_river.gd" id="9_river"]
@@ -27,6 +28,10 @@ radius = 12.0
 [node name="Menu" type="CanvasLayer" parent="." unique_id=1029261457]
 layer = 120
 script = ExtResource("7_menu")
+
+[node name="LostWarning" type="CanvasLayer" parent="."]
+layer = 90
+script = ExtResource("19_lost_warning")
 
 [node name="Background" type="Sprite2D" parent="." unique_id=285845862]
 z_index = -10

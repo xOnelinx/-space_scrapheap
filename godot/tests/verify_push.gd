@@ -69,5 +69,47 @@ func _run() -> void:
 		fail("Отстающий астероид не должен быть на курсе")
 		return
 
+	if not _check_lost_warning(scene, wanderer):
+		return
+
 	print("PUSH_OK")
 	quit(0)
+
+
+func _check_lost_warning(scene: Node, wanderer: Wanderer) -> bool:
+	var warning := scene.get_node_or_null("LostWarning") as LostWarning
+	if warning == null:
+		fail("Нет узла LostWarning")
+		return false
+	if wanderer.lost_progress() > 0.0:
+		fail("На старте не должно быть потери курса")
+		return false
+	for node in wanderer.get_tree().get_nodes_in_group("space_rocks"):
+		var rock := node as SpaceRock
+		if rock == null:
+			continue
+		rock.sync_to_physics = false
+		rock.global_position += Vector2(0, 80000.0)
+		rock.drift_velocity = Vector2.ZERO
+	wanderer.undock()
+	wanderer.velocity = Vector2(40, 0)
+	if not wanderer.course_is_lost():
+		fail("После увода тел курс должен быть потерян")
+		return false
+	wanderer._physics_process(Wanderer.LOST_DOOM_DELAY * 0.5)
+	if wanderer.lost_progress() < 0.4:
+		fail("Таймер пустоты не идёт")
+		return false
+	warning._process(0.0)
+	if not warning.is_shown():
+		fail("Предупреждение не показалось")
+		return false
+	wanderer.dock_to(scene.get_node("Bodies/StaticNear") as Node2D, Vector2.UP)
+	if wanderer.lost_progress() > 0.0:
+		fail("Посадка должна сбросить таймер пустоты")
+		return false
+	warning._process(0.0)
+	if warning.is_shown():
+		fail("На теле предупреждение должно скрыться")
+		return false
+	return true
