@@ -7,6 +7,8 @@ extends CharacterBody2D
 ## С любой точки корпуса прыжок в любую сторону.
 ## Курс без пересечения с телами → гибель. Крутится только спрайт.
 ## ПКМ — курс до края экрана и стрелка скорости (спин опоры).
+## Сила толчка — по расстоянию курсора: дальше сильнее, ближе слабее.
+## Кислород кончается сам. Секунда зажатого толчка — потом 5 секунд двойного расхода.
 
 const FACE_EPS := 1.0
 const RESTITUTION := 0.55
@@ -15,7 +17,9 @@ const DOCK_SEPARATION := 2.0
 const WALK_SPEED := 70.0
 const PUSH_MIN := 10.0
 const PUSH_MAX := 100.0
-const CHARGE_TIME := 0.85
+## Курсор у персонажа — минимум, дальше CHARGE_DIST_MAX — полный толчок.
+const CHARGE_DIST_MIN := 28.0
+const CHARGE_DIST_MAX := 220.0
 const DOOM_INPUT_GRACE := 0.35
 const RESPAWN_INPUT_PAUSE := 0.45
 const LOST_DOOM_DELAY := 6.0
@@ -106,7 +110,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		if event.pressed:
 			if dock.docked:
 				_charging = true
-				_charge = 0.0
+				_charge = _charge_from_cursor()
 				_hold_time = 0.0
 				get_viewport().set_input_as_handled()
 		else:
@@ -191,6 +195,13 @@ func course_is_lost() -> bool:
 		if rock != null and _will_meet_rock(rock):
 			return false
 	return true
+
+
+func lost_progress() -> float:
+	## 0 на теле или после гибели, 1 — в момент экрана смерти.
+	if _dead or dock.docked:
+		return 0.0
+	return clampf(_lost_time / LOST_DOOM_DELAY, 0.0, 1.0)
 
 
 func _will_meet_rock(rock: Node2D) -> bool:
@@ -353,7 +364,7 @@ func _physics_process(delta: float) -> void:
 			return
 		if _charging:
 			_hold_time += delta
-			_charge = minf(1.0, _charge + delta / CHARGE_TIME)
+			_charge = _charge_from_cursor()
 		else:
 			_walk_on_surface(delta)
 		follow_dock()
@@ -491,7 +502,17 @@ func is_aiming() -> bool:
 func aim_charge() -> float:
 	if _charging:
 		return clampf(_charge, 0.0, 1.0)
+	if is_aiming():
+		return _charge_from_cursor()
 	return 0.0
+
+
+func charge_from_offset(to_target: Vector2) -> float:
+	## 0 у персонажа, 1 на CHARGE_DIST_MAX и дальше. Ближе курсор — слабее толчок.
+	return clampf(
+			inverse_lerp(CHARGE_DIST_MIN, CHARGE_DIST_MAX, to_target.length()),
+			0.0,
+			1.0)
 
 
 func aim_target() -> Vector2:
@@ -655,6 +676,10 @@ func _aim_hit_time(rock: SpaceRock, launch_vel: Vector2) -> float:
 	if t_exit > 0.0001:
 		return t_exit
 	return INF
+
+
+func _charge_from_cursor() -> float:
+	return charge_from_offset(get_global_mouse_position() - global_position)
 
 
 func _clear_charge() -> void:

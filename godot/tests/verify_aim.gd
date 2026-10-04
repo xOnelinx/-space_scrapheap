@@ -28,6 +28,8 @@ func _run() -> void:
 		return
 	if not _check_push_debug_grows(scene, wanderer):
 		return
+	if not _check_cursor_distance_sets_charge(wanderer):
+		return
 	if not _check_aim_release_cancels_charge(scene, wanderer):
 		return
 	if not _check_arrow_dock_color(scene, wanderer):
@@ -163,13 +165,37 @@ func _check_push_debug_grows(scene: Node, wanderer: Wanderer) -> bool:
 		fail("Жёлтый вектор на полном заряде должен быть PUSH_MAX")
 		return false
 	if strong.length() <= weak.length() + 1.0:
-		fail("Жёлтый вектор не растёт с зарядом ЛКМ")
+		fail("Жёлтый вектор не растёт с зарядом")
 		return false
 	if aim.push_end_local(weak).distance_to(weak) > 0.05:
 		fail("Жёлтая стрелка не совпала с вектором толчка")
 		return false
 	if absf(weak.angle_to(toward)) > 0.01 or absf(strong.angle_to(toward)) > 0.01:
 		fail("Жёлтый вектор должен смотреть в сторону толчка")
+		return false
+	return true
+
+
+func _check_cursor_distance_sets_charge(wanderer: Wanderer) -> bool:
+	var near := wanderer.charge_from_offset(Vector2(Wanderer.CHARGE_DIST_MIN * 0.4, 0.0))
+	var mid := wanderer.charge_from_offset(
+			Vector2((Wanderer.CHARGE_DIST_MIN + Wanderer.CHARGE_DIST_MAX) * 0.5, 0.0))
+	var far := wanderer.charge_from_offset(Vector2(Wanderer.CHARGE_DIST_MAX + 80.0, 0.0))
+	var pulled := wanderer.charge_from_offset(Vector2(Wanderer.CHARGE_DIST_MIN, 0.0))
+	if near > 0.01:
+		fail("Курсор у персонажа должен давать минимум")
+		return false
+	if pulled > 0.01:
+		fail("На CHARGE_DIST_MIN заряд ещё ноль")
+		return false
+	if far < 0.99:
+		fail("Дальний курсор должен давать максимум")
+		return false
+	if not (near < mid and mid < far):
+		fail("Заряд должен расти с удалением курсора")
+		return false
+	if wanderer.charge_from_offset(Vector2(100.0, 0.0)) <= wanderer.charge_from_offset(Vector2(40.0, 0.0)):
+		fail("Вернуть курсор ближе должно ослабить толчок")
 		return false
 	return true
 
