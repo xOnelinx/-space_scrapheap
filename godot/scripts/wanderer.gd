@@ -1,9 +1,9 @@
 class_name Wanderer
 extends CharacterBody2D
 
-## Без ранца: отталкиваешься с разной силой. В пустоте — только инерция.
+## Без ранца: отталкиваешься с разной силой. В пустоте — инерция и слабая правка курса WASD.
 ## По кромке астероида — A/D. По корпусу — WASD.
-## Магнитные ботинки: к обломку цепляется при любом ударе.
+## Магнитные ботинки: к обломку и к астероиду цепляется при любом ударе, на любой скорости.
 ## С любой точки корпуса прыжок в любую сторону.
 ## Курс без пересечения с телами → гибель. Крутится только спрайт.
 ## ПКМ — курс до края экрана и стрелка скорости (спин опоры).
@@ -12,11 +12,14 @@ extends CharacterBody2D
 
 const FACE_EPS := 1.0
 const RESTITUTION := 0.55
-const DOCK_SPEED := 60.0
 const DOCK_SEPARATION := 2.0
 const WALK_SPEED := 70.0
 const PUSH_MIN := 10.0
 const PUSH_MAX := 100.0
+## За секунду удержания WASD в полёте скорость меняется меньше, чем самый слабый толчок.
+const FLIGHT_NUDGE := 8.0
+## Сверх обычного дыхания, только пока в полёте зажата правка курса.
+const FLIGHT_OXYGEN := 3.0
 ## Курсор у персонажа — минимум, дальше CHARGE_DIST_MAX — полный толчок.
 const CHARGE_DIST_MIN := 28.0
 const CHARGE_DIST_MAX := 220.0
@@ -31,10 +34,10 @@ const OXYGEN_DOUBLE_COLOR := Color(1.0, 0.62, 0.28)
 const LOST_DEATH_TEXT := "Вы умерли.\nБесконечно скитаясь в космосе.\n\nНажмите мышь — начать снова"
 const OXYGEN_DEATH_TEXT := "В космосе нет кислорода, как и в ваших легких\n\nНажмите мышь — начать снова"
 const MASS := 26.0 * 26.0
-const HIT_FRICTION := 0.35
 const AIM_HORIZON := 3.0
 ## Верх спрайта — прямоугольный рюкзак, это спина. Низ — ноги, ими встаём на камень.
 const FOOT_EXTENT := 10.0
+const _FLIGHT_JET := preload("res://scripts/flight_jet.gd")
 
 @export var start_rock_path: NodePath = ^"../Bodies/StaticNear"
 
@@ -48,6 +51,7 @@ var _charge := 0.0
 var _slip_body: Node2D = null
 var _hold_time := 0.0
 var _oxygen_double := 0.0
+var _using_flight_correction := false
 var _self_radius := 0.0
 var _dead := false
 var _controls_locked := true
@@ -55,6 +59,7 @@ var _lost_time := 0.0
 var _oxygen := OXYGEN_START
 var _oxygen_flash := 0.0
 var _oxygen_label: Label
+var _flight_jet: Node2D
 
 
 func _ready() -> void:
@@ -65,6 +70,7 @@ func _ready() -> void:
 	_clear_charge()
 	_free_orphan_doom_overlays()
 	_build_oxygen_hud()
+	_build_flight_jet()
 	call_deferred("_spawn_on_start_rock")
 	call_deferred("_unlock_controls_when_ready")
 
@@ -254,6 +260,8 @@ func _tick_oxygen(delta: float) -> bool:
 	if _oxygen_double > 0.0:
 		rate = 2.0
 		_oxygen_double = maxf(0.0, _oxygen_double - delta)
+	if _using_flight_correction:
+		rate += FLIGHT_OXYGEN
 	_oxygen = maxf(0.0, _oxygen - delta * rate)
 	_refresh_oxygen_label()
 	_tick_oxygen_flash(delta)
@@ -352,11 +360,13 @@ func _show_doom_and_restart(message: String) -> void:
 func _physics_process(delta: float) -> void:
 	if _dead:
 		return
+	_using_flight_correction = _flight_correction_held()
 	if _tick_oxygen(delta):
 		return
 	_release_slip_if_clear()
 	if dock.docked:
 		_lost_time = 0.0
+		_show_flight_jet(Vector2.ZERO)
 		if _controls_locked:
 			_clear_charge()
 			follow_dock()
@@ -372,13 +382,18 @@ func _physics_process(delta: float) -> void:
 		return
 
 	_clear_charge()
+	_nudge_flight(delta)
 
-	var collision := move_and_collide(velocity * delta)
+	# recovery_as_collision: въезд камня в скитальца на скорости тоже контакт, не выталкивание.
+	var collision := move_and_collide(velocity * delta, false, 0.08, true)
 	if collision != null:
 		_resolve_hit(collision)
 		if dock.docked or _dead:
 			_lost_time = 0.0
 			return
+	elif _dock_if_buried():
+		_lost_time = 0.0
+		return
 
 	if course_is_lost():
 		_lost_time += delta
@@ -391,6 +406,39 @@ func _physics_process(delta: float) -> void:
 	_sprite.position = Vector2.ZERO
 	if velocity.length_squared() > FACE_EPS * FACE_EPS:
 		_sprite.rotation = velocity.angle() - PI / 2.0
+
+
+func _flight_correction_held() -> bool:
+	## На камне WASD — ходьба, воздух на неё не тратится.
+	if _controls_locked or dock.docked:
+		return false
+	return _screen_dir().length_squared() > 0.01
+
+
+func _nudge_flight(delta: float) -> void:
+	var dir := Vector2.ZERO if _controls_locked else _screen_dir()
+	## Струя — выхлоп: летит против кнопки, сам сдвиг курса — по кнопке.
+	_show_flight_jet(-dir)
+	_apply_flight_nudge(dir, delta)
+
+
+func _build_flight_jet() -> void:
+	_flight_jet = _FLIGHT_JET.new()
+	_flight_jet.name = "FlightJet"
+	_flight_jet.z_index = 3
+	add_child(_flight_jet)
+
+
+func _show_flight_jet(dir: Vector2) -> void:
+	if _flight_jet != null:
+		_flight_jet.set_direction(dir)
+
+
+func _apply_flight_nudge(dir: Vector2, delta: float) -> void:
+	## Экранные WASD, не разворот спрайта: W всегда вверх экрана.
+	if dir.length_squared() < 0.01:
+		return
+	velocity += dir.normalized() * FLIGHT_NUDGE * delta
 
 
 func _screen_dir() -> Vector2:
@@ -464,33 +512,20 @@ func _resolve_hit(collision: KinematicCollision2D) -> void:
 	var collider := collision.get_collider() as Node2D
 	var normal := collision.get_normal()
 	var rock := collider as SpaceRock
-	var contact := collision.get_position()
-	var body_vel := _velocity_at(collider, contact)
-	var relative := velocity - body_vel
-	var approach := -relative.dot(normal)
-	if approach <= asteroid_dock_speed(rock):
+	if rock != null:
+		## Круглый камень: нормаль из центра, чтобы кривой контакт не вдавливал внутрь.
+		if not rock.hull:
+			var away := global_position - rock.global_position
+			if away.length_squared() > 0.0001:
+				normal = away.normalized()
 		dock_to(collider, normal)
 		return
 
-	if rock == null:
-		velocity = relative.bounce(normal) * RESTITUTION + body_vel
-		global_position += normal * DOCK_SEPARATION
-		return
-
-	var inv_sum := 1.0 / MASS + 1.0 / rock.get_mass()
-	var tangent := Vector2(-normal.y, normal.x)
-	var jn := SpaceRock.normal_impulse(approach, inv_sum, RESTITUTION)
-	velocity += normal * jn / MASS
-	rock.apply_impulse(-normal * jn, contact)
-	var slip := (velocity - _velocity_at(rock, contact)).dot(tangent)
-	var radius := rock.get_hit_radius()
-	var inv_t := inv_sum + (radius * radius) / rock.get_inertia()
-	var jt := SpaceRock.friction_impulse(slip, inv_t, jn, HIT_FRICTION)
-	velocity -= tangent * jt / MASS
-	rock.apply_impulse(tangent * jt, contact)
+	var contact := collision.get_position()
+	var body_vel := _velocity_at(collider, contact)
+	var relative := velocity - body_vel
+	velocity = relative.bounce(normal) * RESTITUTION + body_vel
 	global_position += normal * DOCK_SEPARATION
-	var shove := SpaceRock.separation_share(collision.get_depth(), rock.get_mass(), MASS)
-	rock.global_position -= normal * shove
 
 
 func is_aiming() -> bool:
@@ -588,19 +623,40 @@ func aim_approach_into(rock: SpaceRock, launch_vel: Vector2) -> float:
 	return -rel.dot(away.normalized())
 
 
-func asteroid_dock_speed(rock: SpaceRock) -> float:
-	if rock == null:
-		return DOCK_SPEED
-	if rock.hull:
-		return INF
-	return DOCK_SPEED * minf(rock.get_mass() / MASS, 1.0)
+func asteroid_dock_speed(_rock: SpaceRock) -> float:
+	## Лёгкий камень больше не срезает порог: удар быстрее толчка тоже цепляет.
+	return INF
 
 
-func aim_too_fast_for_meteor(launch_vel: Vector2, horizon: float = AIM_HORIZON) -> bool:
-	var rock := first_aim_rock(launch_vel, horizon)
-	if rock == null or rock.hull:
+func _dock_if_buried() -> bool:
+	## Кадр без отданного контакта: круг уже внутри астероида, вылет выглядел бы отскоком.
+	var buried := _buried_asteroid()
+	if buried == null:
 		return false
-	return aim_approach_into(rock, launch_vel) > asteroid_dock_speed(rock)
+	var away := global_position - buried.global_position
+	var normal := Vector2.UP if away.length_squared() < 0.0001 else away.normalized()
+	dock_to(buried, normal)
+	return true
+
+
+func _buried_asteroid() -> SpaceRock:
+	var found: SpaceRock = null
+	var best := INF
+	for node in get_tree().get_nodes_in_group("space_rocks"):
+		var rock := node as SpaceRock
+		if rock == null or rock.hull:
+			continue
+		var reach := _self_radius + rock.get_hit_radius()
+		var dist := global_position.distance_to(rock.global_position)
+		if dist < reach and dist < best:
+			best = dist
+			found = rock
+	return found
+
+
+func aim_too_fast_for_meteor(_launch_vel: Vector2, _horizon: float = AIM_HORIZON) -> bool:
+	## Посадка не зависит от скорости входа: и медленный, и быстрый контакт цепляет.
+	return false
 
 
 func dock_to(body: Node2D, normal: Vector2) -> void:

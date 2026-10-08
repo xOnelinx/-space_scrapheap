@@ -34,6 +34,8 @@ func _run() -> void:
 		return
 	if not _check_arrow_dock_color(scene, wanderer):
 		return
+	if not _check_fast_contact_docks(wanderer):
+		return
 	print("AIM_OK")
 	quit(0)
 
@@ -242,14 +244,8 @@ func _check_arrow_dock_color(scene: Node, wanderer: Wanderer) -> bool:
 	var stand := scene.get_node("Bodies/StaticNear") as SpaceRock
 	var meteor := scene.get_node("Bodies/StaticMid") as SpaceRock
 	var hull := scene.get_node("Bodies/HullFed01") as SpaceRock
-	if wanderer.asteroid_dock_speed(hull) < 1.0e12:
-		fail("К корпусу нет порога скорости")
-		return false
-	if stand.get_mass() < Wanderer.MASS:
-		fail("Стартовый камень легче скитальца — порог дока сломается")
-		return false
-	if absf(wanderer.asteroid_dock_speed(stand) - Wanderer.DOCK_SPEED) > 0.01:
-		fail("Порог дока к тяжёлому метеориту должен быть %.0f" % Wanderer.DOCK_SPEED)
+	if wanderer.asteroid_dock_speed(hull) < 1.0e12 or wanderer.asteroid_dock_speed(stand) < 1.0e12:
+		fail("К телу нет порога скорости")
 		return false
 	stand.sync_to_physics = false
 	meteor.sync_to_physics = false
@@ -266,7 +262,7 @@ func _check_arrow_dock_color(scene: Node, wanderer: Wanderer) -> bool:
 			continue
 		other.sync_to_physics = false
 		other.global_position.y += 20000.0
-	var fast_void := Vector2(Wanderer.DOCK_SPEED + 40.0, 0.0)
+	var fast_void := Vector2(200.0, 0.0)
 	if wanderer.aim_too_fast_for_meteor(fast_void, 8.0):
 		fail("Без тела на курсе абсолютная скорость не красит стрелку")
 		return false
@@ -281,28 +277,69 @@ func _check_arrow_dock_color(scene: Node, wanderer: Wanderer) -> bool:
 	if rel.distance_to(expect) > 0.2:
 		fail("Относительная скорость к метеориту на курсе неверна: %s ≠ %s" % [rel, expect])
 		return false
-	var limit := wanderer.asteroid_dock_speed(meteor)
-	if wanderer.aim_too_fast_for_meteor(meteor.drift_velocity + Vector2(limit * 0.4, 0.0), 8.0):
+	if wanderer.aim_too_fast_for_meteor(meteor.drift_velocity + Vector2(30.0, 0.0), 8.0):
 		fail("Мягкий подход к метеориту должен быть зелёным")
 		return false
-	if not wanderer.aim_too_fast_for_meteor(meteor.drift_velocity + Vector2(limit + 25.0, 0.0), 8.0):
-		fail("Жёсткий подход к метеориту должен быть красным")
+	if wanderer.aim_too_fast_for_meteor(meteor.drift_velocity + Vector2(280.0, 0.0), 8.0):
+		fail("Жёсткий подход к метеориту тоже цепляется")
 		return false
 	meteor.drift_velocity = Vector2.ZERO
-	var clip := Vector2(limit + 40.0, 0.0)
+	var clip := Vector2(280.0, 0.0)
 	var radii := wanderer._self_radius + meteor.get_hit_radius()
 	meteor.global_position = wanderer.global_position + Vector2(200, radii * 0.92)
 	if wanderer.first_aim_rock(clip, 8.0) != meteor:
 		fail("Скользящий курс должен бить в метеорит")
 		return false
-	var approach := wanderer.aim_approach_into(meteor, clip)
-	if approach > limit:
-		fail("Скользящий удар в тесте оказался жёстче дока")
-		return false
-	if clip.length() <= limit:
-		fail("Скользящий удар должен иметь большую |v|, иначе тест пустой")
-		return false
 	if wanderer.aim_too_fast_for_meteor(clip, 8.0):
 		fail("Скользящий удар цепляется — стрелка не должна быть красной")
 		return false
 	return true
+
+
+func _check_fast_contact_docks(wanderer: Wanderer) -> bool:
+	var meteor := wanderer.get_tree().current_scene.get_node("Bodies/StaticMid") as SpaceRock
+	for node in wanderer.get_tree().get_nodes_in_group("space_rocks"):
+		var rock := node as SpaceRock
+		if rock == null:
+			continue
+		rock.sync_to_physics = false
+		rock.drift_velocity = Vector2.ZERO
+		rock.spin = 0.0
+		if rock != meteor:
+			rock.global_position += Vector2(0, 50000)
+	meteor.global_position = Vector2(4000, 4000)
+	meteor.scale = Vector2(0.5, 0.5)
+	wanderer._controls_locked = true
+	if not _flies_into(wanderer, meteor, 320.0):
+		fail("Быстрый удар в лёгкий астероид должен цеплять")
+		return false
+	wanderer.undock()
+	var reach := meteor.get_hit_radius() + wanderer._self_radius
+	wanderer.global_position = meteor.global_position + Vector2(reach - 8.0, 0.0)
+	wanderer.velocity = Vector2(300.0, 40.0)
+	wanderer._physics_process(1.0 / 60.0)
+	if not wanderer.dock.docked or wanderer.dock.body != meteor:
+		fail("Уже внутри астероида на скорости должны прилипнуть, а не вылететь")
+		return false
+	wanderer.global_position = meteor.global_position + Vector2(reach + 2.0, 0.0)
+	wanderer.velocity = Vector2(160.0, 0.0)
+	wanderer.dock_to(meteor, Vector2.RIGHT)
+	wanderer.undock()
+	for _i in 6:
+		wanderer._physics_process(1.0 / 60.0)
+		if wanderer.dock.docked:
+			fail("Прыжок прочь не должен сразу прилипать обратно")
+			return false
+	return true
+
+
+func _flies_into(wanderer: Wanderer, meteor: SpaceRock, speed: float) -> bool:
+	wanderer.undock()
+	var reach := meteor.get_hit_radius() + wanderer._self_radius
+	wanderer.global_position = meteor.global_position + Vector2(reach + 20.0, 0.0)
+	wanderer.velocity = Vector2(-speed, 0.0)
+	for _i in 20:
+		wanderer._physics_process(1.0 / 60.0)
+		if wanderer.dock.docked:
+			return wanderer.dock.body == meteor
+	return false
