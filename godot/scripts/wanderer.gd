@@ -5,7 +5,7 @@ extends CharacterBody2D
 ## По кромке астероида — A/D. По корпусу — WASD.
 ## Магнитные ботинки: к обломку цепляется при любом ударе.
 ## С любой точки корпуса прыжок в любую сторону.
-## Курс без пересечения с телами → гибель. Крутится только спрайт.
+## Курс без пересечения с телами → гибель. Пока висит трос, этот счётчик молчит.
 ## ПКМ — курс до края экрана и стрелка скорости (спин опоры).
 
 const FACE_EPS := 1.0
@@ -35,6 +35,7 @@ const GRAB_SPRITE := preload("res://assets/wanderer_grab.png")
 @onready var _sprite: Sprite2D = $Sprite
 
 var dock := Dock.new()
+var tether := Tether.new()
 
 var _charging := false
 var _charge := 0.0
@@ -54,6 +55,9 @@ func _ready() -> void:
 	_self_radius = _own_hit_radius()
 	_controls_locked = true
 	_clear_charge()
+	var rope := TetherView.new()
+	rope.name = "TetherView"
+	add_child(rope)
 	_free_orphan_doom_overlays()
 	call_deferred("_spawn_on_start_rock")
 	call_deferred("_unlock_controls_when_ready")
@@ -90,6 +94,15 @@ func _unlock_controls_when_ready() -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if _dead or _controls_locked:
 		return
+	if event is InputEventKey and event.pressed and not event.echo:
+		if event.physical_keycode == KEY_E:
+			_cast_harpoon()
+			get_viewport().set_input_as_handled()
+			return
+		if event.physical_keycode == KEY_Q:
+			tether.release()
+			get_viewport().set_input_as_handled()
+			return
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_RIGHT:
 		if dock.docked:
 			if not event.pressed:
@@ -275,6 +288,7 @@ func _physics_process(delta: float) -> void:
 	_release_slip_if_clear()
 	if dock.docked:
 		_lost_time = 0.0
+		tether.integrate(self, delta, _reeling())
 		if not dock.has_hull():
 			_tick_grab(delta)
 		if _controls_locked:
@@ -295,11 +309,21 @@ func _physics_process(delta: float) -> void:
 	var collision := move_and_collide(velocity * delta)
 	if collision != null:
 		_resolve_hit(collision)
-		if dock.docked or _dead:
+		if _dead:
+			return
+		if dock.docked:
 			_lost_time = 0.0
+			tether.integrate(self, delta, _reeling())
+			if dock.docked:
+				follow_dock()
+				_face_on_surface()
 			return
 
-	if course_is_lost():
+	tether.integrate(self, delta, _reeling())
+
+	if tether.linked():
+		_lost_time = 0.0
+	elif course_is_lost():
 		_lost_time += delta
 		if _lost_time >= LOST_DOOM_DELAY:
 			_begin_doom()
@@ -629,6 +653,58 @@ func _aim_hit_time(rock: SpaceRock, launch_vel: Vector2) -> float:
 	if t_exit > 0.0001:
 		return t_exit
 	return INF
+
+
+func character_size() -> float:
+	return maxf(_self_radius, 1.0) * 2.0
+
+
+func get_mass() -> float:
+	return MASS
+
+
+func add_impulse(impulse: Vector2) -> void:
+	var mass := get_mass()
+	if mass <= 0.0 or impulse.length_squared() < 0.0000001:
+		return
+	velocity += impulse / mass
+
+
+func add_body_impulse(body: Node2D, impulse: Vector2, world_point: Vector2) -> void:
+	var rock := body as SpaceRock
+	if rock == null or impulse.length_squared() < 0.0000001:
+		return
+	rock.apply_impulse(impulse, world_point)
+
+
+func _aim_dir() -> Vector2:
+	var to_target := get_global_mouse_position() - global_position
+	if to_target.length_squared() <= 0.01:
+		if dock.docked:
+			return dock.outward()
+		if velocity.length_squared() > 1.0:
+			return velocity.normalized()
+		return Vector2.UP
+	return to_target
+
+
+func fire_harpoon(direction: Vector2) -> void:
+	if dock.inside or _dead:
+		return
+	if tether.linked() or tether.flying():
+		return
+	tether.shoot(self, direction)
+
+
+func _reeling() -> bool:
+	return not _dead and not _controls_locked and not dock.inside and tether.linked() \
+			and Input.is_physical_key_pressed(KEY_E)
+
+
+func _cast_harpoon() -> void:
+	if dock.inside or tether.linked() or tether.flying():
+		return
+	fire_harpoon(_aim_dir())
 
 
 func _clear_charge() -> void:
