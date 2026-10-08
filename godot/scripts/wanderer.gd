@@ -22,8 +22,13 @@ const LOST_DOOM_DELAY := 6.0
 const MASS := 26.0 * 26.0
 const HIT_FRICTION := 0.35
 const AIM_HORIZON := 3.0
-## Верх спрайта — прямоугольный рюкзак, это спина. Низ — ноги, ими встаём на камень.
-const FOOT_EXTENT := 10.0
+## Верх спрайта — рюкзак, он наружу от камня. Низ — шлем, им встаём на поверхность.
+const FOOT_EXTENT := 12.0
+## Захват астероида: руки к камню. Последний кадр держится, пока стоишь.
+const GRAB_FRAME_COUNT := 4
+const GRAB_FRAME_TIME := 0.08
+const IDLE_SPRITE := preload("res://assets/wanderer.png")
+const GRAB_SPRITE := preload("res://assets/wanderer_grab.png")
 
 @export var start_rock_path: NodePath = ^"../Bodies/StaticNear"
 
@@ -39,6 +44,9 @@ var _self_radius := 0.0
 var _dead := false
 var _controls_locked := true
 var _lost_time := 0.0
+## -1 — обычный спрайт. Иначе кадр захвата, пока скиталец на астероиде.
+var _grab_frame := -1
+var _grab_time := 0.0
 
 
 func _ready() -> void:
@@ -267,6 +275,8 @@ func _physics_process(delta: float) -> void:
 	_release_slip_if_clear()
 	if dock.docked:
 		_lost_time = 0.0
+		if not dock.has_hull():
+			_tick_grab(delta)
 		if _controls_locked:
 			_clear_charge()
 			follow_dock()
@@ -298,6 +308,7 @@ func _physics_process(delta: float) -> void:
 		_lost_time = 0.0
 
 	_sprite.position = Vector2.ZERO
+	_show_idle_sprite()
 	if velocity.length_squared() > FACE_EPS * FACE_EPS:
 		_sprite.rotation = velocity.angle() - PI / 2.0
 
@@ -363,10 +374,48 @@ func _face_on_surface() -> void:
 		_sprite.rotation = dock.hull_face
 		return
 	var outward := dock.outward()
-	## +PI/2 кладёт низ спрайта (ноги) на камень, рюкзак наружу.
+	## +PI/2 кладёт низ спрайта (шлем) на камень, рюкзак наружу.
 	_sprite.rotation = outward.angle() + PI / 2.0
 	var feet_gap := maxf(_self_radius - FOOT_EXTENT, 0.0)
 	_sprite.position = -outward * feet_gap
+
+
+func _begin_grab() -> void:
+	_grab_frame = 0
+	_grab_time = 0.0
+	_apply_grab_frame()
+
+
+func _tick_grab(delta: float) -> void:
+	if _grab_frame < 0 or _grab_frame >= GRAB_FRAME_COUNT - 1:
+		return
+	_grab_time += delta
+	var next := _grab_frame
+	while _grab_time >= GRAB_FRAME_TIME and next < GRAB_FRAME_COUNT - 1:
+		_grab_time -= GRAB_FRAME_TIME
+		next += 1
+	if next == _grab_frame:
+		return
+	_grab_frame = next
+	_apply_grab_frame()
+
+
+func _apply_grab_frame() -> void:
+	_sprite.texture = GRAB_SPRITE
+	_sprite.hframes = GRAB_FRAME_COUNT
+	_sprite.vframes = 1
+	_sprite.frame = _grab_frame
+
+
+func _show_idle_sprite() -> void:
+	_grab_frame = -1
+	_grab_time = 0.0
+	if _sprite.hframes == 1 and _sprite.texture == IDLE_SPRITE:
+		return
+	_sprite.texture = IDLE_SPRITE
+	_sprite.hframes = 1
+	_sprite.vframes = 1
+	_sprite.frame = 0
 
 
 func _resolve_hit(collision: KinematicCollision2D) -> void:
@@ -525,6 +574,10 @@ func dock_to(body: Node2D, normal: Vector2) -> void:
 	_clear_charge()
 	_lost_time = 0.0
 	_face_on_surface()
+	if dock.has_hull():
+		_show_idle_sprite()
+	else:
+		_begin_grab()
 
 
 func follow_dock() -> void:
@@ -536,6 +589,7 @@ func undock() -> void:
 	dock.clear()
 	_set_body_shape_disabled(false)
 	_clear_charge()
+	_show_idle_sprite()
 
 
 func _set_body_shape_disabled(disabled: bool) -> void:

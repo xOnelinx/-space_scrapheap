@@ -4,7 +4,7 @@
 [ext_resource type="Script" uid="uid://dplktpj8vse8x" path="res://scripts/background.gd" id="1_bg_script"]
 [ext_resource type="Script" uid="uid://c8o715rrsjt5b" path="res://scripts/star_field.gd" id="2_stars"]
 [ext_resource type="Texture2D" uid="uid://dbadnu2t04lxh" path="res://assets/zvezdets2.png" id="3_star"]
-[ext_resource type="Texture2D" uid="uid://6vjqtrisigxv" path="res://assets/cosmoman2.png" id="4_wanderer"]
+[ext_resource type="Texture2D" uid="uid://b3lv0gajowb8v" path="res://assets/wanderer.png" id="4_wanderer"]
 [ext_resource type="Script" uid="uid://djnm554bi5ccd" path="res://scripts/wanderer.gd" id="5_wanderer"]
 [ext_resource type="Script" uid="uid://cf5f4xei38j3h" path="res://scripts/jump_aim.gd" id="18_jump_aim"]
 [ext_resource type="Script" uid="uid://bo1yamnrlqi0y" path="res://scripts/menu.gd" id="7_menu"]
@@ -25,7 +25,7 @@
 [ext_resource type="PackedScene" path="res://scenes/asteroids/asteroid_05.tscn" id="23_met05"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_wanderer"]
-radius = 12.0
+radius = 9.0
 
 [node name="Main" type="Node2D" unique_id=540210433]
 
@@ -2555,7 +2555,7 @@ motion_mode = 1
 script = ExtResource("5_wanderer")
 
 [node name="Sprite" type="Sprite2D" parent="Wanderer" unique_id=750067835]
-scale = Vector2(0.5, 0.5)
+scale = Vector2(0.375, 0.375)
 texture = ExtResource("4_wanderer")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Wanderer" unique_id=391632887]
