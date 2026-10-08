@@ -1,7 +1,7 @@
 [gd_scene format=3]
 
-[ext_resource type="PackedScene" path="res://scenes/space_rock.tscn" id="1_rock"]
-[ext_resource type="Texture2D" path="res://assets/asteroids/asteroid_03.png" id="2_tex"]
+[ext_resource type="PackedScene" uid="uid://cspacerock01" path="res://scenes/space_rock.tscn" id="1_rock"]
+[ext_resource type="Texture2D" uid="uid://fech8ei4lg2w" path="res://assets/asteroids/asteroid_03.png" id="2_tex"]
 
 [node name="Asteroid03" instance=ExtResource("1_rock")]
 scale = Vector2(0.1965, 0.1965)
