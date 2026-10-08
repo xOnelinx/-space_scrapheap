@@ -1,12 +1,15 @@
 class_name Wanderer
 extends CharacterBody2D
 
-## Без ранца: отталкиваешься с разной силой. В пустоте — только инерция.
-## По кромке астероида — A/D. По корпусу — WASD.
+## Без ранца: отталкиваешься с разной силой. В пустоте — короткий импульс, не полёт.
+## По кромке астероида — A/D. По корпусу — WASD. Внутри корпуса — тот же шаг, без прыжка.
 ## Магнитные ботинки: к обломку цепляется при любом ударе.
 ## С любой точки корпуса прыжок в любую сторону.
 ## Курс без пересечения с телами → гибель. Пока висит трос, этот счётчик молчит.
 ## ПКМ — курс до края экрана и стрелка скорости (спин опоры).
+
+signal pushed(desired: Vector2, charge: float)
+signal dock_changed(docked: bool, body: Node2D)
 
 const FACE_EPS := 1.0
 const RESTITUTION := 0.55
@@ -22,6 +25,7 @@ const LOST_DOOM_DELAY := 6.0
 const MASS := 26.0 * 26.0
 const HIT_FRICTION := 0.35
 const AIM_HORIZON := 3.0
+const VOID_SPEED := 48.0
 ## Верх спрайта — рюкзак, он наружу от камня. Низ — шлем, им встаём на поверхность.
 const FOOT_EXTENT := 12.0
 ## Захват астероида: руки к камню. Последний кадр держится, пока стоишь.
@@ -36,6 +40,10 @@ const GRAB_SPRITE := preload("res://assets/wanderer_grab.png")
 
 var dock := Dock.new()
 var tether := Tether.new()
+## Масса груза на скафандре. Список предметов снаружи.
+var cargo_mass := 0.0
+## 0 — толчок по курсору. Иначе доля скорости вбок. Порванный скафандр пишет сам.
+var leak_bias := 0.0
 
 var _charging := false
 var _charge := 0.0
@@ -103,6 +111,12 @@ func _unhandled_input(event: InputEvent) -> void:
 			tether.release()
 			get_viewport().set_input_as_handled()
 			return
+		if event.physical_keycode == KEY_F:
+			_toggle_hatch()
+			get_viewport().set_input_as_handled()
+			return
+	if dock.inside:
+		return
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_RIGHT:
 		if dock.docked:
 			if not event.pressed:
@@ -114,6 +128,9 @@ func _unhandled_input(event: InputEvent) -> void:
 			if dock.docked:
 				_charging = true
 				_charge = 0.0
+				get_viewport().set_input_as_handled()
+			else:
+				add_void_impulse(_aim_dir(), VOID_SPEED)
 				get_viewport().set_input_as_handled()
 		else:
 			if _charging:
@@ -129,20 +146,22 @@ func _release_push() -> void:
 
 
 func _commit_push(to_target: Vector2) -> void:
-	if not dock.docked:
+	if not dock.docked or dock.inside:
 		_clear_charge()
 		return
 	var left := dock.body
 	if to_target.length_squared() <= 0.01:
 		to_target = dock.outward()
+	var desired := push_desired(to_target, _charge)
+	var charge := _charge
 	var rock := left as SpaceRock
 	velocity = launch_velocity(to_target, _charge)
 	if rock != null:
-		var desired := push_desired(to_target, _charge)
-		var share := rock.get_mass() / (MASS + rock.get_mass())
-		rock.apply_impulse(-desired * MASS * share, global_position)
+		var share := SpaceRock.push_share(get_mass(), rock.get_mass())
+		add_body_impulse(rock, -desired * get_mass() * share, global_position)
 	_clear_charge()
 	undock()
+	pushed.emit(desired, charge)
 	if rock != null and rock.hull:
 		_begin_slip(rock)
 
@@ -286,6 +305,14 @@ func _physics_process(delta: float) -> void:
 	if _dead:
 		return
 	_release_slip_if_clear()
+	if dock.inside:
+		_lost_time = 0.0
+		_clear_charge()
+		if not _controls_locked:
+			_walk_on_surface(delta)
+		follow_dock()
+		_face_on_surface()
+		return
 	if dock.docked:
 		_lost_time = 0.0
 		tether.integrate(self, delta, _reeling())
@@ -358,7 +385,32 @@ func _walk_on_surface(delta: float) -> void:
 			return
 		_step_on_hull(dir.normalized(), delta)
 		return
+	if dock.has_shape():
+		_walk_shape(dir.x, delta)
+		return
 	_walk_rim(dir.x, delta)
+
+
+func _walk_shape(axis: float, delta: float) -> void:
+	var rock := dock.rock()
+	var outline := rock.outline if rock != null else null
+	if outline == null or absf(axis) < 0.01 or outline.rim < 1.0:
+		return
+	## Положительная площадь в экранных осях — обход по часовой, как D на круге.
+	var sign := 1.0 if outline.loop_is_clockwise() else -1.0
+	var step := axis * sign * WALK_SPEED * delta / rock.uniform_scale()
+	dock.along = fposmod(dock.along + step, outline.rim)
+	var pose := outline.rim_pose(dock.along)
+	dock.local = pose.point
+	dock.normal_local = _ease_normal(dock.normal_local, pose.normal, delta)
+
+
+func _ease_normal(current: Vector2, target: Vector2, delta: float) -> Vector2:
+	if current.length_squared() < 0.01 or target.length_squared() < 0.01:
+		return target
+	var max_turn := deg_to_rad(220.0) * delta
+	var angle := clampf(current.normalized().angle_to(target.normalized()), -max_turn, max_turn)
+	return current.normalized().rotated(angle)
 
 
 func _walk_rim(axis: float, delta: float) -> void:
@@ -459,24 +511,24 @@ func _resolve_hit(collision: KinematicCollision2D) -> void:
 		global_position += normal * DOCK_SEPARATION
 		return
 
-	var inv_sum := 1.0 / MASS + 1.0 / rock.get_mass()
+	var inv_sum := 1.0 / get_mass() + 1.0 / rock.get_mass()
 	var tangent := Vector2(-normal.y, normal.x)
 	var jn := SpaceRock.normal_impulse(approach, inv_sum, RESTITUTION)
-	velocity += normal * jn / MASS
-	rock.apply_impulse(-normal * jn, contact)
+	add_impulse(normal * jn)
+	add_body_impulse(rock, -normal * jn, contact)
 	var slip := (velocity - _velocity_at(rock, contact)).dot(tangent)
 	var radius := rock.get_hit_radius()
 	var inv_t := inv_sum + (radius * radius) / rock.get_inertia()
 	var jt := SpaceRock.friction_impulse(slip, inv_t, jn, HIT_FRICTION)
-	velocity -= tangent * jt / MASS
-	rock.apply_impulse(tangent * jt, contact)
+	add_impulse(-tangent * jt)
+	add_body_impulse(rock, tangent * jt, contact)
 	global_position += normal * DOCK_SEPARATION
-	var shove := SpaceRock.separation_share(collision.get_depth(), rock.get_mass(), MASS)
+	var shove := SpaceRock.separation_share(collision.get_depth(), rock.get_mass(), get_mass())
 	rock.global_position -= normal * shove
 
 
 func is_aiming() -> bool:
-	if _dead or _controls_locked or not dock.docked:
+	if _dead or _controls_locked or not dock.docked or dock.inside:
 		return false
 	return Input.is_mouse_button_pressed(MOUSE_BUTTON_RIGHT)
 
@@ -502,7 +554,7 @@ func launch_velocity(to_target: Vector2, charge: float) -> Vector2:
 	var desired := push_desired(to_target, charge)
 	var rock := dock.rock()
 	if rock != null:
-		var share := rock.get_mass() / (MASS + rock.get_mass())
+		var share := SpaceRock.push_share(get_mass(), rock.get_mass())
 		return _velocity_at(rock, global_position) + desired * share
 	return desired + _velocity_at(dock.body, global_position)
 
@@ -511,7 +563,7 @@ func push_desired(to_target: Vector2, charge: float) -> Vector2:
 	if to_target.length_squared() <= 0.01:
 		to_target = dock.outward()
 	var speed := lerpf(PUSH_MIN, PUSH_MAX, clampf(charge, 0.0, 1.0))
-	return to_target.normalized() * speed
+	return _with_leak(to_target.normalized() * speed)
 
 
 func first_aim_hit(launch_vel: Vector2, horizon: float) -> float:
@@ -565,7 +617,7 @@ func asteroid_dock_speed(rock: SpaceRock) -> float:
 		return DOCK_SPEED
 	if rock.hull:
 		return INF
-	return DOCK_SPEED * minf(rock.get_mass() / MASS, 1.0)
+	return DOCK_SPEED * minf(rock.get_mass() / get_mass(), 1.0)
 
 
 func aim_too_fast_for_meteor(launch_vel: Vector2, horizon: float = AIM_HORIZON) -> bool:
@@ -579,9 +631,12 @@ func dock_to(body: Node2D, normal: Vector2) -> void:
 	if body == null:
 		return
 	dock.docked = true
+	dock.inside = false
 	dock.body = body
 	var rock := dock.rock()
-	if dock.has_outline():
+	if dock.has_shape():
+		_seat_on_shape(rock)
+	elif dock.has_outline():
 		var inward := -normal.rotated(-rock.global_rotation)
 		dock.local = rock.outline.seat(rock.to_local(global_position), inward, _hull_margin(rock))
 		dock.hull_face = 0.0
@@ -602,6 +657,16 @@ func dock_to(body: Node2D, normal: Vector2) -> void:
 		_show_idle_sprite()
 	else:
 		_begin_grab()
+	dock_changed.emit(true, body)
+
+
+func _seat_on_shape(rock: SpaceRock) -> void:
+	var outline := rock.outline
+	dock.along = outline.closest_rim(rock.to_local(global_position))
+	var pose := outline.rim_pose(dock.along)
+	dock.local = pose.point
+	dock.normal_local = pose.normal
+	global_position = rock.to_global(dock.local)
 
 
 func follow_dock() -> void:
@@ -610,10 +675,12 @@ func follow_dock() -> void:
 
 
 func undock() -> void:
+	var left := dock.body
 	dock.clear()
 	_set_body_shape_disabled(false)
 	_clear_charge()
 	_show_idle_sprite()
+	dock_changed.emit(false, left)
 
 
 func _set_body_shape_disabled(disabled: bool) -> void:
@@ -660,7 +727,7 @@ func character_size() -> float:
 
 
 func get_mass() -> float:
-	return MASS
+	return MASS + maxf(cargo_mass, 0.0)
 
 
 func add_impulse(impulse: Vector2) -> void:
@@ -675,6 +742,83 @@ func add_body_impulse(body: Node2D, impulse: Vector2, world_point: Vector2) -> v
 	if rock == null or impulse.length_squared() < 0.0000001:
 		return
 	rock.apply_impulse(impulse, world_point)
+
+
+func add_void_impulse(direction: Vector2, strength: float) -> bool:
+	## Короткий импульс без опоры. Топливо решает тот, кто вызывает.
+	if _dead or dock.docked or dock.inside:
+		return false
+	if direction.length_squared() <= 0.01 or strength <= 0.0:
+		return false
+	var desired := direction.normalized() * strength
+	add_impulse(desired * get_mass())
+	return true
+
+
+func enter_interior(body: SpaceRock) -> bool:
+	if _dead or body == null or not body.hull or body.outline == null:
+		return false
+	if dock.inside and dock.body == body:
+		return true
+	tether.release()
+	_end_slip()
+	dock.docked = true
+	dock.inside = true
+	dock.body = body
+	var local := body.to_local(global_position)
+	var margin := _hull_margin(body)
+	if body.outline.on_face(local, margin):
+		dock.local = local
+	else:
+		var inward := -local
+		if inward.length_squared() < 0.01:
+			inward = Vector2.UP
+		dock.local = body.outline.seat(local, inward.normalized(), margin)
+	dock.hull_face = 0.0
+	global_position = body.to_global(dock.local)
+	velocity = _velocity_at(body, global_position)
+	_set_body_shape_disabled(true)
+	_clear_charge()
+	_lost_time = 0.0
+	_face_on_surface()
+	_show_idle_sprite()
+	dock_changed.emit(true, body)
+	return true
+
+
+func exit_interior() -> void:
+	if not dock.inside:
+		return
+	var rock := dock.rock()
+	var pos := global_position
+	var outward := Vector2.UP
+	if rock != null and rock.outline != null:
+		var rim := rock.outline.nearest_rim(dock.local)
+		var out_local := rim.normal
+		if out_local.length_squared() < 0.01:
+			out_local = Vector2.UP
+		out_local = out_local.normalized()
+		var gap := rim.distance + _hull_margin(rock) + DOCK_SEPARATION
+		var outside_local := dock.local + out_local * gap
+		if rock.outline.on_face(outside_local, 0.0) or Geometry2D.is_point_in_polygon(outside_local, rock.outline.points):
+			outside_local = dock.local + out_local * (rock.outline.bound_radius + gap)
+		pos = rock.to_global(outside_local)
+		outward = (pos - rock.global_position).normalized()
+		if outward.length_squared() < 0.01:
+			outward = Vector2.UP
+	var body_vel := _velocity_at(rock, pos) if rock != null else Vector2.ZERO
+	undock()
+	global_position = pos
+	velocity = body_vel + outward * 12.0
+
+
+func _with_leak(desired: Vector2) -> Vector2:
+	if absf(leak_bias) < 0.0001 or desired.length_squared() <= 0.01:
+		return desired
+	var side := Vector2(-desired.y, desired.x)
+	if side.length_squared() <= 0.0001:
+		return desired
+	return desired + side.normalized() * desired.length() * leak_bias
 
 
 func _aim_dir() -> Vector2:
@@ -705,6 +849,15 @@ func _cast_harpoon() -> void:
 	if dock.inside or tether.linked() or tether.flying():
 		return
 	fire_harpoon(_aim_dir())
+
+
+func _toggle_hatch() -> void:
+	if dock.inside:
+		exit_interior()
+		return
+	var rock := dock.rock()
+	if rock != null and rock.hull:
+		enter_interior(rock)
 
 
 func _clear_charge() -> void:
