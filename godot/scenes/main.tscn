@@ -4,7 +4,7 @@
 [ext_resource type="Script" uid="uid://dplktpj8vse8x" path="res://scripts/background.gd" id="1_bg_script"]
 [ext_resource type="Script" uid="uid://c8o715rrsjt5b" path="res://scripts/star_field.gd" id="2_stars"]
 [ext_resource type="Texture2D" uid="uid://dbadnu2t04lxh" path="res://assets/zvezdets2.png" id="3_star"]
-[ext_resource type="Texture2D" uid="uid://6vjqtrisigxv" path="res://assets/cosmoman2.png" id="4_wanderer"]
+[ext_resource type="Texture2D" uid="uid://b3lv0gajowb8v" path="res://assets/wanderer.png" id="4_wanderer"]
 [ext_resource type="Script" uid="uid://djnm554bi5ccd" path="res://scripts/wanderer.gd" id="5_wanderer"]
 [ext_resource type="Script" uid="uid://cf5f4xei38j3h" path="res://scripts/jump_aim.gd" id="18_jump_aim"]
 [ext_resource type="Script" uid="uid://cvfblak56xx1a" path="res://scripts/lost_warning.gd" id="19_lost_warning"]
@@ -19,9 +19,14 @@
 [ext_resource type="Texture2D" uid="uid://bo3piexnxyreh" path="res://assets/hulls/auto_assault_02.png" id="15_auto02"]
 [ext_resource type="Texture2D" uid="uid://babcl4yyl16rt" path="res://assets/hulls/auto_assault_03.png" id="16_auto03"]
 [ext_resource type="Texture2D" uid="uid://4styiwchytwu" path="res://assets/hulls/auto_assault_04.png" id="17_auto04"]
+[ext_resource type="PackedScene" path="res://scenes/asteroids/asteroid_01.tscn" id="19_met01"]
+[ext_resource type="PackedScene" path="res://scenes/asteroids/asteroid_02.tscn" id="20_met02"]
+[ext_resource type="PackedScene" path="res://scenes/asteroids/asteroid_03.tscn" id="21_met03"]
+[ext_resource type="PackedScene" path="res://scenes/asteroids/asteroid_04.tscn" id="22_met04"]
+[ext_resource type="PackedScene" path="res://scenes/asteroids/asteroid_05.tscn" id="23_met05"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_wanderer"]
-radius = 12.0
+radius = 9.0
 
 [node name="Main" type="Node2D" unique_id=540210433]
 
@@ -2528,6 +2533,26 @@ scale = Vector2(1.656, 1.656)
 drift_velocity = Vector2(32, 8.411)
 hull_texture = ExtResource("16_auto03")
 
+[node name="Meteor01" parent="Bodies" unique_id=1936471895 instance=ExtResource("19_met01")]
+position = Vector2(-162, 326)
+drift_velocity = Vector2(32, 0)
+
+[node name="Meteor02" parent="Bodies" unique_id=415747175 instance=ExtResource("20_met02")]
+position = Vector2(341, 818)
+drift_velocity = Vector2(32, 0)
+
+[node name="Meteor03" parent="Bodies" unique_id=765478300 instance=ExtResource("21_met03")]
+position = Vector2(665, 179)
+drift_velocity = Vector2(32, 0)
+
+[node name="Meteor04" parent="Bodies" unique_id=832963793 instance=ExtResource("22_met04")]
+position = Vector2(683, 583)
+drift_velocity = Vector2(32, 0)
+
+[node name="Meteor05" parent="Bodies" unique_id=211231550 instance=ExtResource("23_met05")]
+position = Vector2(191, 102)
+drift_velocity = Vector2(32, 0)
+
 [node name="Wanderer" type="CharacterBody2D" parent="." unique_id=1717412150]
 z_index = 20
 position = Vector2(320, 400)
@@ -2535,7 +2560,7 @@ motion_mode = 1
 script = ExtResource("5_wanderer")
 
 [node name="Sprite" type="Sprite2D" parent="Wanderer" unique_id=750067835]
-scale = Vector2(0.5, 0.5)
+scale = Vector2(0.375, 0.375)
 texture = ExtResource("4_wanderer")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Wanderer" unique_id=391632887]
