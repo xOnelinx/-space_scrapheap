@@ -9,6 +9,8 @@ var stance := PackedVector2Array()
 var normals := PackedVector2Array()
 var cum := PackedFloat32Array()
 var length := 0.0
+## Периметр железа. По нему идут вокруг астероида, не по stance.
+var rim := 0.0
 var bound_radius := 0.0
 var mass_radius := 0.0
 var clearance_local := 0.0
@@ -31,19 +33,34 @@ class SegmentHit:
 
 
 static func from_texture(texture: Texture2D, body_scale: float, world_clearance: float) -> HullOutline:
-	if texture == null:
+	return from_points(local_points_from_texture(texture, 3.2), body_scale, world_clearance)
+
+
+static func from_points(local_points: PackedVector2Array, body_scale: float, world_clearance: float) -> HullOutline:
+	if local_points.size() < 3 or _abs_area(local_points) < 8.0:
 		return null
+	var outline := HullOutline.new()
+	outline.points = local_points
+	outline.clearance_local = world_clearance / maxf(absf(body_scale), 0.001)
+	outline._measure()
+	outline._build_stance()
+	return outline
+
+
+static func local_points_from_texture(texture: Texture2D, epsilon: float) -> PackedVector2Array:
+	if texture == null:
+		return PackedVector2Array()
 	var image := texture.get_image()
 	if image == null:
-		return null
+		return PackedVector2Array()
 	if image.is_compressed():
 		image.decompress()
 	var bitmap := BitMap.new()
 	bitmap.create_from_image_alpha(image, 0.2)
 	var rect := Rect2i(Vector2i.ZERO, image.get_size())
-	var polys: Array = bitmap.opaque_to_polygons(rect, 3.2)
+	var polys: Array = bitmap.opaque_to_polygons(rect, epsilon)
 	if polys.is_empty():
-		return null
+		return PackedVector2Array()
 	var best: PackedVector2Array = polys[0]
 	var best_area := _abs_area(best)
 	for poly in polys:
@@ -52,18 +69,13 @@ static func from_texture(texture: Texture2D, body_scale: float, world_clearance:
 			best = poly
 			best_area = area
 	if best.size() < 3 or best_area < 8.0:
-		return null
+		return PackedVector2Array()
 	var center := Vector2(image.get_size()) * 0.5
 	var local := PackedVector2Array()
 	local.resize(best.size())
 	for i in best.size():
 		local[i] = best[i] - center
-	var outline := HullOutline.new()
-	outline.points = local
-	outline.clearance_local = world_clearance / maxf(absf(body_scale), 0.001)
-	outline._measure()
-	outline._build_stance()
-	return outline
+	return local
 
 
 func pose_at(along: float) -> Pose:
@@ -188,12 +200,140 @@ func closest_s(local_point: Vector2) -> float:
 	return best_s
 
 
+func closest_rim(local_point: Vector2) -> float:
+	var best_d := INF
+	var best_s := 0.0
+	var acc := 0.0
+	var n := points.size()
+	for i in n:
+		var a: Vector2 = points[i]
+		var b: Vector2 = points[(i + 1) % n]
+		var span := a.distance_to(b)
+		if span < 0.0001:
+			continue
+		var hit := _closest(local_point, a, b)
+		if hit.dist_sq < best_d:
+			best_d = hit.dist_sq
+			best_s = acc + span * hit.t
+		acc += span
+	return best_s
+
+
+func rim_pose(along: float) -> Pose:
+	var n := points.size()
+	if n < 2 or rim <= 0.001:
+		return _pose(Vector2.ZERO, Vector2.UP)
+	along = fposmod(along, rim)
+	var acc := 0.0
+	var turn := _signed_area()
+	for i in n:
+		var a: Vector2 = points[i]
+		var b: Vector2 = points[(i + 1) % n]
+		var span := a.distance_to(b)
+		var last := i == n - 1
+		if not last and acc + span < along:
+			acc += span
+			continue
+		var t := 0.0 if span < 0.0001 else clampf((along - acc) / span, 0.0, 1.0)
+		var point := a.lerp(b, t)
+		var normal := _smooth_outward(along, turn)
+		if Geometry2D.is_point_in_polygon(point + normal * 1.5, points):
+			normal = -normal
+		return _pose(_outside(point, normal), normal)
+	return _pose(points[0], Vector2.UP)
+
+
+func _smooth_outward(along: float, turn: float) -> Vector2:
+	## Пиксельная лесенка контура даёт нормаль то вбок, то наружу. Усредняем соседние рёбра.
+	var window := clampf(clearance_local * 0.5, 22.0, 52.0)
+	var base := _edge_normal_at(along, turn)
+	var sum := base
+	var samples := 7
+	for i in samples:
+		var offset := lerpf(-window, window, float(i) / float(samples - 1))
+		var sample := _edge_normal_at(along + offset, turn)
+		if sample.dot(base) < 0.0:
+			sample = -sample
+		sum += sample
+	if sum.length_squared() < 0.0001:
+		return base
+	return sum.normalized()
+
+
+func _edge_normal_at(along: float, turn: float) -> Vector2:
+	var n := points.size()
+	if n < 2 or rim <= 0.001:
+		return Vector2.UP
+	along = fposmod(along, rim)
+	var acc := 0.0
+	for i in n:
+		var a: Vector2 = points[i]
+		var b: Vector2 = points[(i + 1) % n]
+		var span := a.distance_to(b)
+		if span < 0.0001:
+			continue
+		if acc + span < along and i < n - 1:
+			acc += span
+			continue
+		return _edge_outward(a, b, turn)
+	return Vector2.UP
+
+
+func _outside(origin: Vector2, normal: Vector2) -> Vector2:
+	## Шаг в пиксель: зазор подошвы на мелком силуэте уже, чем крупный шаг _place.
+	var best := _march_out(origin, normal)
+	if _stands_clear(best):
+		return best
+	var away := origin
+	var n := points.size()
+	if n > 0:
+		var center := Vector2.ZERO
+		for vertex in points:
+			center += vertex
+		center /= float(n)
+		away = origin - center
+	if away.length_squared() < 0.01:
+		away = normal
+	return _march_out(origin, away.normalized())
+
+
+func _march_out(origin: Vector2, normal: Vector2) -> Vector2:
+	var best := origin
+	var limit := int(ceil(clearance_local))
+	for dist in range(1, limit + 1):
+		var candidate := origin + normal * float(dist)
+		if Geometry2D.is_point_in_polygon(candidate, points):
+			break
+		best = candidate
+	if _stands_clear(best):
+		return best
+	var nudge := origin + normal * 1.5
+	if not Geometry2D.is_point_in_polygon(nudge, points):
+		return nudge
+	return best
+
+
+func _stands_clear(point: Vector2) -> bool:
+	if Geometry2D.is_point_in_polygon(point, points):
+		return false
+	var gap: float = nearest_rim(point).distance
+	return gap >= 0.75
+
+
+func loop_is_clockwise() -> bool:
+	return _signed_area() > 0.0
+
+
 func _measure() -> void:
 	bound_radius = 0.0
 	for vertex in points:
 		bound_radius = maxf(bound_radius, vertex.length())
 	var area := absf(_signed_area())
 	mass_radius = sqrt(maxf(area, 1.0) / PI)
+	rim = 0.0
+	var n := points.size()
+	for i in n:
+		rim += points[i].distance_to(points[(i + 1) % n])
 
 
 func _signed_area() -> float:

@@ -4,22 +4,28 @@ extends RefCounted
 ## Посадка скитальца на круг астероида или на железо корпуса.
 
 var docked := false
+## Внутри корпуса: тот же follow, но это не кромка и не прыжок в пустоту.
+var inside := false
 var body: Node2D = null
 var local := Vector2.ZERO
 var radius := 0.0
 var angle := 0.0
 var normal_local := Vector2.UP
 var hull_face := 0.0
+## Длина вдоль внешнего обвода силуэта.
+var along := 0.0
 
 
 func clear() -> void:
 	docked = false
+	inside = false
 	body = null
 	local = Vector2.ZERO
 	radius = 0.0
 	angle = 0.0
 	normal_local = Vector2.UP
 	hull_face = 0.0
+	along = 0.0
 
 
 func rock() -> SpaceRock:
@@ -33,6 +39,11 @@ func has_hull() -> bool:
 
 func has_outline() -> bool:
 	return has_hull() and rock().outline != null
+
+
+func has_shape() -> bool:
+	var stood := rock()
+	return stood != null and stood.shaped and stood.outline != null
 
 
 func outward() -> Vector2:

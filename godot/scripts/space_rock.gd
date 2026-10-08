@@ -20,9 +20,15 @@ const BOOT_CLEARANCE := 14.0
 	set(value):
 		hull_texture = value
 		_show_hull_texture()
+## Крупный метеорит: спрайт и коллизия по его силуэту, не круг.
+@export var shape_texture: Texture2D:
+	set(value):
+		shape_texture = value
+		_apply_shape()
 
 var depth := 0
 var hull := false
+var shaped := false
 var outline: HullOutline
 
 
@@ -30,16 +36,21 @@ func _enter_tree() -> void:
 	if Engine.is_editor_hint():
 		set_physics_process(false)
 	_show_hull_texture()
+	_apply_shape()
 
 
 func _ready() -> void:
 	if Engine.is_editor_hint():
 		_show_hull_texture()
+		_apply_shape()
 		return
 	add_to_group("space_rocks")
 	if hull_texture != null:
 		hull = true
 		_show_hull_texture()
+	_apply_shape()
+	if shaped:
+		_make_shape_outline()
 	_assign_ambient_spin()
 	if hull:
 		_make_hull()
@@ -65,7 +76,8 @@ func _show_hull_texture() -> void:
 
 func _assign_ambient_spin() -> void:
 	## Стартовая скала не крутится: иначе скитальца унесёт по ободу сразу.
-	if name == "StaticNear" or spin != 0.0:
+	## Крупный силуэт тоже: обод длинный, даже тихий спин сносит с ног.
+	if name == "StaticNear" or spin != 0.0 or shaped:
 		return
 	var steps := (absi(hash(name)) % 9) - 4
 	spin = float(steps) * 0.12
@@ -118,7 +130,7 @@ func apply_depth_look() -> void:
 	if sprite == null:
 		return
 	var depth_t := float(depth) / float(DEPTH_COUNT - 1)
-	if hull:
+	if hull or shaped:
 		## Контур уже в пикселях спрайта. Дополнительный масштаб разъедется с коллизией.
 		sprite.scale = Vector2.ONE
 		var shade := lerpf(0.86, 1.0, depth_t)
@@ -139,6 +151,68 @@ func _mass_world_radius() -> float:
 
 func uniform_scale() -> float:
 	return maxf(maxf(absf(global_scale.x), absf(global_scale.y)), 0.001)
+
+
+func ray_hit(origin: Vector2, dir: Vector2) -> float:
+	if not shaped or outline == null or outline.points.size() < 3:
+		return INF
+	var best := INF
+	var pts := outline.points
+	var n := pts.size()
+	for i in n:
+		var a := to_global(pts[i])
+		var b := to_global(pts[(i + 1) % n])
+		var t := _ray_segment(origin, dir, a, b)
+		if t >= 0.0 and t < best:
+			best = t
+	return best
+
+
+func _apply_shape() -> void:
+	if shape_texture == null:
+		return
+	var sprite := get_node_or_null("Sprite") as Sprite2D
+	if sprite == null:
+		return
+	sprite.texture = shape_texture
+	sprite.scale = Vector2.ONE
+	var points := HullOutline.local_points_from_texture(shape_texture, 2.0)
+	if points.size() < 3:
+		shaped = false
+		return
+	var poly := get_node_or_null("Silhouette") as CollisionPolygon2D
+	if poly == null:
+		poly = CollisionPolygon2D.new()
+		poly.name = "Silhouette"
+		add_child(poly)
+	poly.polygon = points
+	var circle := get_node_or_null("CollisionShape2D") as CollisionShape2D
+	if circle != null:
+		circle.disabled = true
+	shaped = true
+
+
+func _make_shape_outline() -> void:
+	var poly := get_node_or_null("Silhouette") as CollisionPolygon2D
+	if poly == null or poly.polygon.size() < 3:
+		shaped = false
+		return
+	outline = HullOutline.from_points(poly.polygon, uniform_scale(), BOOT_CLEARANCE)
+	if outline == null:
+		shaped = false
+
+
+static func _ray_segment(origin: Vector2, dir: Vector2, a: Vector2, b: Vector2) -> float:
+	var edge := b - a
+	var denom := dir.x * edge.y - dir.y * edge.x
+	if absf(denom) < 0.000001:
+		return INF
+	var diff := a - origin
+	var t := (diff.x * edge.y - diff.y * edge.x) / denom
+	var u := (diff.x * dir.y - diff.y * dir.x) / denom
+	if t >= 0.0 and u >= 0.0 and u <= 1.0:
+		return t
+	return INF
 
 
 func _make_hull() -> void:
@@ -184,6 +258,15 @@ static func circle_overlap(from: Vector2, to: Vector2, from_radius: float, to_ra
 ## Сдвиг этого тела при разведении: чем оно легче, тем больше уступает.
 static func separation_share(penetration: float, mass_self: float, mass_other: float) -> float:
 	return penetration * mass_other / (mass_self + mass_other)
+
+
+## Доля желаемой относительной скорости, которая остаётся у того, кто толкает.
+## Встречный импульс тела = -desired * mass_actor * share.
+static func push_share(mass_actor: float, mass_other: float) -> float:
+	var sum := mass_actor + mass_other
+	if sum <= 0.0:
+		return 0.0
+	return mass_other / sum
 
 
 static func normal_impulse(approach: float, inv_sum: float, restitution: float) -> float:
