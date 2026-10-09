@@ -60,6 +60,17 @@ func _run() -> void:
 			return
 	if not _bolt_hits_rim(scene.get_node("Bodies/Meteor02") as SpaceRock):
 		return
+	var small := scene.get_node("Bodies/Meteor03") as SpaceRock
+	var saved_scale := small.scale
+	small.scale = saved_scale * 0.35
+	small._make_shape_outline()
+	if small.outline == null:
+		fail("На мелком астероиде не собрался обвод")
+		return
+	if not _stands_and_walks(wanderer, small):
+		return
+	small.scale = saved_scale
+	small._make_shape_outline()
 	print("SHAPES_OK")
 	quit(0)
 
@@ -82,6 +93,10 @@ func _stands_and_walks(wanderer: Wanderer, rock: SpaceRock) -> bool:
 		wanderer.follow_dock()
 		if Geometry2D.is_point_in_polygon(rock.to_local(wanderer.global_position), rock.outline.points):
 			fail("Шаг зашёл в камень: %s" % rock.name)
+			return false
+		var pose := rock.outline.rim_pose(wanderer.dock.along)
+		if wanderer.dock.normal_local.angle_to(pose.normal) > 0.05:
+			fail("Ноги отстают от кромки: %s" % rock.name)
 			return false
 	var traveled := wanderer.global_position.distance_to(before)
 	if traveled < Wanderer.WALK_SPEED * duration * 0.7:

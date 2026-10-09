@@ -541,15 +541,8 @@ func _walk_shape(axis: float, delta: float) -> void:
 	dock.along = fposmod(dock.along + step, outline.rim)
 	var pose := outline.rim_pose(dock.along)
 	dock.local = pose.point
-	dock.normal_local = _ease_normal(dock.normal_local, pose.normal, delta)
-
-
-func _ease_normal(current: Vector2, target: Vector2, delta: float) -> Vector2:
-	if current.length_squared() < 0.01 or target.length_squared() < 0.01:
-		return target
-	var max_turn := deg_to_rad(220.0) * delta
-	var angle := clampf(current.normalized().angle_to(target.normalized()), -max_turn, max_turn)
-	return current.normalized().rotated(angle)
+	## Сразу по нормали. На мелком камне кромка поворачивается быстрее, чем догон, и спрайт крутится на месте.
+	dock.normal_local = pose.normal
 
 
 func _walk_rim(axis: float, delta: float) -> void:
