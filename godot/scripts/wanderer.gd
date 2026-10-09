@@ -1,33 +1,47 @@
 class_name Wanderer
 extends CharacterBody2D
 
-## Без ранца: отталкиваешься с разной силой. В пустоте — короткий импульс, не полёт.
+## Без ранца: отталкиваешься с разной силой. В пустоте — инерция, слабая правка курса WASD и короткий импульс.
 ## По кромке астероида — A/D. По корпусу — WASD. Внутри корпуса — тот же шаг, без прыжка.
-## Магнитные ботинки: к обломку цепляется при любом ударе.
+## Магнитные ботинки: к обломку и к астероиду цепляется при любом ударе, на любой скорости.
 ## С любой точки корпуса прыжок в любую сторону.
-## Курс без пересечения с телами → гибель. Пока висит трос, этот счётчик молчит.
+## Курс без пересечения с телами → гибель. Крутится только спрайт. Пока висит трос, этот счётчик молчит.
 ## ПКМ — курс до края экрана и стрелка скорости (спин опоры).
+## Сила толчка — по расстоянию курсора: дальше сильнее, ближе слабее.
+## Кислород кончается сам. Секунда зажатого толчка — потом 5 секунд двойного расхода.
 
 signal pushed(desired: Vector2, charge: float)
 signal dock_changed(docked: bool, body: Node2D)
 
 const FACE_EPS := 1.0
 const RESTITUTION := 0.55
-const DOCK_SPEED := 60.0
 const DOCK_SEPARATION := 2.0
 const WALK_SPEED := 70.0
 const PUSH_MIN := 10.0
 const PUSH_MAX := 100.0
-const CHARGE_TIME := 0.85
+## За секунду удержания WASD в полёте скорость меняется меньше, чем самый слабый толчок.
+const FLIGHT_NUDGE := 8.0
+## Сверх обычного дыхания, только пока в полёте зажата правка курса.
+const FLIGHT_OXYGEN := 3.0
+## Курсор у персонажа — минимум, дальше CHARGE_DIST_MAX — полный толчок.
+const CHARGE_DIST_MIN := 28.0
+const CHARGE_DIST_MAX := 220.0
 const DOOM_INPUT_GRACE := 0.35
 const RESPAWN_INPUT_PAUSE := 0.45
 const LOST_DOOM_DELAY := 6.0
+const OXYGEN_SECONDS := 1800.0
+const OXYGEN_START := 200.0
+const OXYGEN_DOUBLE_PER_HOLD := 5.0
+const OXYGEN_COLOR := Color(0.4, 0.78, 1.0)
+const OXYGEN_DOUBLE_COLOR := Color(1.0, 0.62, 0.28)
+const LOST_DEATH_TEXT := "Вы умерли.\nБесконечно скитаясь в космосе.\n\nНажмите мышь — начать снова"
+const OXYGEN_DEATH_TEXT := "В космосе нет кислорода, как и в ваших легких\n\nНажмите мышь — начать снова"
 const MASS := 26.0 * 26.0
-const HIT_FRICTION := 0.35
 const AIM_HORIZON := 3.0
 const VOID_SPEED := 48.0
 ## Верх спрайта — рюкзак, он наружу от камня. Низ — шлем, им встаём на поверхность.
 const FOOT_EXTENT := 12.0
+const _FLIGHT_JET := preload("res://scripts/flight_jet.gd")
 ## Захват астероида: руки к камню. Последний кадр держится, пока стоишь.
 const GRAB_FRAME_COUNT := 4
 const GRAB_FRAME_TIME := 0.08
@@ -49,10 +63,17 @@ var _charging := false
 var _charge := 0.0
 ## Корпус, с которого только что прыгнули: круг ещё внутри, столкновение выключено.
 var _slip_body: Node2D = null
+var _hold_time := 0.0
+var _oxygen_double := 0.0
+var _using_flight_correction := false
 var _self_radius := 0.0
 var _dead := false
 var _controls_locked := true
 var _lost_time := 0.0
+var _oxygen := OXYGEN_START
+var _oxygen_flash := 0.0
+var _oxygen_label: Label
+var _flight_jet: Node2D
 ## -1 — обычный спрайт. Иначе кадр захвата, пока скиталец на астероиде.
 var _grab_frame := -1
 var _grab_time := 0.0
@@ -60,6 +81,7 @@ var _grab_time := 0.0
 
 func _ready() -> void:
 	motion_mode = MOTION_MODE_FLOATING
+	add_to_group("wanderer")
 	_self_radius = _own_hit_radius()
 	_controls_locked = true
 	_clear_charge()
@@ -67,6 +89,8 @@ func _ready() -> void:
 	rope.name = "TetherView"
 	add_child(rope)
 	_free_orphan_doom_overlays()
+	_build_oxygen_hud()
+	_build_flight_jet()
 	call_deferred("_spawn_on_start_rock")
 	call_deferred("_unlock_controls_when_ready")
 
@@ -127,7 +151,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		if event.pressed:
 			if dock.docked:
 				_charging = true
-				_charge = 0.0
+				_charge = _charge_from_cursor()
+				_hold_time = 0.0
 				get_viewport().set_input_as_handled()
 			else:
 				add_void_impulse(_aim_dir(), VOID_SPEED)
@@ -159,6 +184,7 @@ func _commit_push(to_target: Vector2) -> void:
 	if rock != null:
 		var share := SpaceRock.push_share(get_mass(), rock.get_mass())
 		add_body_impulse(rock, -desired * get_mass() * share, global_position)
+	_oxygen_double += _hold_time * OXYGEN_DOUBLE_PER_HOLD
 	_clear_charge()
 	undock()
 	pushed.emit(desired, charge)
@@ -217,6 +243,13 @@ func course_is_lost() -> bool:
 	return true
 
 
+func lost_progress() -> float:
+	## 0 на теле или после гибели, 1 — в момент экрана смерти.
+	if _dead or dock.docked:
+		return 0.0
+	return clampf(_lost_time / LOST_DOOM_DELAY, 0.0, 1.0)
+
+
 func _will_meet_rock(rock: Node2D) -> bool:
 	var body := rock as SpaceRock
 	var hit_radius := body.get_hit_radius() if body != null else 0.0
@@ -234,16 +267,78 @@ func _will_meet_rock(rock: Node2D) -> bool:
 	return closest.length() <= radius
 
 
-func _begin_doom() -> void:
+func _build_oxygen_hud() -> void:
+	var layer := CanvasLayer.new()
+	layer.layer = 40
+	layer.name = "OxygenHud"
+	add_child(layer)
+
+	_oxygen_label = Label.new()
+	_oxygen_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_oxygen_label.position = Vector2(20, 14)
+	_oxygen_label.add_theme_font_size_override("font_size", 48)
+	_oxygen_label.add_theme_color_override("font_color", OXYGEN_COLOR)
+	layer.add_child(_oxygen_label)
+	_refresh_oxygen_label()
+
+
+func grant_oxygen(seconds: float) -> bool:
+	## Полный запас не забирает баллон: касание впустую его не съедает.
+	if _dead or _controls_locked or seconds <= 0.0:
+		return false
+	var room := OXYGEN_SECONDS - _oxygen
+	if room < 1.0:
+		return false
+	_oxygen += minf(seconds, room)
+	_oxygen_flash = 0.45
+	_refresh_oxygen_label()
+	return true
+
+
+func _tick_oxygen(delta: float) -> bool:
+	var rate := 1.0
+	if _oxygen_double > 0.0:
+		rate = 2.0
+		_oxygen_double = maxf(0.0, _oxygen_double - delta)
+	if _using_flight_correction:
+		rate += FLIGHT_OXYGEN
+	_oxygen = maxf(0.0, _oxygen - delta * rate)
+	_refresh_oxygen_label()
+	_tick_oxygen_flash(delta)
+	if _oxygen > 0.0:
+		return false
+	_begin_doom(OXYGEN_DEATH_TEXT)
+	return true
+
+
+func _tick_oxygen_flash(delta: float) -> void:
+	if _oxygen_label == null:
+		return
+	if _oxygen_flash > 0.0:
+		_oxygen_flash = maxf(0.0, _oxygen_flash - delta)
+		var t := clampf(_oxygen_flash / 0.45, 0.0, 1.0)
+		_oxygen_label.add_theme_color_override("font_color", OXYGEN_COLOR.lerp(Color(0.9, 0.97, 1.0), t))
+	elif _oxygen_double > 0.0:
+		_oxygen_label.add_theme_color_override("font_color", OXYGEN_DOUBLE_COLOR)
+	else:
+		_oxygen_label.add_theme_color_override("font_color", OXYGEN_COLOR)
+
+
+func _refresh_oxygen_label() -> void:
+	var seconds := 0 if _oxygen <= 0.0 else ceili(_oxygen)
+	_oxygen_label.text = str(seconds)
+
+
+func _begin_doom(message: String = LOST_DEATH_TEXT) -> void:
 	if _dead:
 		return
 	_dead = true
 	set_physics_process(false)
 	set_process_unhandled_input(false)
-	call_deferred("_show_doom_and_restart")
+	call_deferred("_show_doom_and_restart", message)
 
 
-func _show_doom_and_restart() -> void:
+func _show_doom_and_restart(message: String) -> void:
 	var layer := CanvasLayer.new()
 	layer.layer = 100
 	layer.name = "DoomOverlay"
@@ -265,7 +360,8 @@ func _show_doom_and_restart() -> void:
 	label.grow_vertical = Control.GROW_DIRECTION_BOTH
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	label.text = "Вы умерли.\nБесконечно скитаясь в космосе.\n\nНажмите мышь — начать снова"
+	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	label.text = message
 	label.add_theme_font_size_override("font_size", 36)
 	label.add_theme_color_override("font_color", Color(0.92, 0.93, 1.0))
 	label.position = Vector2(-420, -90)
@@ -304,6 +400,9 @@ func _show_doom_and_restart() -> void:
 func _physics_process(delta: float) -> void:
 	if _dead:
 		return
+	_using_flight_correction = _flight_correction_held()
+	if _tick_oxygen(delta):
+		return
 	_release_slip_if_clear()
 	if dock.inside:
 		_lost_time = 0.0
@@ -315,6 +414,7 @@ func _physics_process(delta: float) -> void:
 		return
 	if dock.docked:
 		_lost_time = 0.0
+		_show_flight_jet(Vector2.ZERO)
 		tether.integrate(self, delta, _reeling())
 		if not dock.has_hull():
 			_tick_grab(delta)
@@ -324,7 +424,8 @@ func _physics_process(delta: float) -> void:
 			_face_on_surface()
 			return
 		if _charging:
-			_charge = minf(1.0, _charge + delta / CHARGE_TIME)
+			_hold_time += delta
+			_charge = _charge_from_cursor()
 		else:
 			_walk_on_surface(delta)
 		follow_dock()
@@ -332,8 +433,10 @@ func _physics_process(delta: float) -> void:
 		return
 
 	_clear_charge()
+	_nudge_flight(delta)
 
-	var collision := move_and_collide(velocity * delta)
+	# recovery_as_collision: въезд камня в скитальца на скорости тоже контакт, не выталкивание.
+	var collision := move_and_collide(velocity * delta, false, 0.08, true)
 	if collision != null:
 		_resolve_hit(collision)
 		if _dead:
@@ -345,6 +448,9 @@ func _physics_process(delta: float) -> void:
 				follow_dock()
 				_face_on_surface()
 			return
+	elif _dock_if_buried():
+		_lost_time = 0.0
+		return
 
 	tether.integrate(self, delta, _reeling())
 
@@ -362,6 +468,39 @@ func _physics_process(delta: float) -> void:
 	_show_idle_sprite()
 	if velocity.length_squared() > FACE_EPS * FACE_EPS:
 		_sprite.rotation = velocity.angle() - PI / 2.0
+
+
+func _flight_correction_held() -> bool:
+	## На камне WASD — ходьба, воздух на неё не тратится.
+	if _controls_locked or dock.docked:
+		return false
+	return _screen_dir().length_squared() > 0.01
+
+
+func _nudge_flight(delta: float) -> void:
+	var dir := Vector2.ZERO if _controls_locked else _screen_dir()
+	## Струя — выхлоп: летит против кнопки, сам сдвиг курса — по кнопке.
+	_show_flight_jet(-dir)
+	_apply_flight_nudge(dir, delta)
+
+
+func _build_flight_jet() -> void:
+	_flight_jet = _FLIGHT_JET.new()
+	_flight_jet.name = "FlightJet"
+	_flight_jet.z_index = 3
+	add_child(_flight_jet)
+
+
+func _show_flight_jet(dir: Vector2) -> void:
+	if _flight_jet != null:
+		_flight_jet.set_direction(dir)
+
+
+func _apply_flight_nudge(dir: Vector2, delta: float) -> void:
+	## Экранные WASD, не разворот спрайта: W всегда вверх экрана.
+	if dir.length_squared() < 0.01:
+		return
+	velocity += dir.normalized() * FLIGHT_NUDGE * delta
 
 
 func _screen_dir() -> Vector2:
@@ -417,7 +556,10 @@ func _walk_rim(axis: float, delta: float) -> void:
 	if absf(axis) < 0.01:
 		return
 	var radius := maxf(dock.radius, 1.0)
-	dock.angle += axis * (WALK_SPEED / radius) * delta
+	var rock := dock.rock()
+	## Угол считается в локальных единицах. Делим на масштаб, чтобы шаг в мире был WALK_SPEED.
+	var scale := rock.uniform_scale() if rock != null else 1.0
+	dock.angle += axis * (WALK_SPEED / (radius * scale)) * delta
 	dock.local = Vector2.from_angle(dock.angle) * dock.radius
 	dock.normal_local = dock.local.normalized()
 
@@ -498,33 +640,20 @@ func _resolve_hit(collision: KinematicCollision2D) -> void:
 	var collider := collision.get_collider() as Node2D
 	var normal := collision.get_normal()
 	var rock := collider as SpaceRock
-	var contact := collision.get_position()
-	var body_vel := _velocity_at(collider, contact)
-	var relative := velocity - body_vel
-	var approach := -relative.dot(normal)
-	if approach <= asteroid_dock_speed(rock):
+	if rock != null:
+		## Круглый камень: нормаль из центра, чтобы кривой контакт не вдавливал внутрь.
+		if not rock.hull:
+			var away := global_position - rock.global_position
+			if away.length_squared() > 0.0001:
+				normal = away.normalized()
 		dock_to(collider, normal)
 		return
 
-	if rock == null:
-		velocity = relative.bounce(normal) * RESTITUTION + body_vel
-		global_position += normal * DOCK_SEPARATION
-		return
-
-	var inv_sum := 1.0 / get_mass() + 1.0 / rock.get_mass()
-	var tangent := Vector2(-normal.y, normal.x)
-	var jn := SpaceRock.normal_impulse(approach, inv_sum, RESTITUTION)
-	add_impulse(normal * jn)
-	add_body_impulse(rock, -normal * jn, contact)
-	var slip := (velocity - _velocity_at(rock, contact)).dot(tangent)
-	var radius := rock.get_hit_radius()
-	var inv_t := inv_sum + (radius * radius) / rock.get_inertia()
-	var jt := SpaceRock.friction_impulse(slip, inv_t, jn, HIT_FRICTION)
-	add_impulse(-tangent * jt)
-	add_body_impulse(rock, tangent * jt, contact)
+	var contact := collision.get_position()
+	var body_vel := _velocity_at(collider, contact)
+	var relative := velocity - body_vel
+	velocity = relative.bounce(normal) * RESTITUTION + body_vel
 	global_position += normal * DOCK_SEPARATION
-	var shove := SpaceRock.separation_share(collision.get_depth(), rock.get_mass(), get_mass())
-	rock.global_position -= normal * shove
 
 
 func is_aiming() -> bool:
@@ -536,7 +665,17 @@ func is_aiming() -> bool:
 func aim_charge() -> float:
 	if _charging:
 		return clampf(_charge, 0.0, 1.0)
+	if is_aiming():
+		return _charge_from_cursor()
 	return 0.0
+
+
+func charge_from_offset(to_target: Vector2) -> float:
+	## 0 у персонажа, 1 на CHARGE_DIST_MAX и дальше. Ближе курсор — слабее толчок.
+	return clampf(
+			inverse_lerp(CHARGE_DIST_MIN, CHARGE_DIST_MAX, to_target.length()),
+			0.0,
+			1.0)
 
 
 func aim_target() -> Vector2:
@@ -612,19 +751,40 @@ func aim_approach_into(rock: SpaceRock, launch_vel: Vector2) -> float:
 	return -rel.dot(away.normalized())
 
 
-func asteroid_dock_speed(rock: SpaceRock) -> float:
-	if rock == null:
-		return DOCK_SPEED
-	if rock.hull:
-		return INF
-	return DOCK_SPEED * minf(rock.get_mass() / get_mass(), 1.0)
+func asteroid_dock_speed(_rock: SpaceRock) -> float:
+	## Лёгкий камень больше не срезает порог: удар быстрее толчка тоже цепляет.
+	return INF
 
 
-func aim_too_fast_for_meteor(launch_vel: Vector2, horizon: float = AIM_HORIZON) -> bool:
-	var rock := first_aim_rock(launch_vel, horizon)
-	if rock == null or rock.hull:
+func _dock_if_buried() -> bool:
+	## Кадр без отданного контакта: круг уже внутри астероида, вылет выглядел бы отскоком.
+	var buried := _buried_asteroid()
+	if buried == null:
 		return false
-	return aim_approach_into(rock, launch_vel) > asteroid_dock_speed(rock)
+	var away := global_position - buried.global_position
+	var normal := Vector2.UP if away.length_squared() < 0.0001 else away.normalized()
+	dock_to(buried, normal)
+	return true
+
+
+func _buried_asteroid() -> SpaceRock:
+	var found: SpaceRock = null
+	var best := INF
+	for node in get_tree().get_nodes_in_group("space_rocks"):
+		var rock := node as SpaceRock
+		if rock == null or rock.hull:
+			continue
+		var reach := _self_radius + rock.get_hit_radius()
+		var dist := global_position.distance_to(rock.global_position)
+		if dist < reach and dist < best:
+			best = dist
+			found = rock
+	return found
+
+
+func aim_too_fast_for_meteor(_launch_vel: Vector2, _horizon: float = AIM_HORIZON) -> bool:
+	## Посадка не зависит от скорости входа: и медленный, и быстрый контакт цепляет.
+	return false
 
 
 func dock_to(body: Node2D, normal: Vector2) -> void:
@@ -720,6 +880,10 @@ func _aim_hit_time(rock: SpaceRock, launch_vel: Vector2) -> float:
 	if t_exit > 0.0001:
 		return t_exit
 	return INF
+
+
+func _charge_from_cursor() -> float:
+	return charge_from_offset(get_global_mouse_position() - global_position)
 
 
 func character_size() -> float:
@@ -863,6 +1027,7 @@ func _toggle_hatch() -> void:
 func _clear_charge() -> void:
 	_charging = false
 	_charge = 0.0
+	_hold_time = 0.0
 
 
 func _cancel_aim_charge() -> void:

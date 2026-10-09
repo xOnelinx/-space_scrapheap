@@ -44,8 +44,8 @@ func _check_signals_and_cargo(scene: Node, wanderer: Wanderer) -> bool:
 	if loaded_launch >= bare_launch - 0.5:
 		fail("Прицел не стал короче от массы груза")
 		return false
-	if wanderer.asteroid_dock_speed(rock) >= Wanderer.DOCK_SPEED - 0.01:
-		fail("Тяжёлый груз не снизил порог посадки")
+	if wanderer.asteroid_dock_speed(rock) < 1.0e12:
+		fail("Груз не должен возвращать порог скорости посадки")
 		return false
 	wanderer.cargo_mass = 0.0
 
