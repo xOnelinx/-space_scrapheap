@@ -9,30 +9,36 @@ const WELD := Color(1.0, 0.55, 0.22, 0.95)
 const SPARK := Color(1.0, 0.62, 0.18, 1.0)
 const FLASH := Color(1.0, 0.95, 0.75, 1.0)
 
+var _tip := Vector2.ZERO
+var _flying := false
+var _linked := false
+var _burst_at := Vector2.ZERO
+var _burst_age := -1.0
+
 
 func _ready() -> void:
 	z_index = 1
 	z_as_relative = true
 
 
-func _process(_delta: float) -> void:
+func show_rope(tip: Vector2, flying: bool, linked: bool, burst_at: Vector2, burst_age: float) -> void:
+	_tip = tip
+	_flying = flying
+	_linked = linked
+	_burst_at = burst_at
+	_burst_age = burst_age
 	queue_redraw()
 
 
 func _draw() -> void:
-	var host := get_parent() as Wanderer
-	if host == null:
-		return
-	var tether := host.tether
-	if tether.burst > 0.0:
-		var age := 1.0 - tether.burst / Tether.BURST_LIFE
-		_draw_burst(to_local(tether.burst_at), age)
-	if tether.flying():
-		var tip := to_local(tether.bolt_global)
+	if _burst_age >= 0.0:
+		_draw_burst(to_local(_burst_at), _burst_age)
+	if _flying:
+		var tip := to_local(_tip)
 		draw_line(Vector2.ZERO, tip, ROPE, 1.25, true)
 		draw_circle(tip, 2.5, BOLT)
-	elif tether.linked():
-		var tip := to_local(tether.anchor_global())
+	elif _linked:
+		var tip := to_local(_tip)
 		draw_line(Vector2.ZERO, tip, ROPE, 1.25, true)
 		draw_circle(tip, 2.2, WELD)
 

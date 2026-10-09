@@ -4,7 +4,6 @@ extends Node2D
 ## Астероиды расставлены в сцене. Здесь слои и столкновения одного слоя.
 
 const _LOOT_SCENE := preload("res://scenes/loot.tscn")
-const _START_ROCK_NAME := "StaticNear"
 const CELL := 128.0
 const DENSITY_MIN := 2
 const DENSITY_MAX := 5
@@ -60,13 +59,21 @@ func _assign_depths() -> void:
 
 func _spawn_start_loot() -> void:
 	## Один баллон в кадре старта, не на камне.
-	var start := get_node_or_null(_START_ROCK_NAME) as Node2D
+	var start := _start_rock()
 	if start == null or get_parent() == null:
 		return
 	var loot := _LOOT_SCENE.instantiate() as Loot
 	loot.name = "Loot"
 	add_child(loot)
 	loot.place_near(start)
+
+
+func _start_rock() -> Node2D:
+	for child in get_children():
+		var rock := child as SpaceRock
+		if rock != null and rock.start_rock:
+			return rock
+	return null
 
 
 func _overlap_amount(rock: SpaceRock) -> float:

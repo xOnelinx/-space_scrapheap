@@ -6,33 +6,36 @@ extends CanvasLayer
 var _root: Control
 var _dim: ColorRect
 var _label: Label
-
-@onready var _wanderer: Wanderer = $"../Wanderer"
+var _progress := 0.0
+var _remain := 0.0
 
 
 func _ready() -> void:
+	add_to_group("lost_warning")
 	layer = 90
 	_build()
-	_apply(0.0)
+	_apply(0.0, 0.0)
+
+
+func show_progress(progress: float, remain: float) -> void:
+	_progress = progress
+	_remain = remain
+	_apply(progress, remain)
 
 
 func _process(_delta: float) -> void:
-	if _wanderer == null:
-		_apply(0.0)
-		return
-	_apply(_wanderer.lost_progress())
+	_apply(_progress, _remain)
 
 
 func is_shown() -> bool:
 	return _root != null and _root.visible
 
 
-func _apply(progress: float) -> void:
+func _apply(progress: float, remain: float) -> void:
 	var shown := progress > 0.001
 	_root.visible = shown
 	if not shown:
 		return
-	var remain := Wanderer.LOST_DOOM_DELAY * (1.0 - progress)
 	_label.text = "Курс в пустоту\n%.1f" % remain
 	var t := clampf(progress, 0.0, 1.0)
 	_dim.color = Color(0.12, 0.02, 0.04, lerpf(0.0, 0.38, t))

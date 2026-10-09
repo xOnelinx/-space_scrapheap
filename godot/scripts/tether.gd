@@ -15,7 +15,7 @@ const TAUT_MAX_CLOSE := 280.0
 const BURST_LIFE := 0.32
 
 var phase := Phase.IDLE
-var anchor: SpaceRock = null
+var anchor: Node2D = null
 var anchor_local := Vector2.ZERO
 var length := 0.0
 var bolt_global := Vector2.ZERO
@@ -24,7 +24,7 @@ var burst := 0.0
 var burst_at := Vector2.ZERO
 var ignited := false
 var _flown := 0.0
-var _ignore: SpaceRock = null
+var _ignore: Node2D = null
 var _shot := Vector2.ZERO
 
 
@@ -68,7 +68,7 @@ func shoot(host: Wanderer, direction: Vector2) -> void:
 	if direction.length_squared() <= 0.01:
 		return
 	var aim := direction.normalized()
-	var stand := host.dock.rock() if host.dock.docked and not host.dock.inside else null
+	var stand: Node2D = host.dock.body if host.dock.docked and not host.dock.inside else null
 	var from := host.global_position
 	var reach := max_length(host)
 	var hit := first_along(host, from, aim, reach, stand)
@@ -82,7 +82,7 @@ func shoot(host: Wanderer, direction: Vector2) -> void:
 	fire(host, from, aim, null)
 
 
-func plant(host: Wanderer, rock: SpaceRock, world_point: Vector2) -> void:
+func plant(host: Wanderer, rock: Node2D, world_point: Vector2) -> void:
 	if rock == null:
 		return
 	var reach := max_length(host)
@@ -95,7 +95,7 @@ func plant(host: Wanderer, rock: SpaceRock, world_point: Vector2) -> void:
 	_ignite(stick)
 
 
-func fire(host: Wanderer, from: Vector2, direction: Vector2, ignore: SpaceRock) -> void:
+func fire(host: Wanderer, from: Vector2, direction: Vector2, ignore: Node2D) -> void:
 	release()
 	if direction.length_squared() <= 0.01:
 		return
@@ -121,50 +121,23 @@ func integrate(host: Wanderer, delta: float, reeling: bool = false) -> void:
 		_constrain(host, delta)
 
 
-static func first_along(host: Node, origin: Vector2, direction: Vector2, reach: float, ignore: SpaceRock) -> SpaceRock:
-	if direction.length_squared() <= 0.0001 or reach <= 0.0:
+static func first_along(host: Node, origin: Vector2, direction: Vector2, reach: float, ignore: Node2D) -> Node2D:
+	if host == null:
 		return null
-	var tree := host.get_tree()
-	if tree == null:
-		return null
-	var dir := direction.normalized()
-	var best_t := reach
-	var found: SpaceRock = null
-	for node in tree.get_nodes_in_group("space_rocks"):
-		var rock := node as SpaceRock
-		if rock == null or rock == ignore:
-			continue
-		var t := rock.ray_hit(origin, dir) if rock.shaped else ray_circle(origin, dir, rock.global_position, rock.get_hit_radius())
-		if t >= 0.0 and t < INF and t <= best_t:
-			best_t = t
-			found = rock
-	return found
+	return Bodies.along_ray(host.get_tree(), origin, direction, reach, ignore, true)
 
 
 static func ray_circle(origin: Vector2, dir: Vector2, center: Vector2, radius: float) -> float:
-	var offset := origin - center
-	var b := 2.0 * offset.dot(dir)
-	var c := offset.dot(offset) - radius * radius
-	var disc := b * b - 4.0 * c
-	if disc < 0.0:
-		return INF
-	var root := sqrt(disc)
-	var t_near := (-b - root) * 0.5
-	if t_near >= 0.0:
-		return t_near
-	var t_far := (-b + root) * 0.5
-	if t_far >= 0.0:
-		return t_far
-	return INF
+	return Body.ray_circle(origin, dir, center, radius)
 
 
 func _recoil(host: Wanderer, aim: Vector2) -> void:
 	var back := -aim * RECOIL_SPEED
-	var rock := host.dock.rock()
-	if host.dock.docked and not host.dock.inside and rock != null:
-		var share := SpaceRock.push_share(host.get_mass(), rock.get_mass())
-		host.velocity = rock.velocity_at(host.global_position) + back * share
-		host.add_body_impulse(rock, -back * host.get_mass() * share, host.global_position)
+	var stood := host.dock.body
+	if host.dock.docked and not host.dock.inside and Body.is_body(stood):
+		var share := SpaceRock.push_share(host.get_mass(), Body.mass(stood))
+		host.velocity = Body.velocity_at(stood, host.global_position) + back * share
+		host.add_body_impulse(stood, -back * host.get_mass() * share, host.global_position)
 		host.undock()
 		return
 	host.add_impulse(back * host.get_mass())
@@ -185,7 +158,7 @@ func _fly_bolt(host: Wanderer, delta: float) -> void:
 	var rock := first_along(host, bolt_global, dir, dist, _ignore)
 	_flown += dist
 	if rock != null:
-		var hit_t := rock.ray_hit(bolt_global, dir) if rock.shaped else ray_circle(bolt_global, dir, rock.global_position, rock.get_hit_radius())
+		var hit_t := Body.ray_distance(rock, bolt_global, dir)
 		_attach(host, rock, bolt_global + dir * hit_t)
 		return
 	bolt_global += dir * dist
@@ -193,7 +166,7 @@ func _fly_bolt(host: Wanderer, delta: float) -> void:
 		release()
 
 
-func _attach(host: Wanderer, rock: SpaceRock, world_point: Vector2) -> void:
+func _attach(host: Wanderer, rock: Node2D, world_point: Vector2) -> void:
 	phase = Phase.LINKED
 	anchor = rock
 	anchor_local = rock.to_local(world_point)
@@ -227,13 +200,13 @@ func _constrain(host: Wanderer, delta: float) -> void:
 		if dist <= length or dist < 0.001:
 			return
 	var along := -offset / dist
-	var closing := (host.velocity - anchor.velocity_at(origin)).dot(along)
+	var closing := (host.velocity - Body.velocity_at(anchor, origin)).dot(along)
 	var want := clampf((dist - length) / maxf(delta, 0.001), 0.0, TAUT_MAX_CLOSE)
 	if closing < want:
 		var needed := want - closing
-		var share := SpaceRock.push_share(host.get_mass(), anchor.get_mass())
+		var share := SpaceRock.push_share(host.get_mass(), Body.mass(anchor))
 		host.add_impulse(along * needed * share * host.get_mass())
-		host.add_body_impulse(anchor, -along * needed * (1.0 - share) * anchor.get_mass(), origin)
+		host.add_body_impulse(anchor, -along * needed * (1.0 - share) * Body.mass(anchor), origin)
 	origin = anchor.to_global(anchor_local)
 	offset = host.global_position - origin
 	dist = offset.length()
@@ -241,12 +214,12 @@ func _constrain(host: Wanderer, delta: float) -> void:
 		return
 	var fix := dist - length
 	var pull := -offset / dist
-	var share_fix := SpaceRock.push_share(host.get_mass(), anchor.get_mass())
+	var share_fix := SpaceRock.push_share(host.get_mass(), Body.mass(anchor))
 	host.global_position += pull * fix * share_fix
 	anchor.global_position -= pull * fix * (1.0 - share_fix)
 
 
-func _hit(host: Wanderer, rock: SpaceRock, world_point: Vector2) -> void:
+func _hit(host: Wanderer, rock: Node2D, world_point: Vector2) -> void:
 	if _shot.length_squared() <= 0.01:
 		return
 	host.add_body_impulse(rock, _shot * RECOIL_SPEED * host.get_mass(), world_point)
@@ -258,9 +231,9 @@ func _ignite(at: Vector2) -> void:
 	ignited = true
 
 
-func _on_surface(rock: SpaceRock, world_point: Vector2) -> Vector2:
+func _on_surface(rock: Node2D, world_point: Vector2) -> Vector2:
 	var away := world_point - rock.global_position
-	var radius := rock.get_hit_radius()
+	var radius := Body.hit_radius(rock)
 	if away.length_squared() < 1.0 or radius <= 0.0:
 		return rock.global_position
 	return rock.global_position + away.normalized() * radius

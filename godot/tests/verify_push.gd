@@ -111,16 +111,17 @@ func _check_flight_nudge(wanderer: Wanderer) -> bool:
 	if jet.is_shown():
 		fail("Без кнопки струя должна гаснуть")
 		return false
-	wanderer._oxygen = 40.0
-	wanderer._oxygen_double = 0.0
+	var air := wanderer.get_node("Oxygen") as Oxygen
+	air.seconds = 40.0
+	air.double_left = 0.0
 	wanderer._using_flight_correction = true
-	wanderer._tick_oxygen(1.0)
-	if absf(wanderer._oxygen - (40.0 - 1.0 - Wanderer.FLIGHT_OXYGEN)) > 0.01:
-		fail("Правка курса должна тратить 3 кислорода в секунду, сейчас %.2f" % wanderer._oxygen)
+	wanderer._breathe(1.0)
+	if absf(air.seconds - (40.0 - 1.0 - Wanderer.FLIGHT_OXYGEN)) > 0.01:
+		fail("Правка курса должна тратить 3 кислорода в секунду, сейчас %.2f" % air.seconds)
 		return false
 	wanderer._using_flight_correction = false
-	wanderer._tick_oxygen(1.0)
-	if absf(wanderer._oxygen - (40.0 - 1.0 - Wanderer.FLIGHT_OXYGEN - 1.0)) > 0.01:
+	wanderer._breathe(1.0)
+	if absf(air.seconds - (40.0 - 1.0 - Wanderer.FLIGHT_OXYGEN - 1.0)) > 0.01:
 		fail("Без правки курса остаётся обычное дыхание")
 		return false
 	if wanderer.dock.docked or wanderer._flight_correction_held():

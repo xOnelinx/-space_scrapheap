@@ -1,14 +1,14 @@
 class_name Wanderer
 extends CharacterBody2D
 
-## Без ранца: отталкиваешься с разной силой. В пустоте — инерция, слабая правка курса WASD и короткий импульс.
+## Без ранца: отталкиваешься с разной силой, только с опоры. В пустоте — инерция и слабая правка курса WASD.
 ## По кромке астероида — A/D. По корпусу — WASD. Внутри корпуса — тот же шаг, без прыжка.
 ## Магнитные ботинки: к обломку и к астероиду цепляется при любом ударе, на любой скорости.
 ## С любой точки корпуса прыжок в любую сторону.
 ## Курс без пересечения с телами → гибель. Крутится только спрайт. Пока висит трос, этот счётчик молчит.
 ## ПКМ — курс до края экрана и стрелка скорости (спин опоры).
 ## Сила толчка — по расстоянию курсора: дальше сильнее, ближе слабее.
-## Кислород кончается сам. Секунда зажатого толчка — потом 5 секунд двойного расхода.
+## Кислород — узел Oxygen. Секунда зажатого толчка — потом 5 секунд двойного расхода.
 
 signal pushed(desired: Vector2, charge: float)
 signal dock_changed(docked: bool, body: Node2D)
@@ -26,19 +26,10 @@ const FLIGHT_OXYGEN := 3.0
 ## Курсор у персонажа — минимум, дальше CHARGE_DIST_MAX — полный толчок.
 const CHARGE_DIST_MIN := 28.0
 const CHARGE_DIST_MAX := 220.0
-const DOOM_INPUT_GRACE := 0.35
 const RESPAWN_INPUT_PAUSE := 0.45
 const LOST_DOOM_DELAY := 6.0
-const OXYGEN_SECONDS := 1800.0
-const OXYGEN_START := 200.0
-const OXYGEN_DOUBLE_PER_HOLD := 5.0
-const OXYGEN_COLOR := Color(0.4, 0.78, 1.0)
-const OXYGEN_DOUBLE_COLOR := Color(1.0, 0.62, 0.28)
-const LOST_DEATH_TEXT := "Вы умерли.\nБесконечно скитаясь в космосе.\n\nНажмите мышь — начать снова"
-const OXYGEN_DEATH_TEXT := "В космосе нет кислорода, как и в ваших легких\n\nНажмите мышь — начать снова"
 const MASS := 26.0 * 26.0
 const AIM_HORIZON := 3.0
-const VOID_SPEED := 48.0
 ## Верх спрайта — рюкзак, он наружу от камня. Низ — шлем, им встаём на поверхность.
 const FOOT_EXTENT := 12.0
 const _FLIGHT_JET := preload("res://scripts/flight_jet.gd")
@@ -64,15 +55,12 @@ var _charge := 0.0
 ## Корпус, с которого только что прыгнули: круг ещё внутри, столкновение выключено.
 var _slip_body: Node2D = null
 var _hold_time := 0.0
-var _oxygen_double := 0.0
 var _using_flight_correction := false
 var _self_radius := 0.0
 var _dead := false
 var _controls_locked := true
 var _lost_time := 0.0
-var _oxygen := OXYGEN_START
-var _oxygen_flash := 0.0
-var _oxygen_label: Label
+var _oxygen: Oxygen
 var _flight_jet: Node2D
 ## -1 — обычный спрайт. Иначе кадр захвата, пока скиталец на астероиде.
 var _grab_frame := -1
@@ -88,18 +76,15 @@ func _ready() -> void:
 	var rope := TetherView.new()
 	rope.name = "TetherView"
 	add_child(rope)
-	_free_orphan_doom_overlays()
-	_build_oxygen_hud()
+	DeathScreen.clear_orphans(get_tree())
+	_oxygen = Oxygen.new()
+	_oxygen.name = "Oxygen"
+	_oxygen.depleted.connect(_on_oxygen_depleted)
+	add_child(_oxygen)
 	_build_flight_jet()
+	_add_input_tools()
 	call_deferred("_spawn_on_start_rock")
 	call_deferred("_unlock_controls_when_ready")
-
-
-func _free_orphan_doom_overlays() -> void:
-	## Старые оверлеи могли висеть на root и переживать reload.
-	for child in get_tree().root.get_children():
-		if child is CanvasLayer and child.name == "DoomOverlay":
-			child.queue_free()
 
 
 func _spawn_on_start_rock() -> void:
@@ -115,59 +100,55 @@ func _spawn_on_start_rock() -> void:
 
 
 func _unlock_controls_when_ready() -> void:
-	## Ждём, пока отпустят ЛКМ (клик рестарта), затем пауза — и только потом можно толкаться.
-	while Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
+	## Ждём, пока отпустят толчок (клик рестарта), затем пауза — и только потом можно толкаться.
+	while Input.is_action_pressed(&"push"):
 		await get_tree().process_frame
 	await get_tree().create_timer(RESPAWN_INPUT_PAUSE).timeout
 	if is_instance_valid(self) and not _dead:
 		_controls_locked = false
+		_oxygen.open = true
 
 
-func _unhandled_input(event: InputEvent) -> void:
-	if _dead or _controls_locked:
+func _add_input_tools() -> void:
+	var push := PushTool.new()
+	push.name = "PushTool"
+	add_child(push)
+	var harpoon := HarpoonTool.new()
+	harpoon.name = "HarpoonTool"
+	add_child(harpoon)
+	var hatch := HatchTool.new()
+	hatch.name = "HatchTool"
+	add_child(hatch)
+
+
+func accepts_input() -> bool:
+	return not _dead and not _controls_locked
+
+
+func begin_push() -> void:
+	if not accepts_input() or not dock.docked or dock.inside:
 		return
-	if event is InputEventKey and event.pressed and not event.echo:
-		if event.physical_keycode == KEY_E:
-			_cast_harpoon()
-			get_viewport().set_input_as_handled()
-			return
-		if event.physical_keycode == KEY_Q:
-			tether.release()
-			get_viewport().set_input_as_handled()
-			return
-		if event.physical_keycode == KEY_F:
-			_toggle_hatch()
-			get_viewport().set_input_as_handled()
-			return
-	if dock.inside:
-		return
-	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_RIGHT:
-		if dock.docked:
-			if not event.pressed:
-				_cancel_aim_charge()
-			get_viewport().set_input_as_handled()
-		return
-	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
-		if event.pressed:
-			if dock.docked:
-				_charging = true
-				_charge = _charge_from_cursor()
-				_hold_time = 0.0
-				get_viewport().set_input_as_handled()
-			else:
-				add_void_impulse(_aim_dir(), VOID_SPEED)
-				get_viewport().set_input_as_handled()
-		else:
-			if _charging:
-				_release_push()
-				get_viewport().set_input_as_handled()
+	_charging = true
+	_charge = _charge_from_cursor()
+	_hold_time = 0.0
 
 
-func _release_push() -> void:
+func release_push() -> void:
+	if not _charging:
+		return
 	var to_target := get_global_mouse_position() - global_position
 	if to_target.length_squared() <= 0.01:
 		to_target = dock.outward()
 	_commit_push(to_target)
+
+
+func is_push_charging() -> bool:
+	return _charging
+
+
+func cancel_push_charge() -> void:
+	## Отпустили ПКМ: заряд сгорает, прыжка нет. Нужен новый зажим ЛКМ.
+	_clear_charge()
 
 
 func _commit_push(to_target: Vector2) -> void:
@@ -184,7 +165,7 @@ func _commit_push(to_target: Vector2) -> void:
 	if rock != null:
 		var share := SpaceRock.push_share(get_mass(), rock.get_mass())
 		add_body_impulse(rock, -desired * get_mass() * share, global_position)
-	_oxygen_double += _hold_time * OXYGEN_DOUBLE_PER_HOLD
+	_oxygen.note_hold(_hold_time)
 	_clear_charge()
 	undock()
 	pushed.emit(desired, charge)
@@ -236,11 +217,7 @@ func _cleared_hull(rock: SpaceRock) -> bool:
 func course_is_lost() -> bool:
 	## В полёте нет будущего касания ни с одним астероидом → потерялись.
 	## Своя скорость может быть нулевой: камень способен догнать сам.
-	for node in get_tree().get_nodes_in_group("space_rocks"):
-		var rock := node as Node2D
-		if rock != null and _will_meet_rock(rock):
-			return false
-	return true
+	return not Bodies.any_meet(get_tree(), global_position, velocity, _self_radius)
 
 
 func lost_progress() -> float:
@@ -251,157 +228,44 @@ func lost_progress() -> float:
 
 
 func _will_meet_rock(rock: Node2D) -> bool:
-	var body := rock as SpaceRock
-	var hit_radius := body.get_hit_radius() if body != null else 0.0
-	var to_center := rock.global_position - global_position
-	var radius := _self_radius + hit_radius
-	if to_center.length() <= radius:
-		return true
-	var rel := velocity - _velocity_at(rock, rock.global_position)
-	if rel.length_squared() < 0.0001:
-		return false
-	var t := to_center.dot(rel) / rel.length_squared()
-	if t < 0.0:
-		return false
-	var closest := to_center - rel * t
-	return closest.length() <= radius
+	return Bodies.will_meet(global_position, velocity, _self_radius, rock)
 
 
-func _build_oxygen_hud() -> void:
-	var layer := CanvasLayer.new()
-	layer.layer = 40
-	layer.name = "OxygenHud"
-	add_child(layer)
-
-	_oxygen_label = Label.new()
-	_oxygen_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_oxygen_label.position = Vector2(20, 14)
-	_oxygen_label.add_theme_font_size_override("font_size", 48)
-	_oxygen_label.add_theme_color_override("font_color", OXYGEN_COLOR)
-	layer.add_child(_oxygen_label)
-	_refresh_oxygen_label()
+func _on_oxygen_depleted() -> void:
+	_begin_doom(DeathScreen.OXYGEN_TEXT)
 
 
-func grant_oxygen(seconds: float) -> bool:
-	## Полный запас не забирает баллон: касание впустую его не съедает.
-	if _dead or _controls_locked or seconds <= 0.0:
-		return false
-	var room := OXYGEN_SECONDS - _oxygen
-	if room < 1.0:
-		return false
-	_oxygen += minf(seconds, room)
-	_oxygen_flash = 0.45
-	_refresh_oxygen_label()
-	return true
-
-
-func _tick_oxygen(delta: float) -> bool:
-	var rate := 1.0
-	if _oxygen_double > 0.0:
-		rate = 2.0
-		_oxygen_double = maxf(0.0, _oxygen_double - delta)
+func _breathe(delta: float) -> bool:
+	var extra := 0.0
 	if _using_flight_correction:
-		rate += FLIGHT_OXYGEN
-	_oxygen = maxf(0.0, _oxygen - delta * rate)
-	_refresh_oxygen_label()
-	_tick_oxygen_flash(delta)
-	if _oxygen > 0.0:
-		return false
-	_begin_doom(OXYGEN_DEATH_TEXT)
-	return true
+		extra = FLIGHT_OXYGEN
+	return _oxygen.tick(delta, extra)
 
 
-func _tick_oxygen_flash(delta: float) -> void:
-	if _oxygen_label == null:
-		return
-	if _oxygen_flash > 0.0:
-		_oxygen_flash = maxf(0.0, _oxygen_flash - delta)
-		var t := clampf(_oxygen_flash / 0.45, 0.0, 1.0)
-		_oxygen_label.add_theme_color_override("font_color", OXYGEN_COLOR.lerp(Color(0.9, 0.97, 1.0), t))
-	elif _oxygen_double > 0.0:
-		_oxygen_label.add_theme_color_override("font_color", OXYGEN_DOUBLE_COLOR)
-	else:
-		_oxygen_label.add_theme_color_override("font_color", OXYGEN_COLOR)
-
-
-func _refresh_oxygen_label() -> void:
-	var seconds := 0 if _oxygen <= 0.0 else ceili(_oxygen)
-	_oxygen_label.text = str(seconds)
-
-
-func _begin_doom(message: String = LOST_DEATH_TEXT) -> void:
+func _begin_doom(message: String) -> void:
 	if _dead:
 		return
 	_dead = true
+	_oxygen.open = false
 	set_physics_process(false)
 	set_process_unhandled_input(false)
-	call_deferred("_show_doom_and_restart", message)
+	DeathScreen.open(get_tree(), message)
 
 
-func _show_doom_and_restart(message: String) -> void:
-	var layer := CanvasLayer.new()
-	layer.layer = 100
-	layer.name = "DoomOverlay"
-	var root := Control.new()
-	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	root.mouse_filter = Control.MOUSE_FILTER_STOP
-	layer.add_child(root)
-
-	var dim := ColorRect.new()
-	dim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	dim.mouse_filter = Control.MOUSE_FILTER_STOP
-	dim.color = Color(0.02, 0.02, 0.06, 0.72)
-	root.add_child(dim)
-
-	var label := Label.new()
-	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	label.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
-	label.grow_horizontal = Control.GROW_DIRECTION_BOTH
-	label.grow_vertical = Control.GROW_DIRECTION_BOTH
-	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	label.text = message
-	label.add_theme_font_size_override("font_size", 36)
-	label.add_theme_color_override("font_color", Color(0.92, 0.93, 1.0))
-	label.position = Vector2(-420, -90)
-	label.size = Vector2(840, 180)
-	root.add_child(label)
-
-	# Вешаем на текущую сцену — иначе слой переживает reload и остаётся поверх игры.
-	var scene := get_tree().current_scene
-	if scene != null:
-		scene.add_child(layer)
-	else:
-		get_tree().root.add_child(layer)
-
-	await get_tree().process_frame
-	await get_tree().create_timer(DOOM_INPUT_GRACE).timeout
-
-	var restarting := false
-	var do_restart := func() -> void:
-		if restarting:
-			return
-		restarting = true
-		if is_instance_valid(layer):
-			layer.queue_free()
-		GameMenu.restart(get_tree())
-
-	var on_click := func(event: InputEvent) -> void:
-		# Рестарт по отпусканию: зажатие не переносится в новую игру как заряд толчка.
-		if event is InputEventMouseButton \
-				and event.button_index == MOUSE_BUTTON_LEFT \
-				and not event.pressed:
-			do_restart.call()
-	dim.gui_input.connect(on_click)
-	root.gui_input.connect(on_click)
+func _process(_delta: float) -> void:
+	_publish_views()
 
 
 func _physics_process(delta: float) -> void:
+	_step_motion(delta)
+	_publish_views()
+
+
+func _step_motion(delta: float) -> void:
 	if _dead:
 		return
 	_using_flight_correction = _flight_correction_held()
-	if _tick_oxygen(delta):
+	if _breathe(delta):
 		return
 	_release_slip_if_clear()
 	if dock.inside:
@@ -459,7 +323,7 @@ func _physics_process(delta: float) -> void:
 	elif course_is_lost():
 		_lost_time += delta
 		if _lost_time >= LOST_DOOM_DELAY:
-			_begin_doom()
+			_begin_doom(DeathScreen.LOST_TEXT)
 			return
 	else:
 		_lost_time = 0.0
@@ -468,6 +332,55 @@ func _physics_process(delta: float) -> void:
 	_show_idle_sprite()
 	if velocity.length_squared() > FACE_EPS * FACE_EPS:
 		_sprite.rotation = velocity.angle() - PI / 2.0
+
+
+func _publish_views() -> void:
+	_publish_aim()
+	_publish_rope()
+	_publish_warning()
+
+
+func _publish_aim() -> void:
+	var aim := get_node_or_null("JumpAim") as JumpAim
+	if aim == null:
+		return
+	if not is_aiming():
+		aim.hide_aim()
+		return
+	var target := aim_target()
+	var charge := aim_charge()
+	var launch := launch_velocity(target, charge)
+	if launch.length_squared() < 0.25:
+		aim.hide_aim()
+		return
+	var horizon := aim.path_end_local(launch).length() / launch.length()
+	aim.show_aim(launch, push_desired(target, charge), aim_too_fast_for_meteor(launch, horizon))
+
+
+func _publish_rope() -> void:
+	var view := get_node_or_null("TetherView") as TetherView
+	if view == null:
+		return
+	var age := -1.0
+	if tether.burst > 0.0:
+		age = 1.0 - tether.burst / Tether.BURST_LIFE
+	var tip := Vector2.ZERO
+	if tether.flying():
+		tip = tether.bolt_global
+	elif tether.linked():
+		tip = tether.anchor_global()
+	view.show_rope(tip, tether.flying(), tether.linked(), tether.burst_at, age)
+
+
+func _publish_warning() -> void:
+	var tree := get_tree()
+	if tree == null:
+		return
+	var warning := tree.get_first_node_in_group("lost_warning") as LostWarning
+	if warning == null:
+		return
+	var progress := lost_progress()
+	warning.show_progress(progress, LOST_DOOM_DELAY * (1.0 - progress))
 
 
 func _flight_correction_held() -> bool:
@@ -505,16 +418,7 @@ func _apply_flight_nudge(dir: Vector2, delta: float) -> void:
 
 func _screen_dir() -> Vector2:
 	## Экранные оси: W вверх, S вниз, A влево, D вправо. Y экрана вниз.
-	var dir := Vector2.ZERO
-	if Input.is_physical_key_pressed(KEY_A) or Input.is_physical_key_pressed(KEY_LEFT):
-		dir.x -= 1.0
-	if Input.is_physical_key_pressed(KEY_D) or Input.is_physical_key_pressed(KEY_RIGHT):
-		dir.x += 1.0
-	if Input.is_physical_key_pressed(KEY_W) or Input.is_physical_key_pressed(KEY_UP):
-		dir.y -= 1.0
-	if Input.is_physical_key_pressed(KEY_S) or Input.is_physical_key_pressed(KEY_DOWN):
-		dir.y += 1.0
-	return dir
+	return Input.get_vector(&"move_left", &"move_right", &"move_up", &"move_down")
 
 
 func _walk_on_surface(delta: float) -> void:
@@ -659,7 +563,7 @@ func _resolve_hit(collision: KinematicCollision2D) -> void:
 func is_aiming() -> bool:
 	if _dead or _controls_locked or not dock.docked or dock.inside:
 		return false
-	return Input.is_mouse_button_pressed(MOUSE_BUTTON_RIGHT)
+	return Input.is_action_pressed(&"aim")
 
 
 func aim_charge() -> float:
@@ -714,17 +618,14 @@ func first_aim_hit(launch_vel: Vector2, horizon: float) -> float:
 
 func first_aim_rock(launch_vel: Vector2, horizon: float) -> SpaceRock:
 	## Ближайшее чужое тело на курсе. Опору, с которой толкаемся, пропускаем.
-	var best := INF
-	var found: SpaceRock = null
-	for node in get_tree().get_nodes_in_group("space_rocks"):
-		var rock := node as SpaceRock
-		if rock == null or rock == dock.body:
-			continue
-		var hit_t := _aim_hit_time(rock, launch_vel)
-		if hit_t > 0.0 and hit_t <= horizon and hit_t < best:
-			best = hit_t
-			found = rock
-	return found
+	return Bodies.soonest(get_tree(), dock.body, horizon, _aim_hit_time_of.bind(launch_vel)) as SpaceRock
+
+
+func _aim_hit_time_of(body: Node2D, launch_vel: Vector2) -> float:
+	var rock := body as SpaceRock
+	if rock == null:
+		return INF
+	return _aim_hit_time(rock, launch_vel)
 
 
 func aim_relative_velocity(launch_vel: Vector2, horizon: float) -> Vector2:
@@ -768,18 +669,7 @@ func _dock_if_buried() -> bool:
 
 
 func _buried_asteroid() -> SpaceRock:
-	var found: SpaceRock = null
-	var best := INF
-	for node in get_tree().get_nodes_in_group("space_rocks"):
-		var rock := node as SpaceRock
-		if rock == null or rock.hull:
-			continue
-		var reach := _self_radius + rock.get_hit_radius()
-		var dist := global_position.distance_to(rock.global_position)
-		if dist < reach and dist < best:
-			best = dist
-			found = rock
-	return found
+	return Bodies.nearest_overlap(get_tree(), global_position, _self_radius, true) as SpaceRock
 
 
 func aim_too_fast_for_meteor(_launch_vel: Vector2, _horizon: float = AIM_HORIZON) -> bool:
@@ -818,6 +708,7 @@ func dock_to(body: Node2D, normal: Vector2) -> void:
 	else:
 		_begin_grab()
 	dock_changed.emit(true, body)
+	_publish_views()
 
 
 func _seat_on_shape(rock: SpaceRock) -> void:
@@ -841,6 +732,7 @@ func undock() -> void:
 	_clear_charge()
 	_show_idle_sprite()
 	dock_changed.emit(false, left)
+	_publish_views()
 
 
 func _set_body_shape_disabled(disabled: bool) -> void:
@@ -902,10 +794,7 @@ func add_impulse(impulse: Vector2) -> void:
 
 
 func add_body_impulse(body: Node2D, impulse: Vector2, world_point: Vector2) -> void:
-	var rock := body as SpaceRock
-	if rock == null or impulse.length_squared() < 0.0000001:
-		return
-	rock.apply_impulse(impulse, world_point)
+	Body.apply_impulse(body, impulse, world_point)
 
 
 func add_void_impulse(direction: Vector2, strength: float) -> bool:
@@ -947,6 +836,7 @@ func enter_interior(body: SpaceRock) -> bool:
 	_face_on_surface()
 	_show_idle_sprite()
 	dock_changed.emit(true, body)
+	_publish_views()
 	return true
 
 
@@ -1006,16 +896,24 @@ func fire_harpoon(direction: Vector2) -> void:
 
 func _reeling() -> bool:
 	return not _dead and not _controls_locked and not dock.inside and tether.linked() \
-			and Input.is_physical_key_pressed(KEY_E)
+			and Input.is_action_pressed(&"harpoon")
 
 
-func _cast_harpoon() -> void:
-	if dock.inside or tether.linked() or tether.flying():
+func cast_harpoon() -> void:
+	if not accepts_input() or dock.inside or tether.linked() or tether.flying():
 		return
 	fire_harpoon(_aim_dir())
 
 
-func _toggle_hatch() -> void:
+func release_tether() -> void:
+	if not accepts_input():
+		return
+	tether.release()
+
+
+func toggle_hatch() -> void:
+	if not accepts_input():
+		return
 	if dock.inside:
 		exit_interior()
 		return
@@ -1028,11 +926,6 @@ func _clear_charge() -> void:
 	_charging = false
 	_charge = 0.0
 	_hold_time = 0.0
-
-
-func _cancel_aim_charge() -> void:
-	## Отпустили ПКМ: заряд сгорает, прыжка нет. Нужен новый зажим ЛКМ.
-	_clear_charge()
 
 
 func _own_hit_radius() -> float:
