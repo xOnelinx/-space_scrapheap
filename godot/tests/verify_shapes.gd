@@ -46,9 +46,13 @@ func _run() -> void:
 	if _radial_aspect(long_poly) < 1.35:
 		fail("Вытянутый метеорит остался круглым: %.2f" % _radial_aspect(long_poly))
 		return
-	var round := scene.get_node("Bodies/StaticNear") as SpaceRock
-	if round.shaped or round.get_node_or_null("Silhouette") != null:
-		fail("Стартовая скала не должна быть силуэтом")
+	var start := scene.get_node("Bodies/StaticNear") as SpaceRock
+	if not start.shaped or start.hull or start.get_node_or_null("Silhouette") == null:
+		fail("Стартовая скала должна быть новым астероидом")
+		return
+	var hull := scene.get_node("Bodies/HullFed01") as SpaceRock
+	if not hull.hull or hull.shaped:
+		fail("Корпус не должен стать астероидом")
 		return
 	var wanderer := scene.get_node("Wanderer") as Wanderer
 	for rock_name in names:

@@ -116,7 +116,8 @@ func _check_tether(scene: Node, wanderer: Wanderer) -> bool:
 	var light := scene.get_node("Bodies/StaticMid") as SpaceRock
 	_quiet(heavy)
 	_quiet(light)
-	light.scale = Vector2(0.35, 0.35)
+	var light_reach := 26.0 * 0.35
+	light.scale *= light_reach / maxf(light.get_hit_radius(), 1.0)
 	if light.get_mass() >= wanderer.get_mass():
 		fail("Подопытный камень не стал легче скитальца")
 		return false
