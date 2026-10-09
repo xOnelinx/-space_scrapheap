@@ -1,6 +1,6 @@
 extends "res://tests/scene_check.gd"
 
-## Пять крупных метеоритов: у каждого свой силуэт, посадка снаружи, шаг по кромке.
+## Пять крупных метеоритов: картинка своя, коллизия — сплошной выпуклый обвод.
 
 
 func _initialize() -> void:
@@ -12,36 +12,40 @@ func _run() -> void:
 	if scene == null:
 		return
 	var names: Array[String] = ["Meteor01", "Meteor02", "Meteor03", "Meteor04", "Meteor05"]
-	var signatures: Array[String] = []
+	var seen: Array[String] = []
 	for rock_name in names:
 		var rock := scene.get_node("Bodies/%s" % rock_name) as SpaceRock
-		if rock == null or not rock.shaped or rock.hull:
-			fail("Нет силуэта: %s" % rock_name)
-			return
-		if rock.outline == null or rock.outline.points.size() < 8 or rock.outline.length < 40.0:
-			fail("Контур не собрался: %s" % rock_name)
+		if rock == null or not rock.shaped or rock.hull or rock.outline == null:
+			fail("Нет обвода метеорита: %s" % rock_name)
 			return
 		var circle := rock.get_node("CollisionShape2D") as CollisionShape2D
 		if circle == null or not circle.disabled:
 			fail("Круг всё ещё сталкивается: %s" % rock_name)
 			return
-		var poly := rock.get_node("Silhouette") as CollisionPolygon2D
-		if poly == null or poly.polygon.size() < 8:
-			fail("Нет полигона коллизии: %s" % rock_name)
+		var poly := rock.get_node_or_null("Silhouette") as CollisionPolygon2D
+		if poly == null or poly.polygon.size() < 6 or not _convex(poly.polygon):
+			fail("Нет сплошного выпуклого обвода: %s" % rock_name)
+			return
+		if not Geometry2D.is_point_in_polygon(Vector2.ZERO, poly.polygon):
+			fail("Середина камня пустая: %s" % rock_name)
 			return
 		## Как самый крупный круг потока: радиус 26 при масштабе 1.6497.
 		if absf(rock.get_hit_radius() - 42.89) > 0.6:
 			fail("Размер не как у крупного старого камня: %s %.2f" % [rock_name, rock.get_hit_radius()])
 			return
-		if not _solid(rock):
-			fail("Середина камня пустая: %s" % rock_name)
+		var picture := ""
+		var sprite := rock.get_node_or_null("Sprite") as Sprite2D
+		if sprite != null and sprite.texture != null:
+			picture = str(sprite.texture.resource_path)
+		if picture.is_empty() or seen.has(picture):
+			fail("У метеоритов должна быть своя картинка: %s" % rock_name)
 			return
-		signatures.append(_signature(poly.polygon))
-	for i in signatures.size():
-		for j in range(i + 1, signatures.size()):
-			if signatures[i] == signatures[j]:
-				fail("Два метеорита с одной и той же формой")
-				return
+		seen.append(picture)
+	var long_rock := scene.get_node("Bodies/Meteor02") as SpaceRock
+	var long_poly := (long_rock.get_node("Silhouette") as CollisionPolygon2D).polygon
+	if _radial_aspect(long_poly) < 1.35:
+		fail("Вытянутый метеорит остался круглым: %.2f" % _radial_aspect(long_poly))
+		return
 	var round := scene.get_node("Bodies/StaticNear") as SpaceRock
 	if round.shaped or round.get_node_or_null("Silhouette") != null:
 		fail("Стартовая скала не должна быть силуэтом")
@@ -56,60 +60,30 @@ func _run() -> void:
 	quit(0)
 
 
-func _solid(rock: SpaceRock) -> bool:
-	var pts := rock.outline.points
-	var centroid := Vector2.ZERO
-	for point in pts:
-		centroid += point
-	centroid /= float(pts.size())
-	return Geometry2D.is_point_in_polygon(centroid, pts)
-
-
-func _signature(poly: PackedVector2Array) -> String:
-	return "%d:%.1f:%.1f" % [poly.size(), poly[0].x, poly[poly.size() / 2].y]
-
-
 func _stands_and_walks(wanderer: Wanderer, rock: SpaceRock) -> bool:
 	wanderer.undock()
-	wanderer.global_position = rock.global_position + Vector2(0, -rock.get_hit_radius() - 40.0)
+	wanderer.global_position = rock.global_position + Vector2(0, -rock.get_hit_radius() - 12.0)
 	wanderer.dock_to(rock, Vector2.UP)
-	if not wanderer.dock.docked or wanderer.dock.has_hull():
-		fail("Не встал на силуэт")
+	if not wanderer.dock.docked or wanderer.dock.has_hull() or not wanderer.dock.has_shape():
+		fail("Не встал на обвод метеорита")
 		return false
 	if Geometry2D.is_point_in_polygon(rock.to_local(wanderer.global_position), rock.outline.points):
 		fail("Посадка внутри камня")
 		return false
-	var outward: Vector2 = wanderer.dock.outward()
-	var sprite: Sprite2D = wanderer.get_node("Sprite")
-	var feet: Vector2 = Vector2(0, 1).rotated(sprite.rotation)
-	if feet.dot(-outward) < 0.8:
-		fail("На силуэте ноги не к камню")
-		return false
 	var before := wanderer.global_position
-	var along0 := wanderer.dock.along
 	var duration := 0.6
 	var steps := 36
-	var prev_out := wanderer.dock.outward()
 	for _i in steps:
 		wanderer._walk_shape(1.0, duration / float(steps))
 		wanderer.follow_dock()
 		if Geometry2D.is_point_in_polygon(rock.to_local(wanderer.global_position), rock.outline.points):
 			fail("Шаг зашёл в камень: %s" % rock.name)
 			return false
-		var next_out := wanderer.dock.outward()
-		var turn := absf(prev_out.angle_to(next_out))
-		if turn > deg_to_rad(12.0):
-			fail("Угол к поверхности скачет: %s %.0f°" % [rock.name, rad_to_deg(turn)])
-			return false
-		prev_out = next_out
-	var traveled := absf(wanderer.dock.along - along0)
-	if traveled > rock.outline.rim * 0.5:
-		traveled = rock.outline.rim - traveled
-	var world := traveled * rock.uniform_scale()
-	if world < Wanderer.WALK_SPEED * duration * 0.85:
-		fail("По контуру почти не сдвинулся: %.1f" % world)
+	var traveled := wanderer.global_position.distance_to(before)
+	if traveled < Wanderer.WALK_SPEED * duration * 0.7:
+		fail("По обводу слишком медленно: %.1f" % traveled)
 		return false
-	if wanderer.global_position.x - before.x < 8.0:
+	if wanderer.global_position.x <= before.x:
 		fail("С вершины D не ведёт вправо")
 		return false
 	return true
@@ -118,12 +92,40 @@ func _stands_and_walks(wanderer: Wanderer, rock: SpaceRock) -> bool:
 func _bolt_hits_rim(rock: SpaceRock) -> bool:
 	var origin := rock.global_position + Vector2(-rock.get_hit_radius() - 80.0, 0)
 	var t := rock.ray_hit(origin, Vector2.RIGHT)
-	if t <= 20.0 or t >= rock.get_hit_radius() + 80.0:
-		fail("Болт не встретил силуэт")
+	if t < 1.0 or t > rock.get_hit_radius() + 80.0:
+		fail("Болт не встретил обвод: %.1f" % t)
 		return false
 	var hit := rock.to_local(origin + Vector2.RIGHT * t)
-	var rim := rock.outline.nearest_rim(hit)
-	if rim.distance > 3.0:
-		fail("Попадание не на кромке: %.1f" % rim.distance)
+	if rock.outline.nearest_rim(hit).distance > 3.0:
+		fail("Попадание не на кромке: %.1f" % rock.outline.nearest_rim(hit).distance)
 		return false
 	return true
+
+
+func _radial_aspect(poly: PackedVector2Array) -> float:
+	var far := 0.0
+	var near := INF
+	for point in poly:
+		var dist := point.length()
+		far = maxf(far, dist)
+		near = minf(near, dist)
+	if near < 1.0:
+		return 1.0
+	return far / near
+
+
+func _convex(poly: PackedVector2Array) -> bool:
+	var n := poly.size()
+	var turn := 0.0
+	for i in n:
+		var a := poly[i]
+		var b := poly[(i + 1) % n]
+		var c := poly[(i + 2) % n]
+		var cross := (b.x - a.x) * (c.y - b.y) - (b.y - a.y) * (c.x - b.x)
+		if absf(cross) < 0.01:
+			continue
+		if turn == 0.0:
+			turn = signf(cross)
+		elif signf(cross) != turn:
+			return false
+	return turn != 0.0

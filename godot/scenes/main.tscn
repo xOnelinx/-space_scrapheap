@@ -6,8 +6,6 @@
 [ext_resource type="Texture2D" uid="uid://dbadnu2t04lxh" path="res://assets/zvezdets2.png" id="3_star"]
 [ext_resource type="Texture2D" uid="uid://b3lv0gajowb8v" path="res://assets/wanderer.png" id="4_wanderer"]
 [ext_resource type="Script" uid="uid://djnm554bi5ccd" path="res://scripts/wanderer.gd" id="5_wanderer"]
-[ext_resource type="Script" uid="uid://cf5f4xei38j3h" path="res://scripts/jump_aim.gd" id="18_jump_aim"]
-[ext_resource type="Script" uid="uid://cvfblak56xx1a" path="res://scripts/lost_warning.gd" id="19_lost_warning"]
 [ext_resource type="Script" uid="uid://bo1yamnrlqi0y" path="res://scripts/menu.gd" id="7_menu"]
 [ext_resource type="PackedScene" uid="uid://cspacerock01" path="res://scenes/space_rock.tscn" id="8_rock"]
 [ext_resource type="Script" uid="uid://bc800lgo1y05g" path="res://scripts/rock_river.gd" id="9_river"]
@@ -19,6 +17,8 @@
 [ext_resource type="Texture2D" uid="uid://bo3piexnxyreh" path="res://assets/hulls/auto_assault_02.png" id="15_auto02"]
 [ext_resource type="Texture2D" uid="uid://babcl4yyl16rt" path="res://assets/hulls/auto_assault_03.png" id="16_auto03"]
 [ext_resource type="Texture2D" uid="uid://4styiwchytwu" path="res://assets/hulls/auto_assault_04.png" id="17_auto04"]
+[ext_resource type="Script" uid="uid://cf5f4xei38j3h" path="res://scripts/jump_aim.gd" id="18_jump_aim"]
+[ext_resource type="Script" uid="uid://cvfblak56xx1a" path="res://scripts/lost_warning.gd" id="19_lost_warning"]
 [ext_resource type="PackedScene" path="res://scenes/asteroids/asteroid_01.tscn" id="19_met01"]
 [ext_resource type="PackedScene" path="res://scenes/asteroids/asteroid_02.tscn" id="20_met02"]
 [ext_resource type="PackedScene" path="res://scenes/asteroids/asteroid_03.tscn" id="21_met03"]
@@ -34,7 +34,7 @@ radius = 9.0
 layer = 120
 script = ExtResource("7_menu")
 
-[node name="LostWarning" type="CanvasLayer" parent="."]
+[node name="LostWarning" type="CanvasLayer" parent="." unique_id=491604816]
 layer = 90
 script = ExtResource("19_lost_warning")
 

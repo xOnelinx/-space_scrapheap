@@ -20,7 +20,7 @@ const BOOT_CLEARANCE := 14.0
 	set(value):
 		hull_texture = value
 		_show_hull_texture()
-## Крупный метеорит: спрайт и коллизия по его силуэту, не круг.
+## Крупный метеорит: своя картинка, коллизия — сплошной выпуклый обвод этой картинки.
 @export var shape_texture: Texture2D:
 	set(value):
 		shape_texture = value
@@ -76,8 +76,7 @@ func _show_hull_texture() -> void:
 
 func _assign_ambient_spin() -> void:
 	## Стартовая скала не крутится: иначе скитальца унесёт по ободу сразу.
-	## Крупный силуэт тоже: обод длинный, даже тихий спин сносит с ног.
-	if name == "StaticNear" or spin != 0.0 or shaped:
+	if name == "StaticNear" or spin != 0.0:
 		return
 	var steps := (absi(hash(name)) % 9) - 4
 	spin = float(steps) * 0.12
@@ -130,7 +129,7 @@ func apply_depth_look() -> void:
 	if sprite == null:
 		return
 	var depth_t := float(depth) / float(DEPTH_COUNT - 1)
-	if hull or shaped:
+	if hull or shape_texture != null:
 		## Контур уже в пикселях спрайта. Дополнительный масштаб разъедется с коллизией.
 		sprite.scale = Vector2.ONE
 		var shade := lerpf(0.86, 1.0, depth_t)
@@ -176,20 +175,37 @@ func _apply_shape() -> void:
 		return
 	sprite.texture = shape_texture
 	sprite.scale = Vector2.ONE
-	var points := HullOutline.local_points_from_texture(shape_texture, 2.0)
-	if points.size() < 3:
-		shaped = false
+	var circle := get_node_or_null("CollisionShape2D") as CollisionShape2D
+	if circle == null:
+		return
+	var solid := _solid_outline(HullOutline.local_points_from_texture(shape_texture, 2.0))
+	if solid.size() < 3:
 		return
 	var poly := get_node_or_null("Silhouette") as CollisionPolygon2D
-	if poly == null:
+	if poly == null or poly.is_queued_for_deletion():
 		poly = CollisionPolygon2D.new()
 		poly.name = "Silhouette"
 		add_child(poly)
-	poly.polygon = points
-	var circle := get_node_or_null("CollisionShape2D") as CollisionShape2D
-	if circle != null:
-		circle.disabled = true
+	poly.build_mode = CollisionPolygon2D.BUILD_SOLIDS
+	poly.polygon = solid
+	circle.disabled = true
 	shaped = true
+
+
+static func _solid_outline(points: PackedVector2Array) -> PackedVector2Array:
+	## Выпуклый обвод: выемки картинки не становятся дырами, длинная ось остаётся длинной.
+	if points.size() < 3:
+		return PackedVector2Array()
+	var hull := Geometry2D.convex_hull(points)
+	var closed := hull.size() >= 2 and hull[0].distance_squared_to(hull[hull.size() - 1]) < 0.25
+	var count := hull.size() - 1 if closed else hull.size()
+	if count < 3:
+		return PackedVector2Array()
+	var solid := PackedVector2Array()
+	solid.resize(count)
+	for i in count:
+		solid[i] = hull[i]
+	return solid
 
 
 func _make_shape_outline() -> void:

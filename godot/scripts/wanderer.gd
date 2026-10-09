@@ -556,7 +556,10 @@ func _walk_rim(axis: float, delta: float) -> void:
 	if absf(axis) < 0.01:
 		return
 	var radius := maxf(dock.radius, 1.0)
-	dock.angle += axis * (WALK_SPEED / radius) * delta
+	var rock := dock.rock()
+	## Угол считается в локальных единицах. Делим на масштаб, чтобы шаг в мире был WALK_SPEED.
+	var scale := rock.uniform_scale() if rock != null else 1.0
+	dock.angle += axis * (WALK_SPEED / (radius * scale)) * delta
 	dock.local = Vector2.from_angle(dock.angle) * dock.radius
 	dock.normal_local = dock.local.normalized()
 

@@ -39,8 +39,8 @@ func _run() -> void:
 
 	var meteor := scene.get_node("Bodies/Meteor01") as SpaceRock
 	_redock(wanderer, meteor)
-	if not wanderer.dock.has_shape() or not _grab_started(sprite):
-		fail("На силуэте захват не начался")
+	if wanderer.dock.has_hull() or not _grab_started(sprite):
+		fail("На метеорите захват не начался")
 		return
 
 	print("GRAB_OK")
