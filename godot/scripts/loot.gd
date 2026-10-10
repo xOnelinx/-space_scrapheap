@@ -23,8 +23,9 @@ func _ready() -> void:
 
 
 func place_near(rock: Node2D) -> void:
-	var body := rock as SpaceRock
-	var hit := body.get_hit_radius() if body != null else 26.0
+	var hit := Body.hit_radius(rock)
+	if hit <= 0.0:
+		hit = 26.0
 	global_position = rock.global_position + Vector2(hit + HIT_RADIUS + 48.0, -36.0)
 	velocity = Vector2(22.0, -14.0)
 	spin = 0.7
@@ -45,74 +46,49 @@ func _physics_process(delta: float) -> void:
 		return
 	global_position += velocity * delta
 	rotation += spin * delta
-	for node in get_tree().get_nodes_in_group("space_rocks"):
-		var rock := node as SpaceRock
+	for node in Bodies.rocks(get_tree()):
+		var rock := node as Node2D
 		if rock != null:
 			_bounce_rock(rock)
 	_try_pickup()
 
 
 func _try_pickup() -> void:
-	var wanderer := get_tree().get_first_node_in_group("wanderer") as Wanderer
-	if wanderer == null:
+	var host := get_tree().get_first_node_in_group("wanderer") as Node2D
+	if host == null:
 		return
-	if global_position.distance_squared_to(wanderer.global_position) > PICKUP_REACH * PICKUP_REACH:
+	if global_position.distance_squared_to(host.global_position) > PICKUP_REACH * PICKUP_REACH:
 		return
-	if not wanderer.grant_oxygen(OXYGEN_GRANT):
+	var air := get_tree().get_first_node_in_group("oxygen") as Oxygen
+	if air == null or not air.grant(OXYGEN_GRANT):
 		return
 	_taken = true
 	queue_free()
 
 
 func _shove_clear() -> void:
-	for node in get_tree().get_nodes_in_group("space_rocks"):
-		var rock := node as SpaceRock
+	for node in Bodies.rocks(get_tree()):
+		var rock := node as Node2D
 		if rock != null:
 			_separate(rock)
 
 
-func _bounce_rock(rock: SpaceRock) -> void:
+func _bounce_rock(rock: Node2D) -> void:
+	Body.collide(self, rock, RESTITUTION, FRICTION)
+
+
+func _separate(rock: Node2D) -> void:
 	var delta := rock.global_position - global_position
 	var dist := delta.length()
-	var min_dist := HIT_RADIUS + rock.get_hit_radius()
-	if dist >= min_dist or min_dist <= 0.0:
-		return
-	var normal := delta / dist if dist > 0.01 else Vector2.RIGHT
-	var tangent := Vector2(-normal.y, normal.x)
-	var inv_loot := 1.0 / MASS
-	var inv_rock := 1.0 / rock.get_mass()
-	var pen := min_dist - dist
-	var corr := pen / (inv_loot + inv_rock)
-	global_position -= normal * corr * inv_loot
-	rock.global_position += normal * corr * inv_rock
-
-	var contact := global_position + normal * HIT_RADIUS
-	var rel := velocity_at(contact) - rock.velocity_at(contact)
-	var approach := rel.dot(normal)
-	if approach <= 0.0:
-		return
-	var jn := (1.0 + RESTITUTION) * approach / (inv_loot + inv_rock)
-	var impulse_n := normal * jn
-	apply_impulse(-impulse_n, contact)
-	rock.apply_impulse(impulse_n, contact)
-
-	rel = velocity_at(contact) - rock.velocity_at(contact)
-	var slip := rel.dot(tangent)
-	var inv_t := inv_loot + inv_rock + (HIT_RADIUS * HIT_RADIUS) / get_inertia() + (rock.get_hit_radius() * rock.get_hit_radius()) / rock.get_inertia()
-	var jt := clampf(slip / inv_t, -FRICTION * jn, FRICTION * jn)
-	var impulse_t := tangent * jt
-	apply_impulse(-impulse_t, contact)
-	rock.apply_impulse(impulse_t, contact)
-
-
-func _separate(rock: SpaceRock) -> void:
-	var delta := rock.global_position - global_position
-	var dist := delta.length()
-	var min_dist := HIT_RADIUS + rock.get_hit_radius()
+	var min_dist := HIT_RADIUS + Body.hit_radius(rock)
 	if dist >= min_dist or min_dist <= 0.0:
 		return
 	var normal := delta / dist if dist > 0.01 else Vector2.RIGHT
 	global_position -= normal * (min_dist - dist + 2.0)
+
+
+func get_hit_radius() -> float:
+	return HIT_RADIUS
 
 
 func get_mass() -> float:

@@ -153,6 +153,7 @@ position = Vector2(220, 400)
 rotation = 0.057
 scale = Vector2(0.1656, 0.1656)
 drift_velocity = Vector2(32, 8.411)
+start_rock = true
 
 [node name="StaticMid" parent="Bodies" unique_id=1541486983 instance=ExtResource("23_met05")]
 position = Vector2(8627, 594.00006)

@@ -237,7 +237,7 @@ func _mouse(wanderer: Wanderer, button: MouseButton, pressed: bool) -> void:
 	var event := InputEventMouseButton.new()
 	event.button_index = button
 	event.pressed = pressed
-	wanderer._unhandled_input(event)
+	wanderer.get_node("PushTool")._unhandled_input(event)
 
 
 func _check_arrow_dock_color(scene: Node, wanderer: Wanderer) -> bool:

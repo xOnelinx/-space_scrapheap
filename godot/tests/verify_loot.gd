@@ -61,7 +61,9 @@ func _run() -> void:
 		return
 
 	wanderer._controls_locked = false
-	wanderer._oxygen = 1800.0
+	var air := wanderer.get_node("Oxygen") as Oxygen
+	air.open = true
+	air.seconds = 1800.0
 	wanderer.global_position = loot.global_position
 	loot._physics_process(0.016)
 	if loot.is_queued_for_deletion():
@@ -69,10 +71,10 @@ func _run() -> void:
 		quit(1)
 		return
 
-	wanderer._oxygen = 100.0
+	air.seconds = 100.0
 	loot._physics_process(0.016)
-	if not loot.is_queued_for_deletion() or absf(wanderer._oxygen - 700.0) > 0.01:
-		push_error("Подбор: кислород %.1f" % wanderer._oxygen)
+	if not loot.is_queued_for_deletion() or absf(air.seconds - 700.0) > 0.01:
+		push_error("Подбор: кислород %.1f" % air.seconds)
 		quit(1)
 		return
 

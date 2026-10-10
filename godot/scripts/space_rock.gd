@@ -16,6 +16,8 @@ const BOOT_CLEARANCE := 14.0
 
 @export var drift_velocity := Vector2.ZERO
 @export var spin := 0.0
+## Стартовая скала: без случайного спина. Река ставит баллон рядом.
+@export var start_rock := false
 @export var hull_texture: Texture2D:
 	set(value):
 		hull_texture = value
@@ -76,7 +78,7 @@ func _show_hull_texture() -> void:
 
 func _assign_ambient_spin() -> void:
 	## Стартовая скала не крутится: иначе скитальца унесёт по ободу сразу.
-	if name == "StaticNear" or spin != 0.0:
+	if start_rock or spin != 0.0:
 		return
 	var steps := (absi(hash(name)) % 9) - 4
 	spin = float(steps) * 0.12
@@ -285,43 +287,5 @@ static func push_share(mass_actor: float, mass_other: float) -> float:
 	return mass_other / sum
 
 
-static func normal_impulse(approach: float, inv_sum: float, restitution: float) -> float:
-	return (1.0 + restitution) * approach / inv_sum
-
-
-static func friction_impulse(slip: float, inv_tangent: float, normal_jn: float, friction: float) -> float:
-	return clampf(slip / inv_tangent, -friction * normal_jn, friction * normal_jn)
-
-
-static func bounce(a: SpaceRock, b: SpaceRock) -> void:
-	if a.depth != b.depth:
-		return
-	var ra := a.get_hit_radius()
-	var rb := b.get_hit_radius()
-	var overlap := circle_overlap(a.global_position, b.global_position, ra, rb)
-	if not overlap.hit:
-		return
-	var normal := overlap.normal
-	var tangent := Vector2(-normal.y, normal.x)
-	a.global_position -= normal * separation_share(overlap.penetration, a.get_mass(), b.get_mass())
-	b.global_position += normal * separation_share(overlap.penetration, b.get_mass(), a.get_mass())
-
-	var contact := a.global_position + normal * ra
-	var rel := a.velocity_at(contact) - b.velocity_at(contact)
-	var approach := rel.dot(normal)
-	if approach <= 0.0:
-		return
-	var inv_a := 1.0 / a.get_mass()
-	var inv_b := 1.0 / b.get_mass()
-	var jn := normal_impulse(approach, inv_a + inv_b, PAIR_RESTITUTION)
-	var impulse_n := normal * jn
-	a.apply_impulse(-impulse_n, contact)
-	b.apply_impulse(impulse_n, contact)
-
-	rel = a.velocity_at(contact) - b.velocity_at(contact)
-	var slip := rel.dot(tangent)
-	var inv_t := inv_a + inv_b + (ra * ra) / a.get_inertia() + (rb * rb) / b.get_inertia()
-	var jt := friction_impulse(slip, inv_t, jn, PAIR_FRICTION)
-	var impulse_t := tangent * jt
-	a.apply_impulse(-impulse_t, contact)
-	b.apply_impulse(impulse_t, contact)
+static func bounce(a: Node2D, b: Node2D, restitution: float = PAIR_RESTITUTION, friction: float = PAIR_FRICTION) -> void:
+	Body.collide(a, b, restitution, friction)

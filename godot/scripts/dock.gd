@@ -64,7 +64,4 @@ func follow(host: CharacterBody2D) -> bool:
 
 
 static func velocity_at(body: Node, at: Vector2) -> Vector2:
-	var stood := body as SpaceRock
-	if stood == null:
-		return Vector2.ZERO
-	return stood.velocity_at(at)
+	return Body.velocity_at(body, at)

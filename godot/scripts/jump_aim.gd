@@ -21,16 +21,29 @@ var _push_end := Vector2.ZERO
 var _arrow_color := ARROW_SAFE
 var _shown := false
 
-@onready var _wanderer: Wanderer = get_parent()
-
 
 func _ready() -> void:
 	z_index = -1
 	z_as_relative = true
 
 
-func _process(_delta: float) -> void:
-	_refresh()
+func show_aim(launch: Vector2, push: Vector2, hard: bool) -> void:
+	if launch.length_squared() < 0.25:
+		hide_aim()
+		return
+	_path_end = path_end_local(launch)
+	_arrow_end = velocity_end_local(launch)
+	_arrow_color = ARROW_HARD if hard else ARROW_SAFE
+	_push_end = push_end_local(push)
+	_shown = true
+	queue_redraw()
+
+
+func hide_aim() -> void:
+	if not _shown:
+		return
+	_shown = false
+	queue_redraw()
 
 
 func _draw() -> void:
@@ -54,27 +67,6 @@ func velocity_end_local(launch: Vector2) -> Vector2:
 
 func push_end_local(desired: Vector2) -> Vector2:
 	return desired
-
-
-func _refresh() -> void:
-	if _wanderer == null or not _wanderer.is_aiming():
-		if _shown:
-			_shown = false
-			queue_redraw()
-		return
-	var launch := _wanderer.launch_velocity(_wanderer.aim_target(), _wanderer.aim_charge())
-	if launch.length_squared() < 0.25:
-		if _shown:
-			_shown = false
-			queue_redraw()
-		return
-	_path_end = path_end_local(launch)
-	var horizon := _path_end.length() / launch.length()
-	_arrow_end = velocity_end_local(launch)
-	_arrow_color = ARROW_HARD if _wanderer.aim_too_fast_for_meteor(launch, horizon) else ARROW_SAFE
-	_push_end = push_end_local(_wanderer.push_desired(_wanderer.aim_target(), _wanderer.aim_charge()))
-	_shown = true
-	queue_redraw()
 
 
 func _visible_world_rect() -> Rect2:
