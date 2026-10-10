@@ -245,7 +245,10 @@ func rim_pose(along: float) -> Pose:
 
 func _smooth_outward(along: float, turn: float) -> Vector2:
 	## Пиксельная лесенка контура даёт нормаль то вбок, то наружу. Усредняем соседние рёбра.
-	var window := clampf(clearance_local * 0.5, 22.0, 52.0)
+	## Окно от зазора подошвы: на мелком масштабе оно шире и не дёргает нормаль на каждом шаге.
+	var window := maxf(clearance_local * 0.5, 22.0)
+	if rim > 1.0:
+		window = minf(window, rim * 0.25)
 	var base := _edge_normal_at(along, turn)
 	var sum := base
 	var samples := 7

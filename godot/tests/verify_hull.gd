@@ -110,14 +110,21 @@ func _check_groups_in_stream(scene: Node) -> bool:
 func _check_rim_walk(scene: Node, wanderer: Wanderer) -> bool:
 	var rock := scene.get_node("Bodies/StaticNear") as SpaceRock
 	wanderer.dock_to(rock, Vector2.UP)
-	var rim_before := wanderer.dock.angle
-	wanderer._walk_rim(1.0, 0.5)
-	if absf(wanderer.dock.angle - rim_before) < 0.2:
-		fail("По кромке астероида не сдвинулись")
-		return false
-	if absf(wanderer.dock.local.length() - wanderer.dock.radius) > 1.5:
-		fail("Ходьба по кромке ушла с окружности")
-		return false
+	if wanderer.dock.has_shape():
+		var along_before := wanderer.dock.along
+		wanderer._walk_shape(1.0, 0.5)
+		if absf(wanderer.dock.along - along_before) < 1.0:
+			fail("По кромке астероида не сдвинулись")
+			return false
+	else:
+		var rim_before := wanderer.dock.angle
+		wanderer._walk_rim(1.0, 0.5)
+		if absf(wanderer.dock.angle - rim_before) < 0.2:
+			fail("По кромке астероида не сдвинулись")
+			return false
+		if absf(wanderer.dock.local.length() - wanderer.dock.radius) > 1.5:
+			fail("Ходьба по кромке ушла с окружности")
+			return false
 	var rim_parked := wanderer.dock.local
 	wanderer._step_on_hull(Vector2(0, -1), 0.5)
 	if wanderer.dock.local.distance_to(rim_parked) > 0.01:

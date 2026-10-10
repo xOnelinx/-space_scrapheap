@@ -308,7 +308,8 @@ func _check_fast_contact_docks(wanderer: Wanderer) -> bool:
 		if rock != meteor:
 			rock.global_position += Vector2(0, 50000)
 	meteor.global_position = Vector2(4000, 4000)
-	meteor.scale = Vector2(0.5, 0.5)
+	var light_reach := 26.0 * 0.5
+	meteor.scale *= light_reach / maxf(meteor.get_hit_radius(), 1.0)
 	wanderer._controls_locked = true
 	if not _flies_into(wanderer, meteor, 320.0):
 		fail("Быстрый удар в лёгкий астероид должен цеплять")
