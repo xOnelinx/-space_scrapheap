@@ -60,6 +60,8 @@ func _run() -> void:
 			return
 	if not _bolt_hits_rim(scene.get_node("Bodies/Meteor02") as SpaceRock):
 		return
+	if not _jump_leaves_flank(wanderer, scene.get_node("Bodies/Meteor02") as SpaceRock):
+		return
 	var small := scene.get_node("Bodies/Meteor03") as SpaceRock
 	var saved_scale := small.scale
 	small.scale = saved_scale * 0.35
@@ -106,6 +108,50 @@ func _stands_and_walks(wanderer: Wanderer, rock: SpaceRock) -> bool:
 		fail("С вершины D не ведёт вправо")
 		return false
 	return true
+
+
+func _jump_leaves_flank(wanderer: Wanderer, rock: SpaceRock) -> bool:
+	## Бок вытянутого камня лежит внутри описанной окружности. Прыжок наружу не должен сажать обратно.
+	for node in wanderer.get_tree().get_nodes_in_group("space_rocks"):
+		var other := node as SpaceRock
+		if other == null or other == rock:
+			continue
+		other.global_position = Vector2(-100000.0, 0.0)
+		other.drift_velocity = Vector2.ZERO
+		other.spin = 0.0
+	rock.drift_velocity = Vector2.ZERO
+	rock.spin = 0.0
+	var outline := rock.outline
+	var samples := 24
+	for i in samples:
+		var along := outline.rim * float(i) / float(samples)
+		var pose := outline.rim_pose(along)
+		var world: Vector2 = rock.to_global(pose.point)
+		if world.distance_to(rock.global_position) >= rock.get_hit_radius() + wanderer._self_radius:
+			continue
+		wanderer.undock()
+		wanderer.global_position = world
+		var outward: Vector2 = rock.to_global(pose.point + pose.normal) - world
+		if outward.length_squared() < 0.01:
+			outward = Vector2.UP
+		wanderer.dock_to(rock, outward)
+		var local := rock.to_local(wanderer.global_position)
+		var gap := outline.nearest_rim(local).distance * rock.uniform_scale()
+		if Geometry2D.is_point_in_polygon(local, outline.points) or gap < wanderer._self_radius + 1.0:
+			fail("Посадка на боку внутри камня: %s" % rock.name)
+			return false
+		wanderer._charge = 1.0
+		wanderer._commit_push(wanderer.dock.outward() * 80.0)
+		if wanderer.dock.docked:
+			fail("Толчок с бока не отцепил: %s" % rock.name)
+			return false
+		wanderer._physics_process(1.0 / 60.0)
+		if wanderer.dock.docked:
+			fail("Прыжок с бока снова сел на метеорит: %s" % rock.name)
+			return false
+		return true
+	fail("Нет бока внутри описанной окружности: %s" % rock.name)
+	return false
 
 
 func _bolt_hits_rim(rock: SpaceRock) -> bool:
