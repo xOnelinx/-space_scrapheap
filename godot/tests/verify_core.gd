@@ -389,6 +389,34 @@ func _check_rope_ride(wanderer: Wanderer, heavy: SpaceRock, light: SpaceRock) ->
 		_clear_ride(wanderer)
 		fail("F у конца троса не посадил на камень")
 		return false
+	wanderer._controls_locked = false
+	wanderer.toggle_hatch()
+	wanderer._controls_locked = locked
+	if wanderer.dock.docked or wanderer._ride != null:
+		_clear_ride(wanderer)
+		fail("F на астероиде не отпустил его")
+		return false
+	if wanderer.velocity.length() > 4.0:
+		_clear_ride(wanderer)
+		fail("Отпускание без шага бросило героя")
+		return false
+	wanderer.dock_to(light, Vector2.LEFT)
+	var outward := wanderer.dock.outward()
+	Input.action_press(&"move_right")
+	wanderer._controls_locked = false
+	wanderer.toggle_hatch()
+	Input.action_release(&"move_right")
+	wanderer._controls_locked = locked
+	var tangent := Vector2(-outward.y, outward.x)
+	if wanderer.velocity.length() < 20.0 or absf(wanderer.velocity.dot(outward)) > absf(wanderer.velocity.dot(tangent)):
+		_clear_ride(wanderer)
+		fail("Отпускание на шаге ушло не по касательной")
+		return false
+	wanderer._physics_process(0.05)
+	if wanderer.dock.docked:
+		_clear_ride(wanderer)
+		fail("Отпущенный астероид сразу поймал героя")
+		return false
 	_clear_ride(wanderer)
 	return true
 

@@ -565,6 +565,8 @@ func _resolve_hit(collision: KinematicCollision2D) -> void:
 	var normal := collision.get_normal()
 	var rock := collider as SpaceRock
 	if rock != null:
+		if rock == _slip_body:
+			return
 		## Круглый камень: нормаль из центра, чтобы кривой контакт не вдавливал внутрь.
 		if not rock.hull:
 			var away := global_position - rock.global_position
@@ -680,7 +682,7 @@ func asteroid_dock_speed(_rock: SpaceRock) -> float:
 func _dock_if_buried() -> bool:
 	## Кадр без отданного контакта: круг уже внутри астероида, вылет выглядел бы отскоком.
 	var buried := _buried_asteroid()
-	if buried == null:
+	if buried == null or buried == _slip_body:
 		return false
 	var away := global_position - buried.global_position
 	var normal := Vector2.UP if away.length_squared() < 0.0001 else away.normalized()
@@ -743,6 +745,38 @@ func _seat_on_shape(rock: SpaceRock) -> void:
 func follow_dock() -> void:
 	if not dock.follow(self):
 		undock()
+
+
+func _release_asteroid() -> bool:
+	## F на астероиде отпускает ботинки. Дальше герой летит по скорости камня и шага, не по нормали.
+	if not dock.docked or dock.inside:
+		return false
+	var rock := dock.rock()
+	if rock == null or rock.hull:
+		return false
+	var outward := dock.outward()
+	var carry := _velocity_at(rock, global_position) + _surface_walk_velocity(rock)
+	undock()
+	global_position += outward * (_self_radius + DOCK_SEPARATION)
+	velocity = carry
+	_begin_slip(rock)
+	return true
+
+
+func _surface_walk_velocity(rock: SpaceRock) -> Vector2:
+	## Касательная кромки в сторону A/D. В мире это скорость шага.
+	var axis := 0.0 if _controls_locked else _screen_dir().x
+	if absf(axis) < 0.01:
+		return Vector2.ZERO
+	var local := Vector2.ZERO
+	if dock.has_shape() and rock.outline != null:
+		var sign := 1.0 if rock.outline.loop_is_clockwise() else -1.0
+		local = rock.outline.rim_tangent(dock.along) * sign * signf(axis)
+	else:
+		local = Vector2.from_angle(dock.angle + PI * 0.5) * signf(axis)
+	if local.length_squared() < 0.0001:
+		return Vector2.ZERO
+	return local.normalized().rotated(rock.global_rotation) * WALK_SPEED
 
 
 func undock() -> void:
@@ -963,6 +997,8 @@ func toggle_hatch() -> void:
 		return
 	if dock.inside:
 		exit_interior()
+		return
+	if dock.docked and _release_asteroid():
 		return
 	if grab_nearest_rope():
 		return
