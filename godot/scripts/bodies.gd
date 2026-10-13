@@ -71,12 +71,24 @@ static func nearest_overlap(tree: SceneTree, origin: Vector2, radius: float, ski
 			continue
 		if skip_hull and bool(body.get("hull")):
 			continue
-		var reach := radius + Body.hit_radius(body)
+		if not _circle_on_body(body, origin, radius):
+			continue
 		var dist := origin.distance_to(body.global_position)
-		if dist < reach and dist < best:
+		if dist < best:
 			best = dist
 			found = body
 	return found
+
+
+static func _circle_on_body(body: Node2D, origin: Vector2, radius: float) -> bool:
+	## Сначала описанная окружность: силуэт нужен только у камня, внутри которого уже стоим.
+	var reach := radius + Body.hit_radius(body)
+	if origin.distance_to(body.global_position) >= reach:
+		return false
+	var rock := body as SpaceRock
+	if rock != null and rock.shaped:
+		return rock.overlaps_circle(origin, radius)
+	return true
 
 
 static func soonest(tree: SceneTree, ignore: Node, horizon: float, time_of: Callable) -> Node2D:

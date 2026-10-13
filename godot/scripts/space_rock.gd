@@ -125,6 +125,19 @@ func get_hit_radius() -> float:
 	return circle.radius * uniform_scale()
 
 
+func overlaps_circle(world_center: Vector2, radius: float) -> bool:
+	## Силуэт, не описанная окружность: бок вытянутого камня внутри неё, но снаружи железа.
+	if not shaped or outline == null or outline.points.size() < 3:
+		return global_position.distance_to(world_center) < get_hit_radius() + maxf(radius, 0.0)
+	var local := to_local(world_center)
+	if Geometry2D.is_point_in_polygon(local, outline.points):
+		return true
+	var gap: float = outline.nearest_rim(local).distance
+	if gap == INF:
+		return false
+	return gap * uniform_scale() < maxf(radius, 0.0)
+
+
 func apply_depth_look() -> void:
 	z_index = depth
 	var sprite := get_node_or_null("Sprite") as Sprite2D
