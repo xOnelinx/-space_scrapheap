@@ -14,6 +14,7 @@ const HIT_PUSH := 0.25
 const REEL_RATE := 70.0
 const MIN_LENGTH := 16.0
 const TAUT_MAX_CLOSE := 280.0
+const LINK_COUNT := 9
 const BURST_LIFE := 1.05
 ## Свет пороха гаснет раньше: газ ещё висит, когда вспышка уже погасла.
 const FLASH_LIFE := 0.20
@@ -41,6 +42,9 @@ var muzzle_dir := Vector2.ZERO
 var _flown := 0.0
 var _ignore: Node2D = null
 var _shot := Vector2.ZERO
+var _links := PackedVector2Array()
+var _link_prev := PackedVector2Array()
+var _bend_sign := 1.0
 
 
 func linked() -> bool:
@@ -79,6 +83,7 @@ func pin_home(host: Wanderer) -> bool:
 	## Размер замирает на текущем расстоянии между концами и дальше не растёт и не коротится.
 	var span := home_global().distance_to(anchor_global())
 	length = minf(maxf(span, 0.001), max_length(host))
+	_spawn_links()
 	var stick := home_global()
 	_ignite(stick, stick - stood.global_position)
 	return true
@@ -91,6 +96,43 @@ func jaw_angle() -> float:
 	if _shot.length_squared() > 0.01:
 		return _shot.angle()
 	return 0.0
+
+
+func link_points() -> PackedVector2Array:
+	if not _ensure_links():
+		return PackedVector2Array()
+	return _links.duplicate()
+
+
+func link_span() -> float:
+	if not _ensure_links():
+		return 0.0
+	return _polyline_length(_links)
+
+
+func closest_on_links(point: Vector2) -> Vector3:
+	if not _ensure_links():
+		return Vector3(point.x, point.y, 0.0)
+	return _closest_on_polyline(_links, point)
+
+
+func point_on_links(u: float) -> Vector2:
+	if not _ensure_links():
+		return Vector2.ZERO
+	return _point_on_polyline(_links, u)
+
+
+func tangent_on_links(u: float) -> Vector2:
+	if not _ensure_links():
+		return Vector2.RIGHT
+	var ahead := _point_on_polyline(_links, clampf(u + 0.02, 0.0, 1.0))
+	var behind := _point_on_polyline(_links, clampf(u - 0.02, 0.0, 1.0))
+	var dir := ahead - behind
+	if dir.length_squared() < 0.0001:
+		dir = _links[_links.size() - 1] - _links[0]
+	if dir.length_squared() < 0.0001:
+		return Vector2.RIGHT
+	return dir.normalized()
 
 
 func release() -> void:
@@ -106,6 +148,8 @@ func release() -> void:
 	_ignore = null
 	_shot = Vector2.ZERO
 	ignited = false
+	_links = PackedVector2Array()
+	_link_prev = PackedVector2Array()
 
 
 func max_length(host: Wanderer) -> float:
@@ -276,21 +320,21 @@ func _reel(delta: float) -> void:
 
 
 func _tie_bodies(host: Wanderer, delta: float) -> void:
-	## Натянутый трос держит расстояние между креплениями: и длиннее, и короче заданного размера.
+	## Длина после СКМ замерла. Тянет только натянутый трос; слабина не раздвигает камни и не гасит боковой ход.
 	if not pinned() or not is_instance_valid(anchor) or home == anchor:
 		return
+	_step_links(delta)
 	var origin := anchor_global()
 	var other := home_global()
 	var offset := other - origin
 	var dist := offset.length()
-	if dist < 0.001:
+	if dist <= length or dist < 0.001:
 		return
 	var along := offset / dist
 	var separating := (Body.velocity_at(home, other) - Body.velocity_at(anchor, origin)).dot(along)
-	## Длина после СКМ замерла: длиннее — стянуть, короче — раздвинуть.
-	var bias := clampf(0.4 * (dist - length) / maxf(delta, 0.001), -TAUT_MAX_CLOSE, TAUT_MAX_CLOSE)
+	var bias := clampf(0.4 * (dist - length) / maxf(delta, 0.001), 0.0, TAUT_MAX_CLOSE)
 	var needed := separating + bias
-	if absf(needed) <= 0.0001:
+	if needed <= 0.0:
 		return
 	var inv := _pin_inv_mass(anchor, origin, along) + _pin_inv_mass(home, other, along)
 	if inv <= 0.0:
@@ -311,6 +355,161 @@ func _pin_inv_mass(body: Node2D, at: Vector2, along: Vector2) -> float:
 	var lever := at - body.global_position
 	var cross := lever.x * along.y - lever.y * along.x
 	return inv + cross * cross / inertia
+
+
+func _ensure_links() -> bool:
+	if not pinned() or not is_instance_valid(anchor):
+		return false
+	if _links.size() == LINK_COUNT:
+		return true
+	_spawn_links()
+	return _links.size() == LINK_COUNT
+
+
+func _spawn_links() -> void:
+	var home_at := home_global()
+	var hook_at := anchor_global()
+	_links = PackedVector2Array()
+	_link_prev = PackedVector2Array()
+	_links.resize(LINK_COUNT)
+	_link_prev.resize(LINK_COUNT)
+	for i in LINK_COUNT:
+		var at := home_at.lerp(hook_at, float(i) / float(LINK_COUNT - 1))
+		_links[i] = at
+		_link_prev[i] = at
+	_bend_sign = 1.0
+
+
+func _step_links(_delta: float) -> void:
+	if not _ensure_links():
+		return
+	var home_at := home_global()
+	var hook_at := anchor_global()
+	var chord := hook_at - home_at
+	var dist := chord.length()
+	if dist < 1.0:
+		return
+	if dist >= length - 0.5:
+		for i in LINK_COUNT:
+			var at := home_at.lerp(hook_at, float(i) / float(LINK_COUNT - 1))
+			_links[i] = at
+			_link_prev[i] = at
+		return
+	for i in range(1, LINK_COUNT - 1):
+		var vel := _links[i] - _link_prev[i]
+		_link_prev[i] = _links[i]
+		_links[i] = _links[i] + vel
+	_links[0] = home_at
+	_links[LINK_COUNT - 1] = hook_at
+	_satisfy_links(home_at, hook_at)
+	if _off_chord() < 2.0:
+		_bow_slack(home_at, hook_at, chord / dist, dist)
+		_satisfy_links(home_at, hook_at)
+
+
+func _satisfy_links(home_at: Vector2, hook_at: Vector2) -> void:
+	var seg := length / float(LINK_COUNT - 1)
+	for _iter in 6:
+		for i in LINK_COUNT - 1:
+			var a := _links[i]
+			var b := _links[i + 1]
+			var delta := b - a
+			var span := delta.length()
+			if span < 0.001:
+				continue
+			var corr := delta * ((span - seg) / span) * 0.5
+			if i > 0:
+				_links[i] = _links[i] + corr
+			if i + 1 < LINK_COUNT - 1:
+				_links[i + 1] = _links[i + 1] - corr
+		_links[0] = home_at
+		_links[LINK_COUNT - 1] = hook_at
+
+
+func _bow_slack(home_at: Vector2, hook_at: Vector2, along: Vector2, dist: float) -> void:
+	## Ровная цепочка при сближении концов уходит вбок и дальше живёт своей скоростью.
+	var side := Vector2(-along.y, along.x)
+	## Середина отстаёт от концов: провис смотрит против их бокового хода.
+	var drift := Body.velocity_at(home, home_at) + Body.velocity_at(anchor, hook_at)
+	var lateral := drift.dot(side)
+	if absf(lateral) > 2.0:
+		_bend_sign = -signf(lateral)
+	if _bend_sign < 0.0:
+		side = -side
+	var half := dist * 0.5
+	var rope_half := length * 0.5
+	var sag := 0.0
+	if rope_half > half:
+		sag = sqrt(rope_half * rope_half - half * half) * 0.65
+	for i in range(1, LINK_COUNT - 1):
+		var u := float(i) / float(LINK_COUNT - 1)
+		var bell := sin(u * PI)
+		var placed := home_at.lerp(hook_at, u) + side * sag * bell
+		_link_prev[i] = placed - side * bell * 0.5
+		_links[i] = placed
+
+
+func _off_chord() -> float:
+	var home_at := _links[0]
+	var hook_at := _links[_links.size() - 1]
+	var chord := hook_at - home_at
+	var span := chord.length()
+	if span < 1.0:
+		return 0.0
+	var best := 0.0
+	for i in range(1, _links.size() - 1):
+		var rel := _links[i] - home_at
+		var off := absf(rel.x * chord.y - rel.y * chord.x) / span
+		best = maxf(best, off)
+	return best
+
+
+func _polyline_length(points: PackedVector2Array) -> float:
+	var total := 0.0
+	for i in points.size() - 1:
+		total += points[i].distance_to(points[i + 1])
+	return total
+
+
+func _closest_on_polyline(points: PackedVector2Array, point: Vector2) -> Vector3:
+	var total := _polyline_length(points)
+	if total < 1.0:
+		return Vector3(points[0].x, points[0].y, 0.0)
+	var best_d := INF
+	var best := Vector3(points[0].x, points[0].y, 0.0)
+	var acc := 0.0
+	for i in points.size() - 1:
+		var a := points[i]
+		var b := points[i + 1]
+		var ab := b - a
+		var span := ab.length()
+		if span < 0.001:
+			continue
+		var t := clampf((point - a).dot(ab) / ab.length_squared(), 0.0, 1.0)
+		var at := a + ab * t
+		var dist := point.distance_squared_to(at)
+		if dist < best_d:
+			best_d = dist
+			best = Vector3(at.x, at.y, (acc + span * t) / total)
+		acc += span
+	return best
+
+
+func _point_on_polyline(points: PackedVector2Array, u: float) -> Vector2:
+	var total := _polyline_length(points)
+	if total < 1.0:
+		return points[0]
+	var target := total * clampf(u, 0.0, 1.0)
+	var acc := 0.0
+	for i in points.size() - 1:
+		var a := points[i]
+		var b := points[i + 1]
+		var span := a.distance_to(b)
+		if acc + span >= target - 0.0001:
+			var t := 0.0 if span < 0.001 else (target - acc) / span
+			return a.lerp(b, clampf(t, 0.0, 1.0))
+		acc += span
+	return points[points.size() - 1]
 
 
 func _constrain(host: Wanderer, delta: float) -> void:

@@ -565,8 +565,6 @@ func _resolve_hit(collision: KinematicCollision2D) -> void:
 	var normal := collision.get_normal()
 	var rock := collider as SpaceRock
 	if rock != null:
-		if rock == _slip_body:
-			return
 		## Круглый камень: нормаль из центра, чтобы кривой контакт не вдавливал внутрь.
 		if not rock.hull:
 			var away := global_position - rock.global_position
@@ -682,7 +680,7 @@ func asteroid_dock_speed(_rock: SpaceRock) -> float:
 func _dock_if_buried() -> bool:
 	## Кадр без отданного контакта: круг уже внутри астероида, вылет выглядел бы отскоком.
 	var buried := _buried_asteroid()
-	if buried == null or buried == _slip_body:
+	if buried == null:
 		return false
 	var away := global_position - buried.global_position
 	var normal := Vector2.UP if away.length_squared() < 0.0001 else away.normalized()
@@ -745,38 +743,6 @@ func _seat_on_shape(rock: SpaceRock) -> void:
 func follow_dock() -> void:
 	if not dock.follow(self):
 		undock()
-
-
-func _release_asteroid() -> bool:
-	## F на астероиде отпускает ботинки. Дальше герой летит по скорости камня и шага, не по нормали.
-	if not dock.docked or dock.inside:
-		return false
-	var rock := dock.rock()
-	if rock == null or rock.hull:
-		return false
-	var outward := dock.outward()
-	var carry := _velocity_at(rock, global_position) + _surface_walk_velocity(rock)
-	undock()
-	global_position += outward * (_self_radius + DOCK_SEPARATION)
-	velocity = carry
-	_begin_slip(rock)
-	return true
-
-
-func _surface_walk_velocity(rock: SpaceRock) -> Vector2:
-	## Касательная кромки в сторону A/D. В мире это скорость шага.
-	var axis := 0.0 if _controls_locked else _screen_dir().x
-	if absf(axis) < 0.01:
-		return Vector2.ZERO
-	var local := Vector2.ZERO
-	if dock.has_shape() and rock.outline != null:
-		var sign := 1.0 if rock.outline.loop_is_clockwise() else -1.0
-		local = rock.outline.rim_tangent(dock.along) * sign * signf(axis)
-	else:
-		local = Vector2.from_angle(dock.angle + PI * 0.5) * signf(axis)
-	if local.length_squared() < 0.0001:
-		return Vector2.ZERO
-	return local.normalized().rotated(rock.global_rotation) * WALK_SPEED
 
 
 func undock() -> void:
@@ -998,8 +964,6 @@ func toggle_hatch() -> void:
 	if dock.inside:
 		exit_interior()
 		return
-	if dock.docked and _release_asteroid():
-		return
 	if grab_nearest_rope():
 		return
 	var rock := dock.rock()
@@ -1014,12 +978,9 @@ func grab_nearest_rope() -> bool:
 	for rope in fixed_ropes:
 		if not rope.linked() or not rope.pinned():
 			continue
-		var ends := _cable_ends(rope)
-		var home := ends[0]
-		var hook := ends[1]
-		if home.distance_squared_to(hook) < 1.0:
+		var nearest := rope.closest_on_links(global_position)
+		if rope.link_span() < 1.0:
 			continue
-		var nearest := _closest_on_segment(home, hook, global_position)
 		var dist := global_position.distance_to(Vector2(nearest.x, nearest.y))
 		if dist < best_dist:
 			best = rope
@@ -1031,9 +992,8 @@ func grab_nearest_rope() -> bool:
 		undock()
 	_ride = best
 	_ride_u = best_u
-	var seat := _cable_ends(best)
-	var along := seat[1] - seat[0]
-	var point := seat[0].lerp(seat[1], _ride_u)
+	var point := best.point_on_links(_ride_u)
+	var along := best.tangent_on_links(_ride_u)
 	var off := global_position - point
 	var cross := along.cross(off)
 	_ride_side = 0.0 if absf(cross) < 1.0 else signf(cross)
@@ -1084,12 +1044,9 @@ func _latch_asteroid() -> bool:
 func _seat_on_rope() -> void:
 	if _ride == null or not _ride.linked() or not _ride.pinned():
 		return
-	var ends := _cable_ends(_ride)
-	var home := ends[0]
-	var hook := ends[1]
-	if home.distance_squared_to(hook) < 1.0:
+	if _ride.link_span() < 1.0:
 		return
-	global_position = home.lerp(hook, _ride_u)
+	global_position = _ride.point_on_links(_ride_u)
 	_place_hands_on_rope()
 
 
@@ -1101,14 +1058,10 @@ func _follow_rope(delta: float) -> bool:
 func _slide_rope(axis: float, delta: float) -> bool:
 	if _ride == null or not _ride.linked() or not _ride.pinned():
 		return false
-	var ends := _cable_ends(_ride)
-	var home := ends[0]
-	var hook := ends[1]
-	var span := hook - home
-	var length := span.length()
+	var length := _ride.link_span()
 	if length < 1.0:
 		return false
-	var along := span / length
+	var along := _ride.tangent_on_links(_ride_u)
 	## D везёт вправо по экрану, а на отвесном тросе — вниз. A — в обратную сторону.
 	var prefer := Vector2.RIGHT if absf(along.x) >= absf(along.y) else Vector2.DOWN
 	var step := axis * WALK_SPEED * delta / length
@@ -1116,17 +1069,17 @@ func _slide_rope(axis: float, delta: float) -> bool:
 		step = -step
 	_ride_u = clampf(_ride_u + step, 0.0, 1.0)
 	_seat_on_rope()
-	var carried := _velocity_at(_ride.home, home).lerp(_velocity_at(_ride.anchor, hook), _ride_u)
+	var carried := _velocity_at(_ride.home, _ride.home_global()).lerp(_velocity_at(_ride.anchor, _ride.anchor_global()), _ride_u)
 	var travel := along if along.dot(prefer) >= 0.0 else -along
 	velocity = carried + travel * axis * WALK_SPEED
 	_tick_grab(delta)
-	_face_on_rope(span)
+	_face_on_rope(along)
 	return true
 
 
 func _face_on_rope(along: Vector2) -> void:
 	## Руки вдоль троса. Корпус остаётся с той стороны, с которой герой схватился.
-	if along.length_squared() < 1.0:
+	if along.length_squared() < 0.0001:
 		return
 	var prefer := Vector2.RIGHT if absf(along.x) >= absf(along.y) else Vector2.DOWN
 	var travel := along if along.dot(prefer) >= 0.0 else -along
@@ -1146,14 +1099,6 @@ func _place_hands_on_rope() -> void:
 	var frame_h := float(GRAB_SPRITE.get_height())
 	var grip := Vector2(0.0, (ROPE_GRIP_Y - frame_h * 0.5) * absf(_sprite.scale.y))
 	_sprite.position = -grip.rotated(_sprite.rotation)
-
-
-func _cable_ends(rope: Tether) -> PackedVector2Array:
-	## Герой едет по нарисованному тросу: дальний конец — основание наконечника.
-	return PackedVector2Array([
-		rope.home_global(),
-		TetherView.heel(rope.anchor_global(), rope.jaw_angle()),
-	])
 
 
 func _closest_on_segment(a: Vector2, b: Vector2, point: Vector2) -> Vector3:

@@ -267,27 +267,6 @@ func rim_pose(along: float) -> Pose:
 	return _pose(points[0], Vector2.UP)
 
 
-func rim_tangent(along: float) -> Vector2:
-	## Единичный шаг в сторону роста along, в локальных осях железа.
-	var n := points.size()
-	if n < 2 or rim <= 0.001:
-		return Vector2.RIGHT
-	along = fposmod(along, rim)
-	var acc := 0.0
-	for i in n:
-		var a: Vector2 = points[i]
-		var b: Vector2 = points[(i + 1) % n]
-		var span := a.distance_to(b)
-		var last := i == n - 1
-		if not last and acc + span < along:
-			acc += span
-			continue
-		if span < 0.0001:
-			continue
-		return (b - a) / span
-	return Vector2.RIGHT
-
-
 func _smooth_outward(along: float, turn: float) -> Vector2:
 	## Пиксельная лесенка контура даёт нормаль то вбок, то наружу. Усредняем соседние рёбра.
 	## Окно от зазора подошвы: на мелком масштабе оно шире и не дёргает нормаль на каждом шаге.

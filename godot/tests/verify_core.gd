@@ -244,15 +244,37 @@ func _check_rope_ride(wanderer: Wanderer, heavy: SpaceRock, light: SpaceRock) ->
 		fail("Концы закреплённого троса совпали")
 		return false
 	pull = pull.normalized()
-	light.global_position -= pull * 20.0
+	var side := Vector2(-pull.y, pull.x)
+	light.drift_velocity = side * 40.0
+	laid.integrate(wanderer, 0.016, false)
+	if light.drift_velocity.dot(side) < 30.0:
+		_clear_ride(wanderer)
+		fail("Натянутый трос погасил боковую скорость")
+		return false
+	light.drift_velocity = Vector2.ZERO
+	heavy.drift_velocity = Vector2.ZERO
+	light.spin = 0.0
+	heavy.spin = 0.0
+	light.global_position -= pull * 40.0
 	laid.integrate(wanderer, 0.016, false)
 	if absf(laid.length - frozen) > 0.01:
 		_clear_ride(wanderer)
 		fail("Длина закреплённого троса изменилась")
 		return false
-	if light.drift_velocity.dot(pull) <= 1.0:
+	if light.drift_velocity.dot(pull) > 1.0:
 		_clear_ride(wanderer)
-		fail("Укороченный трос не раздвинул камни")
+		fail("Слабый трос раздвинул камни")
+		return false
+	var pts := laid.link_points()
+	var chord := pts[pts.size() - 1] - pts[0]
+	var bowed := 0.0
+	if chord.length() > 1.0:
+		for i in range(1, pts.size() - 1):
+			var rel := pts[i] - pts[0]
+			bowed = maxf(bowed, absf(rel.x * chord.y - rel.y * chord.x) / chord.length())
+	if bowed < 4.0:
+		_clear_ride(wanderer)
+		fail("Слабый трос остался прямой")
 		return false
 	light.global_position = light_at
 	heavy.global_position = heavy_at
@@ -262,6 +284,7 @@ func _check_rope_ride(wanderer: Wanderer, heavy: SpaceRock, light: SpaceRock) ->
 	heavy.drift_velocity = Vector2.ZERO
 	light.spin = 0.0
 	heavy.spin = 0.0
+	laid.integrate(wanderer, 0.016, false)
 	var home := laid.home_global()
 	var hook := laid.anchor_global()
 	wanderer.drop_rope()
@@ -388,34 +411,6 @@ func _check_rope_ride(wanderer: Wanderer, heavy: SpaceRock, light: SpaceRock) ->
 	if wanderer._ride != null or not wanderer.dock.docked or wanderer.dock.body != light:
 		_clear_ride(wanderer)
 		fail("F у конца троса не посадил на камень")
-		return false
-	wanderer._controls_locked = false
-	wanderer.toggle_hatch()
-	wanderer._controls_locked = locked
-	if wanderer.dock.docked or wanderer._ride != null:
-		_clear_ride(wanderer)
-		fail("F на астероиде не отпустил его")
-		return false
-	if wanderer.velocity.length() > 4.0:
-		_clear_ride(wanderer)
-		fail("Отпускание без шага бросило героя")
-		return false
-	wanderer.dock_to(light, Vector2.LEFT)
-	var outward := wanderer.dock.outward()
-	Input.action_press(&"move_right")
-	wanderer._controls_locked = false
-	wanderer.toggle_hatch()
-	Input.action_release(&"move_right")
-	wanderer._controls_locked = locked
-	var tangent := Vector2(-outward.y, outward.x)
-	if wanderer.velocity.length() < 20.0 or absf(wanderer.velocity.dot(outward)) > absf(wanderer.velocity.dot(tangent)):
-		_clear_ride(wanderer)
-		fail("Отпускание на шаге ушло не по касательной")
-		return false
-	wanderer._physics_process(0.05)
-	if wanderer.dock.docked:
-		_clear_ride(wanderer)
-		fail("Отпущенный астероид сразу поймал героя")
 		return false
 	_clear_ride(wanderer)
 	return true

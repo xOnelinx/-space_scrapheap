@@ -80,7 +80,7 @@ func show_fixed(ropes: Array[Tether]) -> void:
 			"burst_age": burst_age,
 			"burst_dir": rope.burst_dir,
 		})
-		_fit_span(_fixed_lines[i], to_local(home), to_local(tip), jaw)
+		_fit_chain(_fixed_lines[i], rope, jaw)
 	queue_redraw()
 
 
@@ -146,6 +146,23 @@ func _fit_span(line: Line2D, start: Vector2, tip: Vector2, jaw: float) -> void:
 		line.points = PackedVector2Array()
 		return
 	line.points = PackedVector2Array([start, heel])
+
+
+func _fit_chain(line: Line2D, rope: Tether, jaw: float) -> void:
+	var world := rope.link_points()
+	if world.size() < 2:
+		line.points = PackedVector2Array()
+		return
+	var drawn := PackedVector2Array()
+	drawn.resize(world.size())
+	for i in world.size():
+		drawn[i] = to_local(world[i])
+	## Последняя точка — основание наконечника, не остриё.
+	drawn[drawn.size() - 1] = to_local(heel(rope.anchor_global(), jaw))
+	if drawn[0].distance_squared_to(drawn[drawn.size() - 1]) < 1.0:
+		line.points = PackedVector2Array()
+		return
+	line.points = drawn
 
 
 func _draw_head(tip: Vector2) -> void:
