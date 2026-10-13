@@ -70,7 +70,7 @@ func show_fixed(ropes: Array[Tether]) -> void:
 		var jaw := rope.jaw_angle()
 		var home := rope.home_global()
 		_fixed.append({"tip": tip, "jaw": jaw, "home": home})
-		_fit_span(_fixed_lines[i], to_local(home), to_local(tip), jaw)
+		_fit_span(_fixed_lines[i], to_local(home), to_local(tip))
 	queue_redraw()
 
 
@@ -78,7 +78,7 @@ func _draw() -> void:
 	if _muzzle_age >= 0.0:
 		_draw_muzzle(to_local(_muzzle_at), _muzzle_dir, _muzzle_age)
 	for mark in _fixed:
-		_draw_head_at(to_local(mark["tip"]), float(mark["jaw"]))
+		_draw_head_at(to_local(mark["tip"]), float(mark["jaw"]), true)
 	if _flying or _linked:
 		_draw_head(to_local(_tip))
 	## Пыль поверх губок, иначе начало струи прячется в наконечнике.
@@ -98,7 +98,7 @@ func _fit_cable() -> void:
 		return
 	## Трос кончается в пятке. Второй конец — на камне под героем, если его закрепили.
 	var start := to_local(_home) if _home_pinned else Vector2.ZERO
-	_fit_span(_line, start, tip, _jaw_angle)
+	_fit_span(_line, start, tip)
 
 
 func _new_cable() -> Line2D:
@@ -117,11 +117,13 @@ func _new_cable() -> Line2D:
 	return line
 
 
-func _fit_span(line: Line2D, start: Vector2, tip: Vector2, jaw: float) -> void:
-	if tip.length_squared() < 1.0:
+func _fit_span(line: Line2D, start: Vector2, tip: Vector2) -> void:
+	var span := tip - start
+	if span.length_squared() < 1.0:
 		line.points = PackedVector2Array()
 		return
-	var aim := Vector2.from_angle(jaw - global_rotation)
+	## Пятка по отрезку между креплениями. Сдвиг по губкам уводил линию вбок от героя.
+	var aim := span / span.length()
 	var heel := tip - aim * TIP.get_width()
 	if heel.distance_squared_to(start) < 1.0:
 		line.points = PackedVector2Array()
@@ -133,9 +135,10 @@ func _draw_head(tip: Vector2) -> void:
 	_draw_head_at(tip, _jaw_angle)
 
 
-func _draw_head_at(tip: Vector2, jaw: float) -> void:
+func _draw_head_at(tip: Vector2, jaw: float, keep_at_hero: bool = false) -> void:
 	## Остриё в точке удара. Угол пришёл от тела, на котором сидит крюк.
-	if tip.length_squared() < 1.0:
+	## У закреплённого троса крюк остаётся, даже когда герой доехал до него.
+	if not keep_at_hero and tip.length_squared() < 1.0:
 		return
 	var size := TIP.get_size()
 	draw_set_transform(tip, jaw - global_rotation, Vector2.ONE)

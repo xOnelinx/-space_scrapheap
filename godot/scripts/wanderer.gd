@@ -280,6 +280,8 @@ func _step_motion(delta: float) -> void:
 		if _follow_rope(delta):
 			_lost_time = 0.0
 			tether.integrate(self, delta, _reeling())
+			## Втягивание своего троса не должно сдёргивать героя с закреплённого.
+			_seat_on_rope()
 			return
 		_ride = null
 	if dock.inside:
@@ -1010,6 +1012,17 @@ func _latch_asteroid() -> bool:
 	return true
 
 
+func _seat_on_rope() -> void:
+	if _ride == null or not _ride.linked() or not _ride.pinned():
+		return
+	var home := _ride.home_global()
+	var hook := _ride.anchor_global()
+	if home.distance_squared_to(hook) < 1.0:
+		return
+	global_position = home.lerp(hook, _ride_u)
+	_sprite.position = Vector2.ZERO
+
+
 func _follow_rope(delta: float) -> bool:
 	var axis := 0.0 if _controls_locked else Input.get_axis(&"move_left", &"move_right")
 	return _slide_rope(axis, delta)
@@ -1031,7 +1044,7 @@ func _slide_rope(axis: float, delta: float) -> bool:
 	if along.dot(prefer) < 0.0:
 		step = -step
 	_ride_u = clampf(_ride_u + step, 0.0, 1.0)
-	global_position = home.lerp(hook, _ride_u)
+	_seat_on_rope()
 	var carried := _velocity_at(_ride.home, home).lerp(_velocity_at(_ride.anchor, hook), _ride_u)
 	var travel := along if along.dot(prefer) >= 0.0 else -along
 	velocity = carried + travel * axis * WALK_SPEED

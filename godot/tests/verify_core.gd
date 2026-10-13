@@ -266,6 +266,20 @@ func _check_rope_ride(wanderer: Wanderer, heavy: SpaceRock, light: SpaceRock) ->
 		_clear_ride(wanderer)
 		fail("Герой съехал за конец троса")
 		return false
+	wanderer._publish_views()
+	var view := wanderer.get_node("TetherView") as TetherView
+	var line: Line2D = view._fixed_lines[view._fixed_lines.size() - 1]
+	if line.points.size() < 2:
+		_clear_ride(wanderer)
+		fail("У конца трос пропал")
+		return false
+	var cable := line.points[1] - line.points[0]
+	var to_hero := -line.points[0]
+	var off := absf(to_hero.x * cable.y - to_hero.y * cable.x) / cable.length()
+	if off > 1.5:
+		_clear_ride(wanderer)
+		fail("Герой сошёл с линии троса")
+		return false
 	wanderer.global_position = mid
 	wanderer._ride_u = 0.5
 	wanderer._lost_time = 5.0
