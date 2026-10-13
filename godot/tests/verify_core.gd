@@ -124,6 +124,8 @@ func _check_tether(scene: Node, wanderer: Wanderer) -> bool:
 	if heavy.get_mass() <= wanderer.get_mass():
 		fail("Тяжёлый камень легче скитальца")
 		return false
+	if not _check_rope_ride(wanderer, heavy, light):
+		return false
 
 	wanderer.undock()
 	wanderer.velocity = Vector2(25, 0)
@@ -194,6 +196,94 @@ func _check_tether(scene: Node, wanderer: Wanderer) -> bool:
 		fail("На тросе сработал курс в никуда")
 		return false
 	return true
+
+
+func _check_rope_ride(wanderer: Wanderer, heavy: SpaceRock, light: SpaceRock) -> bool:
+	_quiet(heavy)
+	_quiet(light)
+	heavy.rotation = 0.0
+	light.rotation = 0.0
+	light.global_position = heavy.global_position + Vector2(400, 0)
+	wanderer.tether.release()
+	wanderer.undock()
+	wanderer.global_position = heavy.global_position + Vector2(0, -heavy.get_hit_radius() - 30.0)
+	wanderer.dock_to(heavy, Vector2.UP)
+	wanderer.tether.plant(wanderer, light, light.global_position + Vector2(-light.get_hit_radius(), 0))
+	var locked := wanderer._controls_locked
+	wanderer._controls_locked = false
+	if not wanderer.pin_tether():
+		wanderer._controls_locked = locked
+		fail("Трос для поездки не закрепился")
+		return false
+	wanderer._controls_locked = locked
+	var laid := wanderer.fixed_ropes[wanderer.fixed_ropes.size() - 1]
+	var home := laid.home_global()
+	var hook := laid.anchor_global()
+	wanderer.drop_rope()
+	wanderer.undock()
+	wanderer.global_position = home + Vector2(0, 400)
+	wanderer._controls_locked = false
+	wanderer.toggle_hatch()
+	wanderer._controls_locked = locked
+	if wanderer._ride != null:
+		_clear_ride(wanderer)
+		fail("Далёкий трос принял F")
+		return false
+	var mid := home.lerp(hook, 0.5)
+	wanderer.global_position = mid + Vector2(0, 20)
+	if not wanderer.grab_nearest_rope():
+		_clear_ride(wanderer)
+		fail("Близкий трос не принял героя")
+		return false
+	var span := hook - home
+	var rel := wanderer.global_position - home
+	var off_rope := absf(rel.x * span.y - rel.y * span.x) / span.length()
+	if off_rope > 1.0 or wanderer.global_position.distance_to(mid) > 25.0:
+		_clear_ride(wanderer)
+		fail("Герой сел мимо троса")
+		return false
+	var before := wanderer.global_position
+	wanderer._slide_rope(1.0, 0.25)
+	if wanderer.global_position.distance_to(before) < 5.0:
+		_clear_ride(wanderer)
+		fail("D не сдвинул по тросу")
+		return false
+	wanderer._slide_rope(-1.0, 0.25)
+	if wanderer.global_position.distance_to(before) > 2.0:
+		_clear_ride(wanderer)
+		fail("A не вернул по тросу")
+		return false
+	wanderer._slide_rope(1.0, 30.0)
+	var past := wanderer.global_position.distance_to(home) > home.distance_to(hook) + 1.0
+	past = past or wanderer.global_position.distance_to(hook) > home.distance_to(hook) + 1.0
+	if past:
+		_clear_ride(wanderer)
+		fail("Герой съехал за конец троса")
+		return false
+	wanderer.global_position = mid
+	wanderer._ride_u = 0.5
+	wanderer._lost_time = 5.0
+	wanderer._physics_process(0.05)
+	if wanderer._lost_time > 0.01 or wanderer._ride != laid:
+		_clear_ride(wanderer)
+		fail("Поездка по тросу пустила курс в никуда")
+		return false
+	wanderer._controls_locked = false
+	wanderer.toggle_hatch()
+	wanderer._controls_locked = locked
+	if wanderer._ride != null:
+		_clear_ride(wanderer)
+		fail("F не отпустил трос")
+		return false
+	_clear_ride(wanderer)
+	return true
+
+
+func _clear_ride(wanderer: Wanderer) -> void:
+	wanderer.drop_rope()
+	wanderer.fixed_ropes.clear()
+	wanderer.tether.release()
+	wanderer.undock()
 
 
 func _check_pin(wanderer: Wanderer, heavy: SpaceRock, light: SpaceRock) -> bool:

@@ -1,7 +1,7 @@
 class_name HatchTool
 extends Node
 
-## F открывает и закрывает люк корпуса.
+## F сажает на ближайший закреплённый трос и отпускает с него. Без троса открывает люк корпуса.
 
 
 func _unhandled_input(event: InputEvent) -> void:

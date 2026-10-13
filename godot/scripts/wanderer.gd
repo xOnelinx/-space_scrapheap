@@ -17,6 +17,8 @@ const FACE_EPS := 1.0
 const RESTITUTION := 0.55
 const DOCK_SEPARATION := 2.0
 const WALK_SPEED := 70.0
+## Трос тонкий: хватает дистанции около полутора размеров скитальца.
+const ROPE_REACH := 36.0
 const PUSH_MIN := 10.0
 const PUSH_MAX := 100.0
 ## За секунду удержания WASD в полёте скорость меняется меньше, чем самый слабый толчок.
@@ -47,6 +49,8 @@ var dock := Dock.new()
 var tether := Tether.new()
 ## Тросы, у которых оба конца уже сидят на телах. Q их не снимает.
 var fixed_ropes: Array[Tether] = []
+var _ride: Tether = null
+var _ride_u := 0.0
 ## Масса груза на скафандре. Список предметов снаружи.
 var cargo_mass := 0.0
 ## 0 — толчок по курсору. Иначе доля скорости вбок. Порванный скафандр пишет сам.
@@ -259,8 +263,9 @@ func _process(_delta: float) -> void:
 
 
 func _physics_process(delta: float) -> void:
-	_step_motion(delta)
+	## Концы троса сдвигаются до шага героя, иначе ездок отстаёт на кадр.
 	_step_fixed_ropes(delta)
+	_step_motion(delta)
 	_publish_views()
 
 
@@ -271,6 +276,12 @@ func _step_motion(delta: float) -> void:
 	if _breathe(delta):
 		return
 	_release_slip_if_clear()
+	if _ride != null:
+		if _follow_rope(delta):
+			_lost_time = 0.0
+			tether.integrate(self, delta, _reeling())
+			return
+		_ride = null
 	if dock.inside:
 		_lost_time = 0.0
 		_clear_charge()
@@ -939,12 +950,88 @@ func _step_fixed_ropes(delta: float) -> void:
 func toggle_hatch() -> void:
 	if not accepts_input():
 		return
+	if _ride != null:
+		drop_rope()
+		return
 	if dock.inside:
 		exit_interior()
+		return
+	if grab_nearest_rope():
 		return
 	var rock := dock.rock()
 	if rock != null and rock.hull:
 		enter_interior(rock)
+
+
+func grab_nearest_rope() -> bool:
+	var best: Tether = null
+	var best_u := 0.0
+	var best_dist := ROPE_REACH
+	for rope in fixed_ropes:
+		if not rope.linked() or not rope.pinned():
+			continue
+		var home := rope.home_global()
+		var hook := rope.anchor_global()
+		if home.distance_squared_to(hook) < 1.0:
+			continue
+		var nearest := _closest_on_segment(home, hook, global_position)
+		var dist := global_position.distance_to(Vector2(nearest.x, nearest.y))
+		if dist < best_dist:
+			best = rope
+			best_u = nearest.z
+			best_dist = dist
+	if best == null:
+		return false
+	if dock.docked or dock.inside:
+		undock()
+	_ride = best
+	_ride_u = best_u
+	global_position = best.home_global().lerp(best.anchor_global(), _ride_u)
+	_clear_charge()
+	_lost_time = 0.0
+	return true
+
+
+func drop_rope() -> void:
+	_ride = null
+
+
+func _follow_rope(delta: float) -> bool:
+	var axis := 0.0 if _controls_locked else Input.get_axis(&"move_left", &"move_right")
+	return _slide_rope(axis, delta)
+
+
+func _slide_rope(axis: float, delta: float) -> bool:
+	if _ride == null or not _ride.linked() or not _ride.pinned():
+		return false
+	var home := _ride.home_global()
+	var hook := _ride.anchor_global()
+	var span := hook - home
+	var length := span.length()
+	if length < 1.0:
+		return false
+	var along := span / length
+	## D везёт вправо по экрану, а на отвесном тросе — вниз. A — в обратную сторону.
+	var prefer := Vector2.RIGHT if absf(along.x) >= absf(along.y) else Vector2.DOWN
+	var step := axis * WALK_SPEED * delta / length
+	if along.dot(prefer) < 0.0:
+		step = -step
+	_ride_u = clampf(_ride_u + step, 0.0, 1.0)
+	global_position = home.lerp(hook, _ride_u)
+	var carried := _velocity_at(_ride.home, home).lerp(_velocity_at(_ride.anchor, hook), _ride_u)
+	var travel := along if along.dot(prefer) >= 0.0 else -along
+	velocity = carried + travel * axis * WALK_SPEED
+	_sprite.position = Vector2.ZERO
+	_sprite.rotation = travel.angle() - PI / 2.0
+	_show_idle_sprite()
+	return true
+
+
+func _closest_on_segment(a: Vector2, b: Vector2, point: Vector2) -> Vector3:
+	var ab := b - a
+	var u := clampf((point - a).dot(ab) / ab.length_squared(), 0.0, 1.0)
+	var at := a + ab * u
+	return Vector3(at.x, at.y, u)
 
 
 func _clear_charge() -> void:
