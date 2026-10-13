@@ -15,6 +15,9 @@ const REEL_RATE := 70.0
 const MIN_LENGTH := 16.0
 const TAUT_MAX_CLOSE := 280.0
 const BURST_LIFE := 0.32
+## Свет пороха гаснет раньше: газ ещё висит, когда вспышка уже погасла.
+const FLASH_LIFE := 0.20
+const MUZZLE_LIFE := 0.58
 
 var phase := Phase.IDLE
 var anchor: Node2D = null
@@ -25,6 +28,9 @@ var bolt_velocity := Vector2.ZERO
 var burst := 0.0
 var burst_at := Vector2.ZERO
 var ignited := false
+var muzzle := 0.0
+var muzzle_at := Vector2.ZERO
+var muzzle_dir := Vector2.ZERO
 var _flown := 0.0
 var _ignore: Node2D = null
 var _shot := Vector2.ZERO
@@ -100,11 +106,14 @@ func fire(host: Wanderer, from: Vector2, direction: Vector2, ignore: Node2D) -> 
 	length = max_length(host)
 	_ignore = ignore
 	_flown = 0.0
+	_light_muzzle(from, _shot)
 
 
 func integrate(host: Wanderer, delta: float, reeling: bool = false) -> void:
 	if burst > 0.0:
 		burst = maxf(0.0, burst - delta)
+	if muzzle > 0.0:
+		muzzle = maxf(0.0, muzzle - delta)
 	if phase == Phase.BOLT:
 		_fly_bolt(host, delta)
 	elif linked():
@@ -266,6 +275,12 @@ func _ignite(at: Vector2) -> void:
 	burst = BURST_LIFE
 	burst_at = at
 	ignited = true
+
+
+func _light_muzzle(at: Vector2, dir: Vector2) -> void:
+	muzzle = MUZZLE_LIFE
+	muzzle_at = at
+	muzzle_dir = dir if dir.length_squared() > 0.01 else Vector2.RIGHT
 
 
 func _on_surface(rock: Node2D, world_point: Vector2) -> Vector2:
