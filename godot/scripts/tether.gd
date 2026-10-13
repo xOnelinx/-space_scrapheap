@@ -115,6 +115,8 @@ func integrate(host: Wanderer, delta: float, reeling: bool = false) -> void:
 		else:
 			if reeling:
 				_reel(delta)
+			else:
+				_pay_out(host)
 			_constrain(host, delta)
 
 
@@ -203,6 +205,13 @@ func _hold_rope_aboard(host: Wanderer, delta: float, reeling: bool) -> void:
 	_reel(delta)
 	if length < span:
 		length = span
+
+
+func _pay_out(host: Wanderer) -> void:
+	## Без E трос отпускает и от крюка, пока не выбран весь запас.
+	var span := host.global_position.distance_to(anchor_global())
+	if span > length:
+		length = minf(span, max_length(host))
 
 
 func _reel(delta: float) -> void:

@@ -272,13 +272,31 @@ func _check_recoil_reel_and_cap(wanderer: Wanderer, heavy: SpaceRock, light: Spa
 
 	_quiet(light)
 	wanderer.velocity = Vector2.ZERO
+	light.drift_velocity = Vector2.ZERO
 	wanderer.tether.plant(wanderer, light, light.global_position)
 	wanderer.tether.length = 30.0
 	wanderer.global_position = light.global_position + Vector2(160, 0)
+	var before := wanderer.global_position
 	wanderer.tether.integrate(wanderer, 0.016, false)
 	var span := wanderer.global_position.distance_to(wanderer.tether.anchor_global())
+	if wanderer.global_position.distance_to(before) > 1.5:
+		fail("Без E трос вернул скитальца")
+		return false
+	if wanderer.velocity.length() > 1.0 or light.drift_velocity.length() > 1.0:
+		fail("Без E трос толкнул")
+		return false
+	if absf(wanderer.tether.length - span) > 1.5:
+		fail("Без E трос не отпустил от крюка")
+		return false
+	var reach := wanderer.character_size() * Tether.BODIES
+	wanderer.tether.length = reach
+	wanderer.velocity = Vector2.ZERO
+	light.drift_velocity = Vector2.ZERO
+	wanderer.global_position = light.global_position + Vector2(reach + 80.0, 0)
+	wanderer.tether.integrate(wanderer, 0.016, false)
+	span = wanderer.global_position.distance_to(wanderer.tether.anchor_global())
 	if span > wanderer.tether.length + 1.5:
-		fail("Трос растянулся дальше своей длины")
+		fail("Трос растянулся дальше предела")
 		return false
 
 	var far := wanderer.character_size() * Tether.BODIES + 80.0
@@ -303,7 +321,7 @@ func _pulls(wanderer: Wanderer, rock: SpaceRock, host_moves_more: bool) -> bool:
 	wanderer.global_position = rock.global_position + Vector2(140, 0)
 	wanderer.tether.plant(wanderer, rock, rock.global_position)
 	wanderer.tether.length = 20.0
-	wanderer.tether.integrate(wanderer, 0.016)
+	wanderer.tether.integrate(wanderer, 0.016, true)
 	var host_speed := absf(wanderer.velocity.x)
 	var rock_speed := absf(rock.drift_velocity.x)
 	if wanderer.velocity.x >= -1.0:
