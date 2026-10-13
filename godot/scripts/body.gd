@@ -59,8 +59,12 @@ static func ray_circle(origin: Vector2, dir: Vector2, center: Vector2, radius: f
 	return INF
 
 
-static func ray_distance(node: Node2D, origin: Vector2, direction: Vector2) -> float:
-	if node == null:
+static func ray_distance(node: Node2D, origin: Vector2, direction: Vector2, limit: float = INF) -> float:
+	if node == null or limit <= 0.0:
+		return INF
+	## Силуэт дорогой. На шаге болта окружность отсекает почти все тела.
+	var radius := hit_radius(node)
+	if radius > 0.0 and _misses_disk(node.global_position, radius, origin, direction, limit):
 		return INF
 	var shape_flag: Variant = node.get("shaped")
 	if shape_flag != null and bool(shape_flag) and node.has_method("ray_hit"):
@@ -68,7 +72,6 @@ static func ray_distance(node: Node2D, origin: Vector2, direction: Vector2) -> f
 		if along < 0.0:
 			return INF
 		return along
-	var radius := hit_radius(node)
 	if radius <= 0.0:
 		return INF
 	return ray_circle(origin, direction, node.global_position, radius)
@@ -118,6 +121,17 @@ static func collide(a: Node2D, b: Node2D, restitution: float, friction: float) -
 	var impulse_t := tangent * jt
 	apply_impulse(a, -impulse_t, contact)
 	apply_impulse(b, impulse_t, contact)
+
+
+static func _misses_disk(center: Vector2, radius: float, origin: Vector2, dir: Vector2, limit: float) -> bool:
+	var slack := radius + 1.0
+	var along := (center - origin).dot(dir)
+	if along < 0.0:
+		along = 0.0
+	elif along > limit:
+		along = limit
+	var closest := origin + dir * along
+	return closest.distance_squared_to(center) > slack * slack
 
 
 static func _other_layer(a: Node, b: Node) -> bool:

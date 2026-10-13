@@ -158,8 +158,12 @@ func _check_tether(scene: Node, wanderer: Wanderer) -> bool:
 		fail("Вплавление без вспышки")
 		return false
 	var reach := wanderer.character_size() * Tether.BODIES
-	if absf(wanderer.tether.length - reach) > 0.5:
-		fail("Длина троса не равна %d размерам скитальца" % int(Tether.BODIES))
+	var span := wanderer.global_position.distance_to(wanderer.tether.anchor_global())
+	if absf(wanderer.tether.length - span) > 1.0:
+		fail("После зацепа трос не натянут до крюка")
+		return false
+	if wanderer.tether.length > reach + 0.5:
+		fail("Трос длиннее %d размеров скитальца" % int(Tether.BODIES))
 		return false
 
 	if light.drift_velocity.x <= 1.0:
@@ -169,8 +173,8 @@ func _check_tether(scene: Node, wanderer: Wanderer) -> bool:
 	if wanderer.tether.linked():
 		fail("Трос не отцепился")
 		return false
-	if not wanderer.tether.ignited or wanderer.tether.burst <= 0.0:
-		fail("Отцеп без вспышки в точке крепления")
+	if wanderer.tether.ignited:
+		fail("Отцеп зажёг вспышку у наконечника")
 		return false
 
 	if not _check_recoil_reel_and_cap(wanderer, heavy, light):
@@ -211,6 +215,9 @@ func _check_recoil_reel_and_cap(wanderer: Wanderer, heavy: SpaceRock, light: Spa
 	if heavy.drift_velocity.x <= before + 0.2:
 		fail("Опора не получила реакцию выстрела")
 		return false
+	if not wanderer.tether.flying() or wanderer.tether.anchor == heavy:
+		fail("Выстрел с камня сразу сел на него")
+		return false
 	wanderer.tether.release()
 
 	_quiet(heavy)
@@ -221,22 +228,75 @@ func _check_recoil_reel_and_cap(wanderer: Wanderer, heavy: SpaceRock, light: Spa
 	wanderer.tether.plant(wanderer, heavy, heavy.global_position)
 	wanderer.tether.length = 180.0
 	wanderer.tether.integrate(wanderer, 1.0, true)
-	if wanderer.tether.length > 50.0:
+	if wanderer.tether.length > 180.0 - Tether.REEL_RATE + 5.0:
 		fail("Втягивание не укоротило трос")
 		return false
 	if wanderer.velocity.x <= 1.0:
 		fail("Втягивание не ускорило к телу")
 		return false
 
+	_quiet(heavy)
+	_stand(wanderer, heavy)
+	wanderer.velocity = Vector2.ZERO
+	heavy.drift_velocity = Vector2.ZERO
+	heavy.spin = 0.0
+	wanderer.tether.plant(wanderer, heavy, heavy.global_position)
+	wanderer.tether.length = 8.0
+	for _i in 30:
+		wanderer.tether.integrate(wanderer, 0.016, true)
+		if wanderer.dock.docked:
+			wanderer.follow_dock()
+	if not wanderer.dock.docked or wanderer.dock.body != heavy:
+		fail("Втягивание на своём астероиде оторвало ноги")
+		return false
+	if heavy.drift_velocity.length() > 1.0 or absf(heavy.spin) > 0.05:
+		fail("Втягивание на своём астероиде разогнало камень")
+		return false
+	if wanderer.velocity.length() > 1.0:
+		fail("Втягивание на своём астероиде разогнало скитальца")
+		return false
+
+	_quiet(light)
+	wanderer.undock()
+	wanderer.tether.release()
+	wanderer.velocity = Vector2.ZERO
+	light.drift_velocity = Vector2.ZERO
+	light.spin = 0.0
+	wanderer.global_position = light.global_position + Vector2(4, 0)
+	wanderer.tether.plant(wanderer, light, light.global_position + Vector2(light.get_hit_radius(), 0))
+	wanderer.tether.length = 8.0
+	wanderer.tether.integrate(wanderer, 0.016, true)
+	if light.drift_velocity.length() > 1.0 or absf(light.spin) > 0.05:
+		fail("Стыковка на крюке раскрутила астероид")
+		return false
+
 	_quiet(light)
 	wanderer.velocity = Vector2.ZERO
+	light.drift_velocity = Vector2.ZERO
 	wanderer.tether.plant(wanderer, light, light.global_position)
 	wanderer.tether.length = 30.0
 	wanderer.global_position = light.global_position + Vector2(160, 0)
+	var before := wanderer.global_position
 	wanderer.tether.integrate(wanderer, 0.016, false)
 	var span := wanderer.global_position.distance_to(wanderer.tether.anchor_global())
+	if wanderer.global_position.distance_to(before) > 1.5:
+		fail("Без E трос вернул скитальца")
+		return false
+	if wanderer.velocity.length() > 1.0 or light.drift_velocity.length() > 1.0:
+		fail("Без E трос толкнул")
+		return false
+	if absf(wanderer.tether.length - span) > 1.5:
+		fail("Без E трос не отпустил от крюка")
+		return false
+	var reach := wanderer.character_size() * Tether.BODIES
+	wanderer.tether.length = reach
+	wanderer.velocity = Vector2.ZERO
+	light.drift_velocity = Vector2.ZERO
+	wanderer.global_position = light.global_position + Vector2(reach + 80.0, 0)
+	wanderer.tether.integrate(wanderer, 0.016, false)
+	span = wanderer.global_position.distance_to(wanderer.tether.anchor_global())
 	if span > wanderer.tether.length + 1.5:
-		fail("Трос растянулся дальше своей длины")
+		fail("Трос растянулся дальше предела")
 		return false
 
 	var far := wanderer.character_size() * Tether.BODIES + 80.0
@@ -261,7 +321,7 @@ func _pulls(wanderer: Wanderer, rock: SpaceRock, host_moves_more: bool) -> bool:
 	wanderer.global_position = rock.global_position + Vector2(140, 0)
 	wanderer.tether.plant(wanderer, rock, rock.global_position)
 	wanderer.tether.length = 20.0
-	wanderer.tether.integrate(wanderer, 0.016)
+	wanderer.tether.integrate(wanderer, 0.016, true)
 	var host_speed := absf(wanderer.velocity.x)
 	var rock_speed := absf(rock.drift_velocity.x)
 	if wanderer.velocity.x >= -1.0:
