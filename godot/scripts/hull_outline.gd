@@ -14,6 +14,7 @@ var rim := 0.0
 var bound_radius := 0.0
 var mass_radius := 0.0
 var clearance_local := 0.0
+static var _point_cache: Dictionary = {}
 
 
 class Pose:
@@ -50,6 +51,11 @@ static func from_points(local_points: PackedVector2Array, body_scale: float, wor
 static func local_points_from_texture(texture: Texture2D, epsilon: float) -> PackedVector2Array:
 	if texture == null:
 		return PackedVector2Array()
+	## Один и тот же рисунок стоит на сотнях камней. Обвод считаем один раз.
+	var key := "%s@%s" % [texture.resource_path, epsilon]
+	if _point_cache.has(key):
+		var cached: PackedVector2Array = _point_cache[key]
+		return cached.duplicate()
 	var image := texture.get_image()
 	if image == null:
 		return PackedVector2Array()
@@ -75,7 +81,8 @@ static func local_points_from_texture(texture: Texture2D, epsilon: float) -> Pac
 	local.resize(best.size())
 	for i in best.size():
 		local[i] = best[i] - center
-	return local
+	_point_cache[key] = local
+	return local.duplicate()
 
 
 func pose_at(along: float) -> Pose:

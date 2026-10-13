@@ -34,23 +34,33 @@ func _assign_depths() -> void:
 			continue
 		rock.depth = absi(hash(rock.name)) % SpaceRock.DEPTH_COUNT
 		_rocks.append(rock)
+	var radii := {}
+	var max_r := 0.0
+	for rock in _rocks:
+		var radius := rock.get_hit_radius()
+		radii[rock] = radius
+		max_r = maxf(max_r, radius)
+	## Два самых больших камня ещё достают друг друга через столько клеток.
+	var reach := maxi(int(ceil(max_r * 2.0 / CELL)), 1)
 	for _pass in 6:
+		var grid := _fill_grid()
 		var dirty := false
 		for rock in _rocks:
-			if _overlap_amount(rock) <= 0.0:
+			var amount := _overlap_near(rock, grid, radii, reach)
+			if amount <= 0.0:
 				continue
 			dirty = true
 			var best_depth := rock.depth
-			var best_amount := _overlap_amount(rock)
+			var best_amount := amount
 			for depth in SpaceRock.DEPTH_COUNT:
 				rock.depth = depth
-				var amount := _overlap_amount(rock)
-				if amount < best_amount:
-					best_amount = amount
+				var trial := _overlap_near(rock, grid, radii, reach)
+				if trial < best_amount:
+					best_amount = trial
 					best_depth = depth
 			rock.depth = best_depth
 			if best_amount > 0.0:
-				_push_apart(rock)
+				_push_apart_near(rock, grid, radii, reach)
 		if not dirty:
 			break
 	for rock in _rocks:
@@ -76,30 +86,52 @@ func _start_rock() -> Node2D:
 	return null
 
 
-func _overlap_amount(rock: SpaceRock) -> float:
+func _fill_grid() -> Dictionary:
+	var grid: Dictionary = {}
+	for rock in _rocks:
+		var cell := _cell(rock.global_position)
+		if not grid.has(cell):
+			grid[cell] = []
+		grid[cell].append(rock)
+	return grid
+
+
+func _overlap_near(rock: SpaceRock, grid: Dictionary, radii: Dictionary, reach: int) -> float:
 	var amount := 0.0
-	var radius := rock.get_hit_radius()
-	for other in _rocks:
-		if other == rock or other.depth != rock.depth:
-			continue
-		var gap := rock.global_position.distance_to(other.global_position) - radius - other.get_hit_radius()
-		if gap < 0.0:
-			amount -= gap
+	var radius: float = radii[rock]
+	var cell := _cell(rock.global_position)
+	for oy in range(-reach, reach + 1):
+		for ox in range(-reach, reach + 1):
+			var bucket: Array = grid.get(cell + Vector2i(ox, oy), [])
+			for other in bucket:
+				var body := other as SpaceRock
+				if body == null or body == rock or body.depth != rock.depth:
+					continue
+				var other_r: float = radii[body]
+				var gap := rock.global_position.distance_to(body.global_position) - radius - other_r
+				if gap < 0.0:
+					amount -= gap
 	return amount
 
 
-func _push_apart(rock: SpaceRock) -> void:
-	var radius := rock.get_hit_radius()
-	for other in _rocks:
-		if other == rock or other.depth != rock.depth:
-			continue
-		var overlap := SpaceRock.circle_overlap(
-			other.global_position, rock.global_position, other.get_hit_radius(), radius
-		)
-		if not overlap.hit:
-			continue
-		var share := SpaceRock.separation_share(overlap.penetration, rock.get_mass(), other.get_mass())
-		rock.global_position += overlap.normal * share
+func _push_apart_near(rock: SpaceRock, grid: Dictionary, radii: Dictionary, reach: int) -> void:
+	var radius: float = radii[rock]
+	var cell := _cell(rock.global_position)
+	for oy in range(-reach, reach + 1):
+		for ox in range(-reach, reach + 1):
+			var bucket: Array = grid.get(cell + Vector2i(ox, oy), [])
+			for other in bucket:
+				var body := other as SpaceRock
+				if body == null or body == rock or body.depth != rock.depth:
+					continue
+				var other_r: float = radii[body]
+				var overlap := SpaceRock.circle_overlap(
+					body.global_position, rock.global_position, other_r, radius
+				)
+				if not overlap.hit:
+					continue
+				var share := SpaceRock.separation_share(overlap.penetration, rock.get_mass(), body.get_mass())
+				rock.global_position += overlap.normal * share
 
 
 func _collide_same_depth() -> void:
