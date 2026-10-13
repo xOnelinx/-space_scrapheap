@@ -254,6 +254,14 @@ func _check_rope_ride(wanderer: Wanderer, heavy: SpaceRock, light: SpaceRock) ->
 		_clear_ride(wanderer)
 		fail("Герой на тросе не лежит боком")
 		return false
+	if sprite.texture != wanderer.GRAB_SPRITE or sprite.frame != Wanderer.GRAB_FRAME_COUNT - 1:
+		_clear_ride(wanderer)
+		fail("На тросе руки не сжались как на астероиде")
+		return false
+	if sprite.position.length() < 4.0:
+		_clear_ride(wanderer)
+		fail("Трос проходит через центр, а не через руки")
+		return false
 	wanderer._slide_rope(-1.0, 0.25)
 	if wanderer.global_position.distance_to(before) > 2.0:
 		_clear_ride(wanderer)

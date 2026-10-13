@@ -19,6 +19,8 @@ const DOCK_SEPARATION := 2.0
 const WALK_SPEED := 70.0
 ## Трос тонкий: хватает дистанции около полутора размеров скитальца.
 const ROPE_REACH := 36.0
+## Ладони на последнем кадре хватки: ниже центра кадра 120px, не в его середине.
+const ROPE_GRIP_Y := 93.0
 const PUSH_MIN := 10.0
 const PUSH_MAX := 100.0
 ## За секунду удержания WASD в полёте скорость меняется меньше, чем самый слабый толчок.
@@ -993,6 +995,8 @@ func grab_nearest_rope() -> bool:
 	global_position = best.home_global().lerp(best.anchor_global(), _ride_u)
 	_clear_charge()
 	_lost_time = 0.0
+	## Та же хватка руками, что при посадке на астероид.
+	_begin_grab()
 	return true
 
 
@@ -1020,7 +1024,7 @@ func _seat_on_rope() -> void:
 	if home.distance_squared_to(hook) < 1.0:
 		return
 	global_position = home.lerp(hook, _ride_u)
-	_sprite.position = Vector2.ZERO
+	_place_hands_on_rope()
 
 
 func _follow_rope(delta: float) -> bool:
@@ -1048,11 +1052,20 @@ func _slide_rope(axis: float, delta: float) -> bool:
 	var carried := _velocity_at(_ride.home, home).lerp(_velocity_at(_ride.anchor, hook), _ride_u)
 	var travel := along if along.dot(prefer) >= 0.0 else -along
 	velocity = carried + travel * axis * WALK_SPEED
-	_sprite.position = Vector2.ZERO
 	## Руки по бокам спрайта ложатся на трос, корпус стоит поперёк.
 	_sprite.rotation = travel.angle()
-	_show_idle_sprite()
+	_tick_grab(delta)
+	_place_hands_on_rope()
 	return true
+
+
+func _place_hands_on_rope() -> void:
+	if _sprite.texture != GRAB_SPRITE:
+		_sprite.position = Vector2.ZERO
+		return
+	var frame_h := float(GRAB_SPRITE.get_height())
+	var grip := Vector2(0.0, (ROPE_GRIP_Y - frame_h * 0.5) * absf(_sprite.scale.y))
+	_sprite.position = -grip.rotated(_sprite.rotation)
 
 
 func _closest_on_segment(a: Vector2, b: Vector2, point: Vector2) -> Vector3:
