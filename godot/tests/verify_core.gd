@@ -228,6 +228,40 @@ func _check_rope_ride(wanderer: Wanderer, heavy: SpaceRock, light: SpaceRock) ->
 		_clear_ride(wanderer)
 		fail("Второй конец остался на месте героя")
 		return false
+	var frozen := laid.length
+	var gap := laid.home_global().distance_to(laid.anchor_global())
+	if absf(frozen - gap) > 1.0:
+		_clear_ride(wanderer)
+		fail("Закреплённый трос не зафиксировал длину")
+		return false
+	var light_at := light.global_position
+	var heavy_at := heavy.global_position
+	var light_rot := light.rotation
+	var heavy_rot := heavy.rotation
+	var pull := light.global_position - heavy.global_position
+	if pull.length_squared() < 1.0:
+		_clear_ride(wanderer)
+		fail("Концы закреплённого троса совпали")
+		return false
+	pull = pull.normalized()
+	light.global_position -= pull * 20.0
+	laid.integrate(wanderer, 0.016, false)
+	if absf(laid.length - frozen) > 0.01:
+		_clear_ride(wanderer)
+		fail("Длина закреплённого троса изменилась")
+		return false
+	if light.drift_velocity.dot(pull) <= 1.0:
+		_clear_ride(wanderer)
+		fail("Укороченный трос не раздвинул камни")
+		return false
+	light.global_position = light_at
+	heavy.global_position = heavy_at
+	light.rotation = light_rot
+	heavy.rotation = heavy_rot
+	light.drift_velocity = Vector2.ZERO
+	heavy.drift_velocity = Vector2.ZERO
+	light.spin = 0.0
+	heavy.spin = 0.0
 	var home := laid.home_global()
 	var hook := laid.anchor_global()
 	wanderer.drop_rope()

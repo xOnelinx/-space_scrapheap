@@ -76,9 +76,9 @@ func pin_home(host: Wanderer) -> bool:
 		return false
 	home = stood
 	home_local = _skin_local(stood, host.dock.local)
+	## Размер замирает на текущем расстоянии между концами и дальше не растёт и не коротится.
 	var span := home_global().distance_to(anchor_global())
-	if span > length:
-		length = minf(span, max_length(host))
+	length = minf(maxf(span, 0.001), max_length(host))
 	var stick := home_global()
 	_ignite(stick, stick - stood.global_position)
 	return true
@@ -159,11 +159,11 @@ func integrate(host: Wanderer, delta: float, reeling: bool = false) -> void:
 	if phase == Phase.BOLT:
 		_fly_bolt(host, delta)
 	elif linked():
-		if length > max_length(host):
-			length = max_length(host)
 		if pinned():
 			_tie_bodies(host, delta)
 			return
+		if length > max_length(host):
+			length = max_length(host)
 		if not is_instance_valid(home):
 			home = null
 		if _aboard_anchor(host) or _at_anchor_skin(host):
@@ -276,20 +276,21 @@ func _reel(delta: float) -> void:
 
 
 func _tie_bodies(host: Wanderer, delta: float) -> void:
-	## Натянутый трос тянет в точках крепления: скорость и вращение одного камня переходят другому.
+	## Натянутый трос держит расстояние между креплениями: и длиннее, и короче заданного размера.
 	if not pinned() or not is_instance_valid(anchor) or home == anchor:
 		return
 	var origin := anchor_global()
 	var other := home_global()
 	var offset := other - origin
 	var dist := offset.length()
-	if dist <= length or dist < 0.001:
+	if dist < 0.001:
 		return
 	var along := offset / dist
 	var separating := (Body.velocity_at(home, other) - Body.velocity_at(anchor, origin)).dot(along)
-	var bias := clampf(0.4 * (dist - length) / maxf(delta, 0.001), 0.0, TAUT_MAX_CLOSE)
+	## Длина после СКМ замерла: длиннее — стянуть, короче — раздвинуть.
+	var bias := clampf(0.4 * (dist - length) / maxf(delta, 0.001), -TAUT_MAX_CLOSE, TAUT_MAX_CLOSE)
 	var needed := separating + bias
-	if needed <= 0.0:
+	if absf(needed) <= 0.0001:
 		return
 	var inv := _pin_inv_mass(anchor, origin, along) + _pin_inv_mass(home, other, along)
 	if inv <= 0.0:
