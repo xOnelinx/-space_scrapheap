@@ -1,7 +1,7 @@
 class_name Tether
 extends RefCounted
 
-## Трос. Выстрел толкает стрелка назад. Наконечник вплавляется вспышкой.
+## Трос. Выстрел толкает стрелка назад. Стыковка поднимает газ и песок с камня.
 ## Втягивание коротит трос и ускоряет к телу. Дальше 30 размеров скитальца он не тянется.
 
 enum Phase { IDLE, BOLT, LINKED }
@@ -14,7 +14,7 @@ const HIT_PUSH := 0.25
 const REEL_RATE := 70.0
 const MIN_LENGTH := 16.0
 const TAUT_MAX_CLOSE := 280.0
-const BURST_LIFE := 0.32
+const BURST_LIFE := 1.05
 ## Свет пороха гаснет раньше: газ ещё висит, когда вспышка уже погасла.
 const FLASH_LIFE := 0.20
 const MUZZLE_LIFE := 0.58
@@ -27,6 +27,8 @@ var bolt_global := Vector2.ZERO
 var bolt_velocity := Vector2.ZERO
 var burst := 0.0
 var burst_at := Vector2.ZERO
+## Куда от камня летит пыль стыковки.
+var burst_dir := Vector2.ZERO
 var ignited := false
 var muzzle := 0.0
 var muzzle_at := Vector2.ZERO
@@ -51,8 +53,6 @@ func anchor_global() -> Vector2:
 
 
 func release() -> void:
-	var blow := linked()
-	var at := anchor_global() if blow else Vector2.ZERO
 	phase = Phase.IDLE
 	anchor = null
 	anchor_local = Vector2.ZERO
@@ -61,9 +61,6 @@ func release() -> void:
 	_flown = 0.0
 	_ignore = null
 	_shot = Vector2.ZERO
-	if blow:
-		_ignite(at)
-		return
 	ignited = false
 
 
@@ -92,7 +89,7 @@ func plant(host: Wanderer, rock: Node2D, world_point: Vector2) -> void:
 	var stick := _on_surface(rock, world_point)
 	anchor_local = rock.to_local(stick)
 	length = reach
-	_ignite(stick)
+	_ignite(stick, stick - rock.global_position)
 
 
 func fire(host: Wanderer, from: Vector2, direction: Vector2, ignore: Node2D) -> void:
@@ -185,7 +182,7 @@ func _attach(host: Wanderer, rock: Node2D, world_point: Vector2) -> void:
 	_ignore = null
 	_flown = 0.0
 	_hit(host, rock, world_point)
-	_ignite(world_point)
+	_ignite(world_point, world_point - rock.global_position)
 
 
 func _aboard_anchor(host: Wanderer) -> bool:
@@ -271,9 +268,10 @@ func _hit(host: Wanderer, rock: Node2D, world_point: Vector2) -> void:
 	host.add_body_impulse(rock, _shot * RECOIL_SPEED * HIT_PUSH * host.get_mass(), world_point)
 
 
-func _ignite(at: Vector2) -> void:
+func _ignite(at: Vector2, away: Vector2 = Vector2.ZERO) -> void:
 	burst = BURST_LIFE
 	burst_at = at
+	burst_dir = away.normalized() if away.length_squared() > 0.01 else Vector2.ZERO
 	ignited = true
 
 

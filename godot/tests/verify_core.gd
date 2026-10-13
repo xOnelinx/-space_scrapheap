@@ -173,8 +173,8 @@ func _check_tether(scene: Node, wanderer: Wanderer) -> bool:
 	if wanderer.tether.linked():
 		fail("Трос не отцепился")
 		return false
-	if not wanderer.tether.ignited or wanderer.tether.burst <= 0.0:
-		fail("Отцеп без вспышки в точке крепления")
+	if wanderer.tether.ignited:
+		fail("Отцеп зажёг вспышку у наконечника")
 		return false
 
 	if not _check_recoil_reel_and_cap(wanderer, heavy, light):
