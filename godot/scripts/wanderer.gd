@@ -53,6 +53,8 @@ var tether := Tether.new()
 var fixed_ropes: Array[Tether] = []
 var _ride: Tether = null
 var _ride_u := 0.0
+## Знак стороны home→hook, с которой герой сел. Плюс — по часовой на экране.
+var _ride_side := 0.0
 ## Масса груза на скафандре. Список предметов снаружи.
 var cargo_mass := 0.0
 ## 0 — толчок по курсору. Иначе доля скорости вбок. Порванный скафандр пишет сам.
@@ -994,16 +996,23 @@ func grab_nearest_rope() -> bool:
 	_ride = best
 	_ride_u = best_u
 	var seat := _cable_ends(best)
-	global_position = seat[0].lerp(seat[1], _ride_u)
+	var along := seat[1] - seat[0]
+	var point := seat[0].lerp(seat[1], _ride_u)
+	var off := global_position - point
+	var cross := along.cross(off)
+	_ride_side = 0.0 if absf(cross) < 1.0 else signf(cross)
+	global_position = point
 	_clear_charge()
 	_lost_time = 0.0
 	## Та же хватка руками, что при посадке на астероид.
 	_begin_grab()
+	_face_on_rope(along)
 	return true
 
 
 func drop_rope() -> void:
 	_ride = null
+	_ride_side = 0.0
 
 
 func _latch_asteroid() -> bool:
@@ -1056,11 +1065,24 @@ func _slide_rope(axis: float, delta: float) -> bool:
 	var carried := _velocity_at(_ride.home, home).lerp(_velocity_at(_ride.anchor, hook), _ride_u)
 	var travel := along if along.dot(prefer) >= 0.0 else -along
 	velocity = carried + travel * axis * WALK_SPEED
-	## Руки по бокам спрайта ложатся на трос, корпус стоит поперёк.
-	_sprite.rotation = travel.angle()
 	_tick_grab(delta)
-	_place_hands_on_rope()
+	_face_on_rope(span)
 	return true
+
+
+func _face_on_rope(along: Vector2) -> void:
+	## Руки вдоль троса. Корпус остаётся с той стороны, с которой герой схватился.
+	if along.length_squared() < 1.0:
+		return
+	var prefer := Vector2.RIGHT if absf(along.x) >= absf(along.y) else Vector2.DOWN
+	var travel := along if along.dot(prefer) >= 0.0 else -along
+	var flip := false
+	if _ride_side > 0.0:
+		flip = along.dot(travel) >= 0.0
+	elif _ride_side < 0.0:
+		flip = along.dot(travel) < 0.0
+	_sprite.rotation = travel.angle() + (PI if flip else 0.0)
+	_place_hands_on_rope()
 
 
 func _place_hands_on_rope() -> void:

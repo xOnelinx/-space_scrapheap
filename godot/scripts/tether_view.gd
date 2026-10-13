@@ -69,7 +69,17 @@ func show_fixed(ropes: Array[Tether]) -> void:
 		var tip := rope.anchor_global()
 		var jaw := rope.jaw_angle()
 		var home := rope.home_global()
-		_fixed.append({"tip": tip, "jaw": jaw, "home": home})
+		var burst_age := -1.0
+		if rope.burst > 0.0:
+			burst_age = 1.0 - rope.burst / Tether.BURST_LIFE
+		_fixed.append({
+			"tip": tip,
+			"jaw": jaw,
+			"home": home,
+			"burst_at": rope.burst_at,
+			"burst_age": burst_age,
+			"burst_dir": rope.burst_dir,
+		})
 		_fit_span(_fixed_lines[i], to_local(home), to_local(tip), jaw)
 	queue_redraw()
 
@@ -89,6 +99,10 @@ func _draw() -> void:
 	## Пыль поверх губок, иначе начало струи прячется в наконечнике.
 	if _burst_age >= 0.0:
 		_draw_burst(to_local(_burst_at), _burst_age)
+	for mark in _fixed:
+		var burst_age := float(mark["burst_age"])
+		if burst_age >= 0.0:
+			_draw_burst(to_local(mark["burst_at"]), burst_age, mark["burst_dir"] as Vector2)
 
 
 func _fit_cable() -> void:
@@ -180,10 +194,11 @@ func _draw_gas(at: Vector2, aim: Vector2, life: float) -> void:
 		draw_line(inner, outer, Color(GAS.r, GAS.g, GAS.b, gas_alpha), 2.0, false)
 
 
-func _draw_burst(at: Vector2, age: float) -> void:
-	if _burst_dir.length_squared() <= 0.01:
+func _draw_burst(at: Vector2, age: float, dir: Vector2 = Vector2.ZERO) -> void:
+	var aim := dir if dir.length_squared() > 0.01 else _burst_dir
+	if aim.length_squared() <= 0.01:
 		return
-	_draw_dock_spray(at, _burst_dir, age)
+	_draw_dock_spray(at, aim, age)
 
 
 func _draw_dock_spray(at: Vector2, dir: Vector2, age: float) -> void:

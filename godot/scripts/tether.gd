@@ -24,7 +24,7 @@ var anchor: Node2D = null
 var anchor_local := Vector2.ZERO
 ## Угол губок в системе якоря: после стыковки крутится вместе с телом.
 var anchor_angle := 0.0
-## Второй конец: камень, на котором стоял герой в момент СКМ.
+## Второй конец: железо камня, на котором стоял герой в момент СКМ.
 var home: Node2D = null
 var home_local := Vector2.ZERO
 var length := 0.0
@@ -68,17 +68,19 @@ func home_global() -> Vector2:
 
 
 func pin_home(host: Wanderer) -> bool:
-	## Конец у героя садится на тело под ногами. Крюк при этом уже должен держаться.
+	## Конец садится на железо под ногами, не в центр героя. Крюк при этом уже должен держаться.
 	if not linked() or host.dock.inside or not host.dock.docked:
 		return false
 	var stood := host.dock.body
 	if stood == null or not is_instance_valid(stood):
 		return false
 	home = stood
-	home_local = host.dock.local
+	home_local = _skin_local(stood, host.dock.local)
 	var span := home_global().distance_to(anchor_global())
 	if span > length:
 		length = minf(span, max_length(host))
+	var stick := home_global()
+	_ignite(stick, stick - stood.global_position)
 	return true
 
 
@@ -372,6 +374,14 @@ func _light_muzzle(at: Vector2, dir: Vector2) -> void:
 	muzzle = MUZZLE_LIFE
 	muzzle_at = at
 	muzzle_dir = dir if dir.length_squared() > 0.01 else Vector2.RIGHT
+
+
+func _skin_local(body: Node2D, seat: Vector2) -> Vector2:
+	## Подошва стоит с зазором. Трос входит в ближайшее железо, а не остаётся на месте героя.
+	var rock := body as SpaceRock
+	if rock != null and rock.outline != null and rock.outline.points.size() >= 3:
+		return rock.outline.closest_iron(seat)
+	return body.to_local(_on_surface(body, body.to_global(seat)))
 
 
 func _on_surface(rock: Node2D, world_point: Vector2) -> Vector2:

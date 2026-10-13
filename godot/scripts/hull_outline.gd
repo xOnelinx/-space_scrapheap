@@ -207,6 +207,23 @@ func closest_s(local_point: Vector2) -> float:
 	return best_s
 
 
+func closest_iron(local_point: Vector2) -> Vector2:
+	## Ближняя точка железа, без зазора подошвы.
+	var best := local_point
+	var best_d := INF
+	var n := points.size()
+	for i in n:
+		var a: Vector2 = points[i]
+		var b: Vector2 = points[(i + 1) % n]
+		if a.distance_squared_to(b) < 0.0001:
+			continue
+		var hit := _closest(local_point, a, b)
+		if hit.dist_sq < best_d:
+			best_d = hit.dist_sq
+			best = hit.point
+	return best
+
+
 func closest_rim(local_point: Vector2) -> float:
 	var best_d := INF
 	var best_s := 0.0
