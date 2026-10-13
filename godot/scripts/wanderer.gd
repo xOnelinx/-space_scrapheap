@@ -372,7 +372,7 @@ func _publish_rope() -> void:
 	var muzzle_age := -1.0
 	if tether.muzzle > 0.0:
 		muzzle_age = 1.0 - tether.muzzle / Tether.MUZZLE_LIFE
-	view.show_rope(tip, tether.flying(), tether.linked(), tether.burst_at, age, tether.muzzle_at, tether.muzzle_dir, muzzle_age, tether.burst_dir)
+	view.show_rope(tip, tether.flying(), tether.linked(), tether.burst_at, age, tether.muzzle_at, tether.muzzle_dir, muzzle_age, tether.burst_dir, tether.jaw_angle())
 
 
 func _publish_warning() -> void:

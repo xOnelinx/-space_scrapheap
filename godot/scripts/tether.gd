@@ -22,6 +22,8 @@ const MUZZLE_LIFE := 0.58
 var phase := Phase.IDLE
 var anchor: Node2D = null
 var anchor_local := Vector2.ZERO
+## Угол губок в системе якоря: после стыковки крутится вместе с телом.
+var anchor_angle := 0.0
 var length := 0.0
 var bolt_global := Vector2.ZERO
 var bolt_velocity := Vector2.ZERO
@@ -52,10 +54,20 @@ func anchor_global() -> Vector2:
 	return bolt_global
 
 
+func jaw_angle() -> float:
+	## В мире. На якоре — угол тела плюс тот, с которым губки вошли.
+	if linked():
+		return anchor.global_rotation + anchor_angle
+	if _shot.length_squared() > 0.01:
+		return _shot.angle()
+	return 0.0
+
+
 func release() -> void:
 	phase = Phase.IDLE
 	anchor = null
 	anchor_local = Vector2.ZERO
+	anchor_angle = 0.0
 	bolt_velocity = Vector2.ZERO
 	length = 0.0
 	_flown = 0.0
@@ -88,6 +100,7 @@ func plant(host: Wanderer, rock: Node2D, world_point: Vector2) -> void:
 	anchor = rock
 	var stick := _on_surface(rock, world_point)
 	anchor_local = rock.to_local(stick)
+	_remember_jaw(rock, stick - host.global_position)
 	length = reach
 	_ignite(stick, stick - rock.global_position)
 
@@ -175,6 +188,7 @@ func _attach(host: Wanderer, rock: Node2D, world_point: Vector2) -> void:
 	phase = Phase.LINKED
 	anchor = rock
 	anchor_local = rock.to_local(world_point)
+	_remember_jaw(rock, _shot)
 	## Сразу до крюка, не на весь запас: иначе E долго выбирает слабину, прежде чем тянуть.
 	var span := host.global_position.distance_to(anchor.to_global(anchor_local))
 	length = clampf(span, MIN_LENGTH, max_length(host))
@@ -266,6 +280,13 @@ func _hit(host: Wanderer, rock: Node2D, world_point: Vector2) -> void:
 	if _shot.length_squared() <= 0.01:
 		return
 	host.add_body_impulse(rock, _shot * RECOIL_SPEED * HIT_PUSH * host.get_mass(), world_point)
+
+
+func _remember_jaw(rock: Node2D, into: Vector2) -> void:
+	var aim := into
+	if aim.length_squared() <= 0.01:
+		aim = Vector2.RIGHT
+	anchor_angle = aim.angle() - rock.global_rotation
 
 
 func _ignite(at: Vector2, away: Vector2 = Vector2.ZERO) -> void:

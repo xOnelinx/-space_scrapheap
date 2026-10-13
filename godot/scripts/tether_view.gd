@@ -22,6 +22,7 @@ var _burst_dir := Vector2.ZERO
 var _muzzle_at := Vector2.ZERO
 var _muzzle_dir := Vector2.RIGHT
 var _muzzle_age := -1.0
+var _jaw_angle := 0.0
 var _line: Line2D
 
 
@@ -45,13 +46,14 @@ func _ready() -> void:
 	add_child(_line)
 
 
-func show_rope(tip: Vector2, flying: bool, linked: bool, burst_at: Vector2, burst_age: float, muzzle_at: Vector2 = Vector2.ZERO, muzzle_dir: Vector2 = Vector2.RIGHT, muzzle_age: float = -1.0, burst_dir: Vector2 = Vector2.ZERO) -> void:
+func show_rope(tip: Vector2, flying: bool, linked: bool, burst_at: Vector2, burst_age: float, muzzle_at: Vector2 = Vector2.ZERO, muzzle_dir: Vector2 = Vector2.RIGHT, muzzle_age: float = -1.0, burst_dir: Vector2 = Vector2.ZERO, jaw_angle: float = 0.0) -> void:
 	_tip = tip
 	_flying = flying
 	_linked = linked
 	_burst_at = burst_at
 	_burst_age = burst_age
 	_burst_dir = burst_dir
+	_jaw_angle = jaw_angle
 	_muzzle_at = muzzle_at
 	_muzzle_dir = muzzle_dir
 	_muzzle_age = muzzle_age
@@ -79,20 +81,24 @@ func _fit_cable() -> void:
 	if tip.length_squared() < 1.0:
 		_line.points = PackedVector2Array()
 		return
-	## Трос кончается в пятке губок, острия доходят до точки удара.
-	var heel := tip - tip.normalized() * TIP.get_width()
+	## Трос кончается в пятке. На камне пятка крутится вместе с телом, не вдоль троса.
+	var heel := tip - _jaw_aim() * TIP.get_width()
 	if heel.length_squared() < 1.0:
 		_line.points = PackedVector2Array()
 		return
 	_line.points = PackedVector2Array([Vector2.ZERO, heel])
 
 
+func _jaw_aim() -> Vector2:
+	return Vector2.from_angle(_jaw_angle - global_rotation)
+
+
 func _draw_head(tip: Vector2) -> void:
-	## Губки смотрят по тросу: справа текстуры остриё, слева пятка с винтом.
+	## Остриё в точке удара. После стыковки угол пришёл от тела, не от троса.
 	if tip.length_squared() < 1.0:
 		return
 	var size := TIP.get_size()
-	draw_set_transform(tip, tip.angle(), Vector2.ONE)
+	draw_set_transform(tip, _jaw_aim().angle(), Vector2.ONE)
 	draw_texture_rect(TIP, Rect2(-size.x, -size.y * 0.5, size.x, size.y), false)
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 
