@@ -30,7 +30,7 @@ static func along_ray(tree: SceneTree, origin: Vector2, direction: Vector2, reac
 		var body := node as Node2D
 		if body == null or body == ignore or not Body.is_body(body):
 			continue
-		var t := Body.ray_distance(body, origin, dir)
+		var t := Body.ray_distance(body, origin, dir, best_t)
 		if t >= 0.0 and t < INF and t <= best_t:
 			best_t = t
 			found = body

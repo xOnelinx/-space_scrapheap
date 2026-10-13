@@ -170,13 +170,16 @@ func uniform_scale() -> float:
 func ray_hit(origin: Vector2, dir: Vector2) -> float:
 	if not shaped or outline == null or outline.points.size() < 3:
 		return INF
+	## Ребро в локали спрайта. local_dir — образ единичного мирового шага, поэтому t в мировых пикселях.
+	var local_origin := to_local(origin)
+	var local_dir := to_local(origin + dir) - local_origin
+	if local_dir.length_squared() < 0.0000001:
+		return INF
 	var best := INF
 	var pts := outline.points
 	var n := pts.size()
 	for i in n:
-		var a := to_global(pts[i])
-		var b := to_global(pts[(i + 1) % n])
-		var t := _ray_segment(origin, dir, a, b)
+		var t := _ray_segment(local_origin, local_dir, pts[i], pts[(i + 1) % n])
 		if t >= 0.0 and t < best:
 			best = t
 	return best
