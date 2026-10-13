@@ -180,6 +180,11 @@ func _check_tether(scene: Node, wanderer: Wanderer) -> bool:
 	if not _check_recoil_reel_and_cap(wanderer, heavy, light):
 		return false
 
+	if not _check_pin(wanderer, heavy, light):
+		return false
+	if not _check_rope_shares_motion(wanderer, heavy, light):
+		return false
+
 	wanderer.tether.plant(wanderer, heavy, heavy.global_position)
 	wanderer.global_position = Vector2(-90000, 40000)
 	wanderer.velocity = Vector2(-200, 0)
@@ -188,6 +193,84 @@ func _check_tether(scene: Node, wanderer: Wanderer) -> bool:
 	if wanderer._dead or wanderer._lost_time > 0.01:
 		fail("На тросе сработал курс в никуда")
 		return false
+	return true
+
+
+func _check_pin(wanderer: Wanderer, heavy: SpaceRock, light: SpaceRock) -> bool:
+	wanderer.tether.release()
+	wanderer.undock()
+	_quiet(heavy)
+	_quiet(light)
+	light.global_position = heavy.global_position + Vector2(220, 0)
+	wanderer.global_position = heavy.global_position + Vector2(0, -heavy.get_hit_radius() - 30.0)
+	wanderer.dock_to(heavy, Vector2.UP)
+	if not wanderer.dock.docked or wanderer.dock.body != heavy:
+		fail("Не встал на камень для второго конца")
+		return false
+	if wanderer.tether.pin_home(wanderer):
+		fail("Второй конец сел без крюка")
+		return false
+	wanderer.tether.plant(wanderer, light, light.global_position + Vector2(light.get_hit_radius(), 0))
+	if not wanderer.tether.pin_home(wanderer):
+		fail("Второй конец не сел на камень под ногами")
+		return false
+	var before := wanderer.tether.home_global()
+	heavy.rotation += 0.6
+	if wanderer.tether.home_global().distance_to(before) < 1.0:
+		fail("Второй конец не повернулся вместе с астероидом")
+		return false
+	wanderer.global_position += Vector2(90, 0)
+	wanderer.velocity = Vector2(40, 0)
+	var keep := wanderer.velocity
+	wanderer.tether.integrate(wanderer, 0.016, true)
+	if wanderer.velocity.distance_to(keep) > 0.01:
+		fail("Закреплённый трос потянул героя")
+		return false
+	if not wanderer.tether.pinned() or wanderer.tether.home != heavy:
+		fail("Второй конец отцепился от камня")
+		return false
+	wanderer.tether.release()
+	if wanderer.tether.pinned():
+		fail("Q не снял второй конец")
+		return false
+	return true
+
+
+func _check_rope_shares_motion(wanderer: Wanderer, heavy: SpaceRock, light: SpaceRock) -> bool:
+	wanderer.tether.release()
+	wanderer.undock()
+	_quiet(heavy)
+	_quiet(light)
+	heavy.rotation = 0.0
+	light.rotation = 0.0
+	heavy.spin = 0.0
+	light.spin = 0.0
+	light.global_position = heavy.global_position + Vector2(400, 0)
+	wanderer.global_position = heavy.global_position + Vector2(0, -heavy.get_hit_radius() - 30.0)
+	wanderer.dock_to(heavy, Vector2.UP)
+	wanderer.tether.plant(wanderer, light, light.global_position + Vector2(-light.get_hit_radius(), 0))
+	if not wanderer.tether.pin_home(wanderer):
+		fail("Трос между камнями не закрепился")
+		return false
+	var origin := wanderer.tether.anchor_global()
+	var other := wanderer.tether.home_global()
+	var along := other - origin
+	if along.length_squared() < 1.0:
+		fail("Концы троса совпали")
+		return false
+	along = along.normalized()
+	wanderer.tether.length = maxf(origin.distance_to(other) - 2.0, Tether.MIN_LENGTH)
+	light.drift_velocity = -along * 90.0
+	heavy.drift_velocity = Vector2.ZERO
+	var pulling := light.drift_velocity.dot(-along)
+	wanderer.tether.integrate(wanderer, 0.016, false)
+	if heavy.drift_velocity.dot(-along) <= 1.0:
+		fail("Трос не передал движение второму астероиду")
+		return false
+	if light.drift_velocity.dot(-along) >= pulling - 1.0:
+		fail("Трос не забрал скорость у астероида, который тянет")
+		return false
+	wanderer.tether.release()
 	return true
 
 
@@ -276,10 +359,10 @@ func _check_recoil_reel_and_cap(wanderer: Wanderer, heavy: SpaceRock, light: Spa
 	wanderer.tether.plant(wanderer, light, light.global_position)
 	wanderer.tether.length = 30.0
 	wanderer.global_position = light.global_position + Vector2(160, 0)
-	var before := wanderer.global_position
+	var stayed := wanderer.global_position
 	wanderer.tether.integrate(wanderer, 0.016, false)
 	var span := wanderer.global_position.distance_to(wanderer.tether.anchor_global())
-	if wanderer.global_position.distance_to(before) > 1.5:
+	if wanderer.global_position.distance_to(stayed) > 1.5:
 		fail("Без E трос вернул скитальца")
 		return false
 	if wanderer.velocity.length() > 1.0 or light.drift_velocity.length() > 1.0:

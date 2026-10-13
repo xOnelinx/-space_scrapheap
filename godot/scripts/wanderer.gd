@@ -318,7 +318,7 @@ func _step_motion(delta: float) -> void:
 
 	tether.integrate(self, delta, _reeling())
 
-	if tether.linked():
+	if tether.linked() and not tether.pinned():
 		_lost_time = 0.0
 	elif course_is_lost():
 		_lost_time += delta
@@ -372,7 +372,10 @@ func _publish_rope() -> void:
 	var muzzle_age := -1.0
 	if tether.muzzle > 0.0:
 		muzzle_age = 1.0 - tether.muzzle / Tether.MUZZLE_LIFE
-	view.show_rope(tip, tether.flying(), tether.linked(), tether.burst_at, age, tether.muzzle_at, tether.muzzle_dir, muzzle_age, tether.burst_dir, tether.jaw_angle())
+	var home := Vector2.ZERO
+	if tether.pinned():
+		home = tether.home_global()
+	view.show_rope(tip, tether.flying(), tether.linked(), tether.burst_at, age, tether.muzzle_at, tether.muzzle_dir, muzzle_age, tether.burst_dir, tether.jaw_angle(), home, tether.pinned())
 
 
 func _publish_warning() -> void:
@@ -905,6 +908,12 @@ func release_tether() -> void:
 	if not accepts_input():
 		return
 	tether.release()
+
+
+func pin_tether() -> void:
+	if not accepts_input():
+		return
+	tether.pin_home(self)
 
 
 func toggle_hatch() -> void:

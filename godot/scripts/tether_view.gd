@@ -23,6 +23,8 @@ var _muzzle_at := Vector2.ZERO
 var _muzzle_dir := Vector2.RIGHT
 var _muzzle_age := -1.0
 var _jaw_angle := 0.0
+var _home := Vector2.ZERO
+var _home_pinned := false
 var _line: Line2D
 
 
@@ -46,7 +48,7 @@ func _ready() -> void:
 	add_child(_line)
 
 
-func show_rope(tip: Vector2, flying: bool, linked: bool, burst_at: Vector2, burst_age: float, muzzle_at: Vector2 = Vector2.ZERO, muzzle_dir: Vector2 = Vector2.RIGHT, muzzle_age: float = -1.0, burst_dir: Vector2 = Vector2.ZERO, jaw_angle: float = 0.0) -> void:
+func show_rope(tip: Vector2, flying: bool, linked: bool, burst_at: Vector2, burst_age: float, muzzle_at: Vector2 = Vector2.ZERO, muzzle_dir: Vector2 = Vector2.RIGHT, muzzle_age: float = -1.0, burst_dir: Vector2 = Vector2.ZERO, jaw_angle: float = 0.0, home: Vector2 = Vector2.ZERO, home_pinned: bool = false) -> void:
 	_tip = tip
 	_flying = flying
 	_linked = linked
@@ -54,6 +56,8 @@ func show_rope(tip: Vector2, flying: bool, linked: bool, burst_at: Vector2, burs
 	_burst_age = burst_age
 	_burst_dir = burst_dir
 	_jaw_angle = jaw_angle
+	_home = home
+	_home_pinned = home_pinned
 	_muzzle_at = muzzle_at
 	_muzzle_dir = muzzle_dir
 	_muzzle_age = muzzle_age
@@ -81,12 +85,13 @@ func _fit_cable() -> void:
 	if tip.length_squared() < 1.0:
 		_line.points = PackedVector2Array()
 		return
-	## Трос кончается в пятке. На камне пятка крутится вместе с телом, не вдоль троса.
+	## Трос кончается в пятке. Второй конец — на камне под героем, если его закрепили.
 	var heel := tip - _jaw_aim() * TIP.get_width()
-	if heel.length_squared() < 1.0:
+	var start := to_local(_home) if _home_pinned else Vector2.ZERO
+	if heel.distance_squared_to(start) < 1.0:
 		_line.points = PackedVector2Array()
 		return
-	_line.points = PackedVector2Array([Vector2.ZERO, heel])
+	_line.points = PackedVector2Array([start, heel])
 
 
 func _jaw_aim() -> Vector2:

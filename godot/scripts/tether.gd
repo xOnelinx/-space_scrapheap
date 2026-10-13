@@ -24,6 +24,9 @@ var anchor: Node2D = null
 var anchor_local := Vector2.ZERO
 ## Угол губок в системе якоря: после стыковки крутится вместе с телом.
 var anchor_angle := 0.0
+## Второй конец: камень, на котором стоял герой в момент СКМ.
+var home: Node2D = null
+var home_local := Vector2.ZERO
 var length := 0.0
 var bolt_global := Vector2.ZERO
 var bolt_velocity := Vector2.ZERO
@@ -54,6 +57,31 @@ func anchor_global() -> Vector2:
 	return bolt_global
 
 
+func pinned() -> bool:
+	return home != null and is_instance_valid(home)
+
+
+func home_global() -> Vector2:
+	if pinned():
+		return home.to_global(home_local)
+	return Vector2.ZERO
+
+
+func pin_home(host: Wanderer) -> bool:
+	## Конец у героя садится на тело под ногами. Крюк при этом уже должен держаться.
+	if not linked() or host.dock.inside or not host.dock.docked:
+		return false
+	var stood := host.dock.body
+	if stood == null or not is_instance_valid(stood):
+		return false
+	home = stood
+	home_local = host.dock.local
+	var span := home_global().distance_to(anchor_global())
+	if span > length:
+		length = minf(span, max_length(host))
+	return true
+
+
 func jaw_angle() -> float:
 	## В мире. На якоре — угол тела плюс тот, с которым губки вошли.
 	if linked():
@@ -68,6 +96,8 @@ func release() -> void:
 	anchor = null
 	anchor_local = Vector2.ZERO
 	anchor_angle = 0.0
+	home = null
+	home_local = Vector2.ZERO
 	bolt_velocity = Vector2.ZERO
 	length = 0.0
 	_flown = 0.0
@@ -129,6 +159,11 @@ func integrate(host: Wanderer, delta: float, reeling: bool = false) -> void:
 	elif linked():
 		if length > max_length(host):
 			length = max_length(host)
+		if pinned():
+			_tie_bodies(host, delta)
+			return
+		if not is_instance_valid(home):
+			home = null
 		if _aboard_anchor(host) or _at_anchor_skin(host):
 			_hold_rope_aboard(host, delta, reeling)
 		else:
@@ -236,6 +271,43 @@ func _pay_out(host: Wanderer) -> void:
 
 func _reel(delta: float) -> void:
 	length = maxf(length - REEL_RATE * delta, MIN_LENGTH)
+
+
+func _tie_bodies(host: Wanderer, delta: float) -> void:
+	## Натянутый трос тянет в точках крепления: скорость и вращение одного камня переходят другому.
+	if not pinned() or not is_instance_valid(anchor) or home == anchor:
+		return
+	var origin := anchor_global()
+	var other := home_global()
+	var offset := other - origin
+	var dist := offset.length()
+	if dist <= length or dist < 0.001:
+		return
+	var along := offset / dist
+	var separating := (Body.velocity_at(home, other) - Body.velocity_at(anchor, origin)).dot(along)
+	var bias := clampf(0.4 * (dist - length) / maxf(delta, 0.001), 0.0, TAUT_MAX_CLOSE)
+	var needed := separating + bias
+	if needed <= 0.0:
+		return
+	var inv := _pin_inv_mass(anchor, origin, along) + _pin_inv_mass(home, other, along)
+	if inv <= 0.0:
+		return
+	var impulse := needed / inv
+	host.add_body_impulse(anchor, along * impulse, origin)
+	host.add_body_impulse(home, -along * impulse, other)
+
+
+func _pin_inv_mass(body: Node2D, at: Vector2, along: Vector2) -> float:
+	var mass := Body.mass(body)
+	if mass <= 0.0:
+		return 0.0
+	var inv := 1.0 / mass
+	var inertia := Body.inertia(body)
+	if inertia <= 0.0:
+		return inv
+	var lever := at - body.global_position
+	var cross := lever.x * along.y - lever.y * along.x
+	return inv + cross * cross / inertia
 
 
 func _constrain(host: Wanderer, delta: float) -> void:
