@@ -231,6 +231,27 @@ func _check_recoil_reel_and_cap(wanderer: Wanderer, heavy: SpaceRock, light: Spa
 		fail("Втягивание не ускорило к телу")
 		return false
 
+	_quiet(heavy)
+	_stand(wanderer, heavy)
+	wanderer.velocity = Vector2.ZERO
+	heavy.drift_velocity = Vector2.ZERO
+	heavy.spin = 0.0
+	wanderer.tether.plant(wanderer, heavy, heavy.global_position)
+	wanderer.tether.length = 8.0
+	for _i in 30:
+		wanderer.tether.integrate(wanderer, 0.016, true)
+		if wanderer.dock.docked:
+			wanderer.follow_dock()
+	if not wanderer.dock.docked or wanderer.dock.body != heavy:
+		fail("Втягивание на своём астероиде оторвало ноги")
+		return false
+	if heavy.drift_velocity.length() > 1.0 or absf(heavy.spin) > 0.05:
+		fail("Втягивание на своём астероиде разогнало камень")
+		return false
+	if wanderer.velocity.length() > 1.0:
+		fail("Втягивание на своём астероиде разогнало скитальца")
+		return false
+
 	_quiet(light)
 	wanderer.velocity = Vector2.ZERO
 	wanderer.tether.plant(wanderer, light, light.global_position)

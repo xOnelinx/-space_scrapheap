@@ -108,9 +108,12 @@ func integrate(host: Wanderer, delta: float, reeling: bool = false) -> void:
 	elif linked():
 		if length > max_length(host):
 			length = max_length(host)
-		if reeling:
-			_reel(delta)
-		_constrain(host, delta)
+		if _aboard_anchor(host):
+			_hold_rope_aboard(host, delta, reeling)
+		else:
+			if reeling:
+				_reel(delta)
+			_constrain(host, delta)
 
 
 static func first_along(host: Node, origin: Vector2, direction: Vector2, reach: float, ignore: Node2D) -> Node2D:
@@ -168,6 +171,22 @@ func _attach(host: Wanderer, rock: Node2D, world_point: Vector2) -> void:
 	_flown = 0.0
 	_hit(host, rock, world_point)
 	_ignite(world_point)
+
+
+func _aboard_anchor(host: Wanderer) -> bool:
+	return host.dock.docked and host.dock.body == anchor
+
+
+func _hold_rope_aboard(host: Wanderer, delta: float, reeling: bool) -> void:
+	## Свободный натяг здесь швыряет обоих: кадр сбрасывает скорость ног, камень импульс копит.
+	var span := host.global_position.distance_to(anchor_global())
+	if length < span:
+		length = span
+	if not reeling:
+		return
+	_reel(delta)
+	if length < span:
+		length = span
 
 
 func _reel(delta: float) -> void:
