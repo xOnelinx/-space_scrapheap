@@ -45,6 +45,8 @@ const GRAB_SPRITE := preload("res://assets/wanderer_grab.png")
 
 var dock := Dock.new()
 var tether := Tether.new()
+## Тросы, у которых оба конца уже сидят на телах. Q их не снимает.
+var fixed_ropes: Array[Tether] = []
 ## Масса груза на скафандре. Список предметов снаружи.
 var cargo_mass := 0.0
 ## 0 — толчок по курсору. Иначе доля скорости вбок. Порванный скафандр пишет сам.
@@ -258,6 +260,7 @@ func _process(_delta: float) -> void:
 
 func _physics_process(delta: float) -> void:
 	_step_motion(delta)
+	_step_fixed_ropes(delta)
 	_publish_views()
 
 
@@ -376,6 +379,7 @@ func _publish_rope() -> void:
 	if tether.pinned():
 		home = tether.home_global()
 	view.show_rope(tip, tether.flying(), tether.linked(), tether.burst_at, age, tether.muzzle_at, tether.muzzle_dir, muzzle_age, tether.burst_dir, tether.jaw_angle(), home, tether.pinned())
+	view.show_fixed(fixed_ropes)
 
 
 func _publish_warning() -> void:
@@ -910,10 +914,26 @@ func release_tether() -> void:
 	tether.release()
 
 
-func pin_tether() -> void:
+func pin_tether() -> bool:
 	if not accepts_input():
-		return
-	tether.pin_home(self)
+		return false
+	if not tether.pin_home(self):
+		return false
+	## Этот трос остаётся на камнях. В руках — новый, Q снимет только его.
+	fixed_ropes.append(tether)
+	tether = Tether.new()
+	return true
+
+
+func _step_fixed_ropes(delta: float) -> void:
+	var live: Array[Tether] = []
+	for rope in fixed_ropes:
+		if not rope.linked() or not rope.pinned():
+			continue
+		rope.integrate(self, delta, false)
+		if rope.linked() and rope.pinned():
+			live.append(rope)
+	fixed_ropes = live
 
 
 func toggle_hatch() -> void:
