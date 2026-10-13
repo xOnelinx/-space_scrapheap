@@ -14,7 +14,7 @@ const HIT_PUSH := 0.25
 const REEL_RATE := 70.0
 const MIN_LENGTH := 16.0
 const TAUT_MAX_CLOSE := 280.0
-const LINK_COUNT := 9
+const LINK_COUNT := 16
 const BURST_LIFE := 1.05
 ## Свет пороха гаснет раньше: газ ещё висит, когда вспышка уже погасла.
 const FLASH_LIFE := 0.20
@@ -319,42 +319,32 @@ func _reel(delta: float) -> void:
 	length = maxf(length - REEL_RATE * delta, MIN_LENGTH)
 
 
-func _tie_bodies(host: Wanderer, delta: float) -> void:
-	## Длина после СКМ замерла. Тянет только натянутый трос; слабина не раздвигает камни и не гасит боковой ход.
+func _tie_bodies(_host: Wanderer, delta: float) -> void:
+	## Длиннее закреплённого трос не растёт. Рывок в крепление делится на ход и спин. Короче — провисает.
 	if not pinned() or not is_instance_valid(anchor) or home == anchor:
 		return
-	_step_links(delta)
 	var origin := anchor_global()
 	var other := home_global()
 	var offset := other - origin
 	var dist := offset.length()
-	if dist <= length or dist < 0.001:
+	if dist < 0.001:
 		return
 	var along := offset / dist
-	var separating := (Body.velocity_at(home, other) - Body.velocity_at(anchor, origin)).dot(along)
-	var bias := clampf(0.4 * (dist - length) / maxf(delta, 0.001), 0.0, TAUT_MAX_CLOSE)
-	var needed := separating + bias
-	if needed <= 0.0:
-		return
-	var inv := _pin_inv_mass(anchor, origin, along) + _pin_inv_mass(home, other, along)
-	if inv <= 0.0:
-		return
-	var impulse := needed / inv
-	host.add_body_impulse(anchor, along * impulse, origin)
-	host.add_body_impulse(home, -along * impulse, other)
+	var inv := _linear_inv(anchor) + _linear_inv(home)
+	var stretch := maxf(dist - length, 0.0)
+	if dist + 0.001 >= length:
+		Body.resist(anchor, origin, home, other, along, 0.0)
+	if stretch > 0.0 and inv > 0.0:
+		anchor.global_position += along * stretch * _linear_inv(anchor) / inv
+		home.global_position -= along * stretch * _linear_inv(home) / inv
+	_step_links(delta)
 
 
-func _pin_inv_mass(body: Node2D, at: Vector2, along: Vector2) -> float:
+func _linear_inv(body: Node2D) -> float:
 	var mass := Body.mass(body)
 	if mass <= 0.0:
 		return 0.0
-	var inv := 1.0 / mass
-	var inertia := Body.inertia(body)
-	if inertia <= 0.0:
-		return inv
-	var lever := at - body.global_position
-	var cross := lever.x * along.y - lever.y * along.x
-	return inv + cross * cross / inertia
+	return 1.0 / mass
 
 
 func _ensure_links() -> bool:
@@ -409,7 +399,7 @@ func _step_links(_delta: float) -> void:
 
 func _satisfy_links(home_at: Vector2, hook_at: Vector2) -> void:
 	var seg := length / float(LINK_COUNT - 1)
-	for _iter in 6:
+	for _iter in 12:
 		for i in LINK_COUNT - 1:
 			var a := _links[i]
 			var b := _links[i + 1]

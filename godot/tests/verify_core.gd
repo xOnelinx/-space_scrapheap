@@ -234,6 +234,67 @@ func _check_rope_ride(wanderer: Wanderer, heavy: SpaceRock, light: SpaceRock) ->
 		_clear_ride(wanderer)
 		fail("Закреплённый трос не зафиксировал длину")
 		return false
+	var rope_along := laid.home_global() - laid.anchor_global()
+	rope_along = rope_along.normalized()
+	light.spin = 0.8
+	heavy.spin = -0.5
+	light.drift_velocity = -rope_along * 90.0
+	heavy.drift_velocity = Vector2.ZERO
+	laid.integrate(wanderer, 0.016, false)
+	if heavy.drift_velocity.dot(-rope_along) <= 0.0 or light.drift_velocity.dot(-rope_along) >= 89.0:
+		_clear_ride(wanderer)
+		fail("Трос не передал скорость движения")
+		return false
+	var pin_was := laid.anchor_global()
+	var local_pin := laid.anchor_local
+	var hitch_side := Vector2(-rope_along.y, rope_along.x)
+	var light_pos := light.global_position
+	var heavy_pos := heavy.global_position
+	var light_turn := light.rotation
+	light.rotation = hitch_side.angle() - local_pin.angle()
+	light.global_position += pin_was - laid.anchor_global()
+	var lever := laid.anchor_global() - light.global_position
+	var torque_sign := signf(lever.cross(rope_along))
+	if absf(torque_sign) < 0.5:
+		_clear_ride(wanderer)
+		fail("Плечо крепления не вышло")
+		return false
+	var slack := frozen - laid.home_global().distance_to(laid.anchor_global())
+	if slack > 0.0:
+		light.global_position -= rope_along * slack
+	light.spin = -torque_sign * 1.5
+	heavy.spin = 0.0
+	light.drift_velocity = Vector2.ZERO
+	heavy.drift_velocity = Vector2.ZERO
+	var fought := light.spin
+	laid.integrate(wanderer, 0.016, false)
+	var held_along := laid.home_global() - laid.anchor_global()
+	held_along = held_along.normalized()
+	var paid := Body.velocity_at(heavy, laid.home_global()).dot(held_along) \
+			- Body.velocity_at(light, laid.anchor_global()).dot(held_along)
+	if paid > 0.5 or absf(light.spin) >= absf(fought) - 0.02:
+		_clear_ride(wanderer)
+		fail("Трос не поделил рывок со спином")
+		return false
+	if absf(light.spin) > absf(fought):
+		_clear_ride(wanderer)
+		fail("Трос разогнал спин сильнее рывка")
+		return false
+	var held_spin := light.spin
+	laid.integrate(wanderer, 0.016, false)
+	if absf(light.spin - held_spin) > 0.05:
+		_clear_ride(wanderer)
+		fail("Трос снова разогнал спин")
+		return false
+	light.global_position = light_pos
+	heavy.global_position = heavy_pos
+	light.rotation = light_turn
+	light.global_position += pin_was - laid.anchor_global()
+	light.spin = 0.0
+	light.drift_velocity = Vector2.ZERO
+	heavy.spin = 0.0
+	heavy.drift_velocity = Vector2.ZERO
+	laid.integrate(wanderer, 0.016, false)
 	var light_at := light.global_position
 	var heavy_at := heavy.global_position
 	var light_rot := light.rotation
@@ -255,15 +316,40 @@ func _check_rope_ride(wanderer: Wanderer, heavy: SpaceRock, light: SpaceRock) ->
 	heavy.drift_velocity = Vector2.ZERO
 	light.spin = 0.0
 	heavy.spin = 0.0
-	light.global_position -= pull * 40.0
+	var stretched := light.global_position + pull * 30.0
+	light.global_position = stretched
+	light.rotation += 0.35
 	laid.integrate(wanderer, 0.016, false)
 	if absf(laid.length - frozen) > 0.01:
 		_clear_ride(wanderer)
 		fail("Длина закреплённого троса изменилась")
 		return false
+	var span_now := laid.home_global().distance_to(laid.anchor_global())
+	if absf(span_now - frozen) > 2.0:
+		_clear_ride(wanderer)
+		fail("Трос вырос вместо толчка")
+		return false
+	if light.global_position.distance_to(stretched) < 1.0 and light.drift_velocity.length() < 1.0:
+		_clear_ride(wanderer)
+		fail("Растяжение не ушло в движение")
+		return false
+	light.global_position = light_at
+	heavy.global_position = heavy_at
+	light.rotation = light_rot
+	heavy.rotation = heavy_rot
+	light.drift_velocity = Vector2.ZERO
+	heavy.drift_velocity = Vector2.ZERO
+	light.spin = 0.0
+	heavy.spin = 0.0
+	light.global_position -= pull * 40.0
+	laid.integrate(wanderer, 0.016, false)
+	if laid.home_global().distance_to(laid.anchor_global()) > frozen - 10.0:
+		_clear_ride(wanderer)
+		fail("Ослабший трос не укоротился")
+		return false
 	if light.drift_velocity.dot(pull) > 1.0:
 		_clear_ride(wanderer)
-		fail("Слабый трос раздвинул камни")
+		fail("Ослабший трос раздвинул камни")
 		return false
 	var pts := laid.link_points()
 	var chord := pts[pts.size() - 1] - pts[0]
@@ -274,7 +360,7 @@ func _check_rope_ride(wanderer: Wanderer, heavy: SpaceRock, light: SpaceRock) ->
 			bowed = maxf(bowed, absf(rel.x * chord.y - rel.y * chord.x) / chord.length())
 	if bowed < 4.0:
 		_clear_ride(wanderer)
-		fail("Слабый трос остался прямой")
+		fail("Ослабший трос остался прямой")
 		return false
 	light.global_position = light_at
 	heavy.global_position = heavy_at
