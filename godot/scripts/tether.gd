@@ -11,7 +11,7 @@ const BOLT_SPEED := 640.0
 const RECOIL_SPEED := 90.0
 ## Доля импульса выстрела, которую наконечник отдаёт телу. Целиком камень слишком крутит.
 const HIT_PUSH := 0.25
-const REEL_RATE := 140.0
+const REEL_RATE := 70.0
 const MIN_LENGTH := 16.0
 const TAUT_MAX_CLOSE := 280.0
 const BURST_LIFE := 0.32

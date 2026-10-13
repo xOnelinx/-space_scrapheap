@@ -228,7 +228,7 @@ func _check_recoil_reel_and_cap(wanderer: Wanderer, heavy: SpaceRock, light: Spa
 	wanderer.tether.plant(wanderer, heavy, heavy.global_position)
 	wanderer.tether.length = 180.0
 	wanderer.tether.integrate(wanderer, 1.0, true)
-	if wanderer.tether.length > 50.0:
+	if wanderer.tether.length > 180.0 - Tether.REEL_RATE + 5.0:
 		fail("Втягивание не укоротило трос")
 		return false
 	if wanderer.velocity.x <= 1.0:
