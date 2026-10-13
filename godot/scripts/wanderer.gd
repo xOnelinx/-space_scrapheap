@@ -951,6 +951,8 @@ func toggle_hatch() -> void:
 	if not accepts_input():
 		return
 	if _ride != null:
+		if _latch_asteroid():
+			return
 		drop_rope()
 		return
 	if dock.inside:
@@ -996,6 +998,18 @@ func drop_rope() -> void:
 	_ride = null
 
 
+func _latch_asteroid() -> bool:
+	## Круг героя уже в периметре камня: F сажает на него, а не бросает в пустоту.
+	var rock := _buried_asteroid()
+	if rock == null:
+		return false
+	var away := global_position - rock.global_position
+	var normal := Vector2.UP if away.length_squared() < 0.0001 else away.normalized()
+	drop_rope()
+	dock_to(rock, normal)
+	return true
+
+
 func _follow_rope(delta: float) -> bool:
 	var axis := 0.0 if _controls_locked else Input.get_axis(&"move_left", &"move_right")
 	return _slide_rope(axis, delta)
@@ -1022,7 +1036,8 @@ func _slide_rope(axis: float, delta: float) -> bool:
 	var travel := along if along.dot(prefer) >= 0.0 else -along
 	velocity = carried + travel * axis * WALK_SPEED
 	_sprite.position = Vector2.ZERO
-	_sprite.rotation = travel.angle() - PI / 2.0
+	## Руки по бокам спрайта ложатся на трос, корпус стоит поперёк.
+	_sprite.rotation = travel.angle()
 	_show_idle_sprite()
 	return true
 

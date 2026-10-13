@@ -248,6 +248,12 @@ func _check_rope_ride(wanderer: Wanderer, heavy: SpaceRock, light: SpaceRock) ->
 		_clear_ride(wanderer)
 		fail("D не сдвинул по тросу")
 		return false
+	var sprite := wanderer.get_node("Sprite") as Sprite2D
+	var arm := Vector2.RIGHT.rotated(sprite.rotation)
+	if absf(absf(arm.dot(span.normalized())) - 1.0) > 0.05:
+		_clear_ride(wanderer)
+		fail("Герой на тросе не лежит боком")
+		return false
 	wanderer._slide_rope(-1.0, 0.25)
 	if wanderer.global_position.distance_to(before) > 2.0:
 		_clear_ride(wanderer)
@@ -271,9 +277,20 @@ func _check_rope_ride(wanderer: Wanderer, heavy: SpaceRock, light: SpaceRock) ->
 	wanderer._controls_locked = false
 	wanderer.toggle_hatch()
 	wanderer._controls_locked = locked
-	if wanderer._ride != null:
+	if wanderer._ride != null or wanderer.dock.docked:
 		_clear_ride(wanderer)
-		fail("F не отпустил трос")
+		fail("F без астероида не отпустил трос")
+		return false
+	var pin := laid.anchor_global()
+	wanderer._ride = laid
+	wanderer._ride_u = 1.0
+	wanderer.global_position = pin
+	wanderer._controls_locked = false
+	wanderer.toggle_hatch()
+	wanderer._controls_locked = locked
+	if wanderer._ride != null or not wanderer.dock.docked or wanderer.dock.body != light:
+		_clear_ride(wanderer)
+		fail("F в периметре астероида не посадил на него")
 		return false
 	_clear_ride(wanderer)
 	return true
