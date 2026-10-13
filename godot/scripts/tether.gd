@@ -2,11 +2,11 @@ class_name Tether
 extends RefCounted
 
 ## Трос. Выстрел толкает стрелка назад. Наконечник вплавляется вспышкой.
-## Втягивание коротит трос и ускоряет к телу. Дальше 26⅔ размеров скитальца он не тянется.
+## Втягивание коротит трос и ускоряет к телу. Дальше 30 размеров скитальца он не тянется.
 
 enum Phase { IDLE, BOLT, LINKED }
 
-const BODIES := 80.0 / 3.0
+const BODIES := 30.0
 const BOLT_SPEED := 640.0
 const RECOIL_SPEED := 90.0
 const REEL_RATE := 140.0
