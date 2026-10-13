@@ -976,8 +976,9 @@ func grab_nearest_rope() -> bool:
 	for rope in fixed_ropes:
 		if not rope.linked() or not rope.pinned():
 			continue
-		var home := rope.home_global()
-		var hook := rope.anchor_global()
+		var ends := _cable_ends(rope)
+		var home := ends[0]
+		var hook := ends[1]
 		if home.distance_squared_to(hook) < 1.0:
 			continue
 		var nearest := _closest_on_segment(home, hook, global_position)
@@ -992,7 +993,8 @@ func grab_nearest_rope() -> bool:
 		undock()
 	_ride = best
 	_ride_u = best_u
-	global_position = best.home_global().lerp(best.anchor_global(), _ride_u)
+	var seat := _cable_ends(best)
+	global_position = seat[0].lerp(seat[1], _ride_u)
 	_clear_charge()
 	_lost_time = 0.0
 	## Та же хватка руками, что при посадке на астероид.
@@ -1019,8 +1021,9 @@ func _latch_asteroid() -> bool:
 func _seat_on_rope() -> void:
 	if _ride == null or not _ride.linked() or not _ride.pinned():
 		return
-	var home := _ride.home_global()
-	var hook := _ride.anchor_global()
+	var ends := _cable_ends(_ride)
+	var home := ends[0]
+	var hook := ends[1]
 	if home.distance_squared_to(hook) < 1.0:
 		return
 	global_position = home.lerp(hook, _ride_u)
@@ -1035,8 +1038,9 @@ func _follow_rope(delta: float) -> bool:
 func _slide_rope(axis: float, delta: float) -> bool:
 	if _ride == null or not _ride.linked() or not _ride.pinned():
 		return false
-	var home := _ride.home_global()
-	var hook := _ride.anchor_global()
+	var ends := _cable_ends(_ride)
+	var home := ends[0]
+	var hook := ends[1]
 	var span := hook - home
 	var length := span.length()
 	if length < 1.0:
@@ -1066,6 +1070,14 @@ func _place_hands_on_rope() -> void:
 	var frame_h := float(GRAB_SPRITE.get_height())
 	var grip := Vector2(0.0, (ROPE_GRIP_Y - frame_h * 0.5) * absf(_sprite.scale.y))
 	_sprite.position = -grip.rotated(_sprite.rotation)
+
+
+func _cable_ends(rope: Tether) -> PackedVector2Array:
+	## Герой едет по нарисованному тросу: дальний конец — основание наконечника.
+	return PackedVector2Array([
+		rope.home_global(),
+		TetherView.heel(rope.anchor_global(), rope.jaw_angle()),
+	])
 
 
 func _closest_on_segment(a: Vector2, b: Vector2, point: Vector2) -> Vector3:

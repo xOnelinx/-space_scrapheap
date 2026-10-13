@@ -70,8 +70,13 @@ func show_fixed(ropes: Array[Tether]) -> void:
 		var jaw := rope.jaw_angle()
 		var home := rope.home_global()
 		_fixed.append({"tip": tip, "jaw": jaw, "home": home})
-		_fit_span(_fixed_lines[i], to_local(home), to_local(tip))
+		_fit_span(_fixed_lines[i], to_local(home), to_local(tip), jaw)
 	queue_redraw()
+
+
+## tip и jaw в одной системе. Остриё спрайта в tip, трос входит в левый край.
+static func heel(tip: Vector2, jaw: float) -> Vector2:
+	return tip - Vector2.from_angle(jaw) * float(TIP.get_width())
 
 
 func _draw() -> void:
@@ -96,9 +101,9 @@ func _fit_cable() -> void:
 	if tip.length_squared() < 1.0:
 		_line.points = PackedVector2Array()
 		return
-	## Трос кончается в пятке. Второй конец — на камне под героем, если его закрепили.
+	## Трос кончается в основании наконечника. Второй конец — на камне под героем, если его закрепили.
 	var start := to_local(_home) if _home_pinned else Vector2.ZERO
-	_fit_span(_line, start, tip)
+	_fit_span(_line, start, tip, _jaw_angle)
 
 
 func _new_cable() -> Line2D:
@@ -117,14 +122,12 @@ func _new_cable() -> Line2D:
 	return line
 
 
-func _fit_span(line: Line2D, start: Vector2, tip: Vector2) -> void:
-	var span := tip - start
-	if span.length_squared() < 1.0:
+func _fit_span(line: Line2D, start: Vector2, tip: Vector2, jaw: float) -> void:
+	if start.distance_squared_to(tip) < 1.0:
 		line.points = PackedVector2Array()
 		return
-	## Пятка по отрезку между креплениями. Сдвиг по губкам уводил линию вбок от героя.
-	var aim := span / span.length()
-	var heel := tip - aim * TIP.get_width()
+	## Пятка по оси губок: иначе трос обрывается в стороне от основания наконечника.
+	var heel := heel(tip, jaw - global_rotation)
 	if heel.distance_squared_to(start) < 1.0:
 		line.points = PackedVector2Array()
 		return
