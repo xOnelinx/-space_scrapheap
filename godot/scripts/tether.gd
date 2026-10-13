@@ -64,22 +64,14 @@ func max_length(host: Wanderer) -> float:
 
 
 func shoot(host: Wanderer, direction: Vector2) -> void:
-	## Выстрел: отдача назад, болт вперёд. Мимо — вплавление в тело под ногами.
+	## Выстрел: отдача назад, болт вперёд. Камень под ногами этот выстрел не ловит.
 	if direction.length_squared() <= 0.01:
 		return
 	var aim := direction.normalized()
 	var stand: Node2D = host.dock.body if host.dock.docked and not host.dock.inside else null
 	var from := host.global_position
-	var reach := max_length(host)
-	var hit := first_along(host, from, aim, reach, stand)
 	_recoil(host, aim)
-	if hit != null:
-		fire(host, from, aim, stand)
-		return
-	if stand != null:
-		plant(host, stand, from)
-		return
-	fire(host, from, aim, null)
+	fire(host, from, aim, stand)
 
 
 func plant(host: Wanderer, rock: Node2D, world_point: Vector2) -> void:
