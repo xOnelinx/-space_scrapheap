@@ -167,7 +167,9 @@ func _attach(host: Wanderer, rock: Node2D, world_point: Vector2) -> void:
 	phase = Phase.LINKED
 	anchor = rock
 	anchor_local = rock.to_local(world_point)
-	length = max_length(host)
+	## Сразу до крюка, не на весь запас: иначе E долго выбирает слабину, прежде чем тянуть.
+	var span := host.global_position.distance_to(anchor.to_global(anchor_local))
+	length = clampf(span, MIN_LENGTH, max_length(host))
 	bolt_velocity = Vector2.ZERO
 	_ignore = null
 	_flown = 0.0

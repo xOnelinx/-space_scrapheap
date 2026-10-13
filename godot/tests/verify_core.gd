@@ -158,8 +158,12 @@ func _check_tether(scene: Node, wanderer: Wanderer) -> bool:
 		fail("Вплавление без вспышки")
 		return false
 	var reach := wanderer.character_size() * Tether.BODIES
-	if absf(wanderer.tether.length - reach) > 0.5:
-		fail("Длина троса не равна %d размерам скитальца" % int(Tether.BODIES))
+	var span := wanderer.global_position.distance_to(wanderer.tether.anchor_global())
+	if absf(wanderer.tether.length - span) > 1.0:
+		fail("После зацепа трос не натянут до крюка")
+		return false
+	if wanderer.tether.length > reach + 0.5:
+		fail("Трос длиннее %d размеров скитальца" % int(Tether.BODIES))
 		return false
 
 	if light.drift_velocity.x <= 1.0:
