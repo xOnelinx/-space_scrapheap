@@ -9,6 +9,8 @@ extends AnimatableBody2D
 
 const DEPTH_COUNT := 10
 const REFERENCE_RADIUS := 26.0
+## Общий вес обломков. Без него толчок и наконечник легко разгоняют камень.
+const MASS_SCALE := 2.0
 const PAIR_RESTITUTION := 0.4
 const PAIR_FRICTION := 0.35
 ## Радиус скитальца 12 и зазор посадки 2. Подошва стоит снаружи железа.
@@ -97,7 +99,7 @@ func get_mass() -> float:
 	var radius := maxf(_mass_world_radius(), 1.0)
 	var ref := REFERENCE_RADIUS
 	var ratio := radius / ref
-	return ref * ref * ratio * ratio * ratio * ratio
+	return ref * ref * ratio * ratio * ratio * ratio * MASS_SCALE
 
 
 func get_inertia() -> float:

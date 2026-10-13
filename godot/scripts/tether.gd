@@ -9,6 +9,8 @@ enum Phase { IDLE, BOLT, LINKED }
 const BODIES := 30.0
 const BOLT_SPEED := 640.0
 const RECOIL_SPEED := 90.0
+## Доля импульса выстрела, которую наконечник отдаёт телу. Целиком камень слишком крутит.
+const HIT_PUSH := 0.25
 const REEL_RATE := 140.0
 const MIN_LENGTH := 16.0
 const TAUT_MAX_CLOSE := 280.0
@@ -233,7 +235,7 @@ func _constrain(host: Wanderer, delta: float) -> void:
 func _hit(host: Wanderer, rock: Node2D, world_point: Vector2) -> void:
 	if _shot.length_squared() <= 0.01:
 		return
-	host.add_body_impulse(rock, _shot * RECOIL_SPEED * host.get_mass(), world_point)
+	host.add_body_impulse(rock, _shot * RECOIL_SPEED * HIT_PUSH * host.get_mass(), world_point)
 
 
 func _ignite(at: Vector2) -> void:
