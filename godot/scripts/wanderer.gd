@@ -957,7 +957,7 @@ func toggle_hatch() -> void:
 	if not accepts_input():
 		return
 	if _ride != null:
-		if _latch_asteroid():
+		if _latch_rope_end() or _latch_asteroid():
 			return
 		drop_rope()
 		return
@@ -1013,6 +1013,24 @@ func grab_nearest_rope() -> bool:
 func drop_rope() -> void:
 	_ride = null
 	_ride_side = 0.0
+
+
+func _latch_rope_end() -> bool:
+	## Упёрся в конец: F сажает на камень этого конца, даже если круг ещё снаружи периметра.
+	if _ride == null or not _ride.linked() or not _ride.pinned():
+		return false
+	var at_home := _ride_u <= 0.001
+	var at_hook := _ride_u >= 0.999
+	if not at_home and not at_hook:
+		return false
+	var body: Node2D = _ride.home if at_home else _ride.anchor
+	if body == null or not is_instance_valid(body):
+		return false
+	var away := global_position - body.global_position
+	var normal := Vector2.UP if away.length_squared() < 0.0001 else away.normalized()
+	drop_rope()
+	dock_to(body, normal)
+	return true
 
 
 func _latch_asteroid() -> bool:

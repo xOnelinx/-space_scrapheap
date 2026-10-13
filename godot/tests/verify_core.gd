@@ -340,12 +340,20 @@ func _check_rope_ride(wanderer: Wanderer, heavy: SpaceRock, light: SpaceRock) ->
 	wanderer._ride = laid
 	wanderer._ride_u = 1.0
 	wanderer.global_position = pin
+	var steps := 0
+	while wanderer._buried_asteroid() != null and steps < 24:
+		wanderer.global_position += Vector2.DOWN * 8.0
+		steps += 1
+	if wanderer._buried_asteroid() != null:
+		_clear_ride(wanderer)
+		fail("Конец троса не вывести из периметра")
+		return false
 	wanderer._controls_locked = false
 	wanderer.toggle_hatch()
 	wanderer._controls_locked = locked
 	if wanderer._ride != null or not wanderer.dock.docked or wanderer.dock.body != light:
 		_clear_ride(wanderer)
-		fail("F в периметре астероида не посадил на него")
+		fail("F у конца троса не посадил на камень")
 		return false
 	_clear_ride(wanderer)
 	return true
