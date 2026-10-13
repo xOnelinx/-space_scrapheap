@@ -253,6 +253,20 @@ func _check_recoil_reel_and_cap(wanderer: Wanderer, heavy: SpaceRock, light: Spa
 		return false
 
 	_quiet(light)
+	wanderer.undock()
+	wanderer.tether.release()
+	wanderer.velocity = Vector2.ZERO
+	light.drift_velocity = Vector2.ZERO
+	light.spin = 0.0
+	wanderer.global_position = light.global_position + Vector2(4, 0)
+	wanderer.tether.plant(wanderer, light, light.global_position + Vector2(light.get_hit_radius(), 0))
+	wanderer.tether.length = 8.0
+	wanderer.tether.integrate(wanderer, 0.016, true)
+	if light.drift_velocity.length() > 1.0 or absf(light.spin) > 0.05:
+		fail("Стыковка на крюке раскрутила астероид")
+		return false
+
+	_quiet(light)
 	wanderer.velocity = Vector2.ZERO
 	wanderer.tether.plant(wanderer, light, light.global_position)
 	wanderer.tether.length = 30.0

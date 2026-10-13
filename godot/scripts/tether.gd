@@ -110,7 +110,7 @@ func integrate(host: Wanderer, delta: float, reeling: bool = false) -> void:
 	elif linked():
 		if length > max_length(host):
 			length = max_length(host)
-		if _aboard_anchor(host):
+		if _aboard_anchor(host) or _at_anchor_skin(host):
 			_hold_rope_aboard(host, delta, reeling)
 		else:
 			if reeling:
@@ -179,6 +179,18 @@ func _aboard_anchor(host: Wanderer) -> bool:
 	return host.dock.docked and host.dock.body == anchor
 
 
+func _at_anchor_skin(host: Wanderer) -> bool:
+	## Уже у тела: прямой натяг до крюка не достаёт и бьёт камень в стыковке.
+	if anchor == null or not is_instance_valid(anchor):
+		return false
+	var pad := host.character_size() * 0.5 + 4.0
+	var rock := anchor as SpaceRock
+	if rock != null and rock.shaped and rock.outline != null:
+		return rock.overlaps_circle(host.global_position, pad)
+	var reach := Body.hit_radius(anchor) + pad
+	return host.global_position.distance_squared_to(anchor.global_position) <= reach * reach
+
+
 func _hold_rope_aboard(host: Wanderer, delta: float, reeling: bool) -> void:
 	## Свободный натяг здесь швыряет обоих: кадр сбрасывает скорость ног, камень импульс копит.
 	var span := host.global_position.distance_to(anchor_global())
@@ -219,7 +231,8 @@ func _constrain(host: Wanderer, delta: float) -> void:
 		var needed := want - closing
 		var share := SpaceRock.push_share(host.get_mass(), Body.mass(anchor))
 		host.add_impulse(along * needed * share * host.get_mass())
-		host.add_body_impulse(anchor, -along * needed * (1.0 - share) * Body.mass(anchor), origin)
+		## В центр, не в крюк: рывок у стыковки иначе крутит камень вокруг точки крепления.
+		host.add_body_impulse(anchor, -along * needed * (1.0 - share) * Body.mass(anchor), anchor.global_position)
 	origin = anchor.to_global(anchor_local)
 	offset = host.global_position - origin
 	dist = offset.length()
