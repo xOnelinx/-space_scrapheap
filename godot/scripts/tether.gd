@@ -9,11 +9,12 @@ enum Phase { IDLE, BOLT, LINKED }
 const BODIES := 30.0
 const BOLT_SPEED := 640.0
 const RECOIL_SPEED := 90.0
-## Доля импульса выстрела, которую наконечник отдаёт телу. Целиком камень слишком крутит.
-const HIT_PUSH := 0.25
 const REEL_RATE := 70.0
 const MIN_LENGTH := 16.0
-const TAUT_MAX_CLOSE := 280.0
+## После удара трос не отбирает ход сразу: иначе остаётся один спин.
+const HIT_CARRY := 0.30
+## Без отскока: рывок меняет спин и оставляет его таким, слабина старую скорость не возвращает.
+const ROPE_RESTITUTION := 0.0
 const LINK_COUNT := 16
 const BURST_LIFE := 1.05
 ## Свет пороха гаснет раньше: газ ещё висит, когда вспышка уже погасла.
@@ -45,6 +46,7 @@ var _shot := Vector2.ZERO
 var _links := PackedVector2Array()
 var _link_prev := PackedVector2Array()
 var _bend_sign := 1.0
+var _loose := 0.0
 
 
 func linked() -> bool:
@@ -147,6 +149,7 @@ func release() -> void:
 	_flown = 0.0
 	_ignore = null
 	_shot = Vector2.ZERO
+	_loose = 0.0
 	ignited = false
 	_links = PackedVector2Array()
 	_link_prev = PackedVector2Array()
@@ -206,6 +209,15 @@ func integrate(host: Wanderer, delta: float, reeling: bool = false) -> void:
 		if pinned():
 			_tie_bodies(host, delta)
 			return
+		if _loose > 0.0:
+			_loose = maxf(0.0, _loose - delta)
+			_pay_out(host)
+			if reeling:
+				_reel(delta)
+			if host.global_position.distance_to(anchor_global()) > max_length(host):
+				length = max_length(host)
+				_constrain(host, delta, false)
+			return
 		if length > max_length(host):
 			length = max_length(host)
 		if not is_instance_valid(home):
@@ -217,7 +229,7 @@ func integrate(host: Wanderer, delta: float, reeling: bool = false) -> void:
 				_reel(delta)
 			else:
 				_pay_out(host)
-			_constrain(host, delta)
+			_constrain(host, delta, reeling)
 
 
 static func first_along(host: Node, origin: Vector2, direction: Vector2, reach: float, ignore: Node2D) -> Node2D:
@@ -277,6 +289,7 @@ func _attach(host: Wanderer, rock: Node2D, world_point: Vector2) -> void:
 	_ignore = null
 	_flown = 0.0
 	_hit(host, rock, world_point)
+	_loose = HIT_CARRY
 	_ignite(world_point, world_point - rock.global_position)
 
 
@@ -320,9 +333,10 @@ func _reel(delta: float) -> void:
 
 
 func _tie_bodies(_host: Wanderer, delta: float) -> void:
-	## Длиннее закреплённого трос не растёт. Рывок в крепление делится на ход и спин. Короче — провисает.
+	## Длина стали зафиксирована. Концы не разъезжаются дальше неё: рывок делит ход и спин. Короче — провисает.
 	if not pinned() or not is_instance_valid(anchor) or home == anchor:
 		return
+	var steel := length
 	var origin := anchor_global()
 	var other := home_global()
 	var offset := other - origin
@@ -330,14 +344,49 @@ func _tie_bodies(_host: Wanderer, delta: float) -> void:
 	if dist < 0.001:
 		return
 	var along := offset / dist
-	var inv := _linear_inv(anchor) + _linear_inv(home)
-	var stretch := maxf(dist - length, 0.0)
-	if dist + 0.001 >= length:
-		Body.resist(anchor, origin, home, other, along, 0.0)
-	if stretch > 0.0 and inv > 0.0:
-		anchor.global_position += along * stretch * _linear_inv(anchor) / inv
-		home.global_position -= along * stretch * _linear_inv(home) / inv
+	if dist + 0.001 >= steel:
+		## Спин и ход, которые тянут трос, здесь же становятся ходом и спином соседа.
+		Body.resist(anchor, origin, home, other, along, ROPE_RESTITUTION)
+		origin = anchor_global()
+		other = home_global()
+		offset = other - origin
+		dist = offset.length()
+		if dist < 0.001:
+			_step_links(delta)
+			return
+		along = offset / dist
+	_hold_steel(steel)
+	length = steel
 	_step_links(delta)
+
+
+func _hold_steel(steel: float) -> void:
+	## Концы уже получили импульс в точках крепления. Здесь только сдвиг центров:
+	## поворот позы без спина останавливает камень любого размера.
+	for _i in 4:
+		var origin := anchor_global()
+		var other := home_global()
+		var offset := other - origin
+		var dist := offset.length()
+		var stretch := dist - steel
+		if stretch <= 0.05 or dist < 0.001:
+			return
+		var along := offset / dist
+		var inv_a := _linear_inv(anchor)
+		var inv_b := _linear_inv(home)
+		var inv := inv_a + inv_b
+		if inv <= 0.0:
+			return
+		anchor.global_position += along * stretch * inv_a / inv
+		home.global_position -= along * stretch * inv_b / inv
+
+
+func _center_velocity(body: Node2D) -> Vector2:
+	if body.get("drift_velocity") != null:
+		return body.drift_velocity
+	if body.get("velocity") != null:
+		return body.velocity
+	return Vector2.ZERO
 
 
 func _linear_inv(body: Node2D) -> float:
@@ -502,7 +551,7 @@ func _point_on_polyline(points: PackedVector2Array, u: float) -> Vector2:
 	return points[points.size() - 1]
 
 
-func _constrain(host: Wanderer, delta: float) -> void:
+func _constrain(host: Wanderer, _delta: float, reeling: bool) -> void:
 	if host.dock.inside:
 		return
 	if not is_instance_valid(anchor):
@@ -520,14 +569,25 @@ func _constrain(host: Wanderer, delta: float) -> void:
 		if dist <= length or dist < 0.001:
 			return
 	var along := -offset / dist
-	var closing := (host.velocity - Body.velocity_at(anchor, origin)).dot(along)
-	var want := clampf((dist - length) / maxf(delta, 0.001), 0.0, TAUT_MAX_CLOSE)
+	## Считаем ход центров, не крюка: иначе спин на ободе съедает скорость и после E её уже нет.
+	var closing := (host.velocity - _center_velocity(anchor)).dot(along)
+	var want := REEL_RATE if reeling else 0.0
 	if closing < want:
 		var needed := want - closing
-		var share := SpaceRock.push_share(host.get_mass(), Body.mass(anchor))
-		host.add_impulse(along * needed * share * host.get_mass())
-		## В центр, не в крюк: рывок у стыковки иначе крутит камень вокруг точки крепления.
-		host.add_body_impulse(anchor, -along * needed * (1.0 - share) * Body.mass(anchor), anchor.global_position)
+		var mass := Body.mass(anchor)
+		var inv := (1.0 / host.get_mass()) + (1.0 / mass if mass > 0.0 else 0.0)
+		if mass > 0.0 and inv > 0.0:
+			var impulse := needed / inv
+			host.add_impulse(along * impulse)
+			var rock_dir := -along
+			host.add_body_impulse(anchor, rock_dir * impulse, anchor.global_position)
+			var radius := maxf(Body.hit_radius(anchor), 1.0)
+			var lever := origin - anchor.global_position
+			var cross := lever.x * rock_dir.y - lever.y * rock_dir.x
+			var glance := clampf(absf(cross) / radius, 0.0, 1.0)
+			var inertia := Body.inertia(anchor)
+			if inertia > 0.0 and glance > 0.0:
+				anchor.set("spin", float(anchor.get("spin")) + cross * glance * 0.5 * impulse / inertia)
 	origin = anchor.to_global(anchor_local)
 	offset = host.global_position - origin
 	dist = offset.length()
@@ -543,7 +603,23 @@ func _constrain(host: Wanderer, delta: float) -> void:
 func _hit(host: Wanderer, rock: Node2D, world_point: Vector2) -> void:
 	if _shot.length_squared() <= 0.01:
 		return
-	host.add_body_impulse(rock, _shot * RECOIL_SPEED * HIT_PUSH * host.get_mass(), world_point)
+	## Импульс столкновения делится точкой: у центра это ход, к краю растёт спин, ход не пропадает.
+	var tip_mass := Wanderer.MASS * RECOIL_SPEED / BOLT_SPEED
+	var mass := Body.mass(rock)
+	var rel := (_shot * BOLT_SPEED - Body.velocity_at(rock, world_point)).dot(_shot)
+	if rel <= 0.0 or tip_mass <= 0.0 or mass <= 0.0:
+		return
+	var radius := maxf(Body.hit_radius(rock), 1.0)
+	var lever := world_point - rock.global_position
+	var cross := lever.x * _shot.y - lever.y * _shot.x
+	var glance := clampf(absf(cross) / radius, 0.0, 1.0)
+	var motion := lerpf(1.0, 0.5, glance)
+	var impulse := rel / ((1.0 / tip_mass) + (1.0 / mass))
+	host.add_body_impulse(rock, _shot * motion * impulse, rock.global_position)
+	var inertia := Body.inertia(rock)
+	if inertia <= 0.0 or glance <= 0.0:
+		return
+	rock.set("spin", float(rock.get("spin")) + cross * (1.0 - motion) * impulse / inertia)
 
 
 func _remember_jaw(rock: Node2D, into: Vector2) -> void:

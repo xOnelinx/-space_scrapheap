@@ -157,8 +157,13 @@ func _fit_chain(line: Line2D, rope: Tether, jaw: float) -> void:
 	drawn.resize(world.size())
 	for i in world.size():
 		drawn[i] = to_local(world[i])
-	## Последняя точка — основание наконечника, не остриё.
-	drawn[drawn.size() - 1] = to_local(heel(rope.anchor_global(), jaw))
+	## Основание губок, если оно не выносит трос дальше железа. Сталь длиннее закреплённого не рисуется.
+	var pin := rope.anchor_global()
+	var home := rope.home_global()
+	var base := heel(pin, jaw)
+	if home.distance_squared_to(base) > home.distance_squared_to(pin):
+		base = pin
+	drawn[drawn.size() - 1] = to_local(base)
 	if drawn[0].distance_squared_to(drawn[drawn.size() - 1]) < 1.0:
 		line.points = PackedVector2Array()
 		return

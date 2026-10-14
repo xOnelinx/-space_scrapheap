@@ -29,6 +29,9 @@ func _run() -> void:
 
 func _check_signals_and_cargo(scene: Node, wanderer: Wanderer) -> bool:
 	var rock := scene.get_node("Bodies/StaticNear") as SpaceRock
+	if rock.sync_to_physics:
+		fail("Камень сверяет позицию с физикой и теряет дрейф")
+		return false
 	rock.sync_to_physics = false
 	rock.spin = 0.0
 	rock.drift_velocity = Vector2.ZERO
@@ -144,6 +147,12 @@ func _check_tether(scene: Node, wanderer: Wanderer) -> bool:
 		return false
 	if not _pulls(wanderer, light, false):
 		return false
+	if not _check_reel_coast(wanderer, light):
+		return false
+	if not _check_hook_jerk(wanderer, light):
+		return false
+	if not _check_pin_point(wanderer, heavy, light):
+		return false
 
 	wanderer.tether.release()
 	wanderer.global_position = Vector2(90000, 90000)
@@ -170,6 +179,33 @@ func _check_tether(scene: Node, wanderer: Wanderer) -> bool:
 
 	if light.drift_velocity.x <= 1.0:
 		fail("Попадание не дало импульс телу")
+		return false
+	wanderer.tether.release()
+	_quiet(light)
+	light.rotation = 0.0
+	light.drift_velocity = Vector2(36, 0)
+	light.spin = 0.0
+	wanderer.velocity = Vector2.ZERO
+	wanderer.global_position = light.global_position + Vector2(-80, 0)
+	wanderer.tether.fire(wanderer, wanderer.global_position, Vector2.RIGHT, null)
+	for _i in 8:
+		wanderer.tether.integrate(wanderer, 0.05)
+	if not wanderer.tether.linked() or light.drift_velocity.x <= 36.0:
+		fail("Попадание затормозило камень: %.1f" % light.drift_velocity.x)
+		return false
+	wanderer.tether.release()
+	_quiet(light)
+	light.rotation = 0.0
+	light.drift_velocity = Vector2.ZERO
+	light.spin = 0.0
+	var rim := light.get_hit_radius() * 0.65
+	wanderer.velocity = Vector2.ZERO
+	wanderer.global_position = light.global_position + Vector2(-90.0, rim)
+	wanderer.tether.fire(wanderer, wanderer.global_position, Vector2.RIGHT, null)
+	for _i in 10:
+		wanderer.tether.integrate(wanderer, 0.05)
+	if not wanderer.tether.linked() or light.drift_velocity.x <= 1.0 or absf(light.spin) <= 0.05:
+		fail("Боковой удар не поделил ход и спин: v %.1f w %.3f" % [light.drift_velocity.x, light.spin])
 		return false
 	wanderer.tether.release()
 	if wanderer.tether.linked():
@@ -236,8 +272,8 @@ func _check_rope_ride(wanderer: Wanderer, heavy: SpaceRock, light: SpaceRock) ->
 		return false
 	var rope_along := laid.home_global() - laid.anchor_global()
 	rope_along = rope_along.normalized()
-	light.spin = 0.8
-	heavy.spin = -0.5
+	light.spin = 0.0
+	heavy.spin = 0.0
 	light.drift_velocity = -rope_along * 90.0
 	heavy.drift_velocity = Vector2.ZERO
 	laid.integrate(wanderer, 0.016, false)
@@ -266,29 +302,86 @@ func _check_rope_ride(wanderer: Wanderer, heavy: SpaceRock, light: SpaceRock) ->
 	heavy.spin = 0.0
 	light.drift_velocity = Vector2.ZERO
 	heavy.drift_velocity = Vector2.ZERO
-	var fought := light.spin
 	laid.integrate(wanderer, 0.016, false)
 	var held_along := laid.home_global() - laid.anchor_global()
 	held_along = held_along.normalized()
-	var paid := Body.velocity_at(heavy, laid.home_global()).dot(held_along) \
-			- Body.velocity_at(light, laid.anchor_global()).dot(held_along)
-	if paid > 0.5 or absf(light.spin) >= absf(fought) - 0.02:
+	var lever_h := laid.home_global() - heavy.global_position
+	var heavy_torque := lever_h.cross(-held_along)
+	var along_l := light.get_mass() * light.drift_velocity.dot(held_along)
+	var along_h := heavy.get_mass() * heavy.drift_velocity.dot(held_along)
+	if torque_sign * light.spin <= -1.45:
 		_clear_ride(wanderer)
-		fail("Трос не поделил рывок со спином")
+		fail("Трос не затормозил спин")
 		return false
-	if absf(light.spin) > absf(fought):
+	if light.drift_velocity.dot(held_along) <= 0.5:
 		_clear_ride(wanderer)
-		fail("Трос разогнал спин сильнее рывка")
+		fail("Крутящийся камень не сдвинулся от троса")
+		return false
+	if along_h >= -0.01:
+		_clear_ride(wanderer)
+		fail("Спин не стал ходом второго камня")
+		return false
+	if absf(heavy_torque) < 0.5 or heavy_torque * heavy.spin <= 0.0:
+		_clear_ride(wanderer)
+		fail("Спин не раскрутил второй камень")
+		return false
+	if absf(along_l + along_h) > 0.05 * (absf(along_l) + absf(along_h) + 1.0):
+		_clear_ride(wanderer)
+		fail("Трос прибавил импульс из ниоткуда")
 		return false
 	var held_spin := light.spin
 	laid.integrate(wanderer, 0.016, false)
-	if absf(light.spin - held_spin) > 0.05:
+	if absf(light.spin) > absf(held_spin) + 0.05:
 		_clear_ride(wanderer)
-		fail("Трос снова разогнал спин")
+		fail("После слабины спин вернулся")
 		return false
+	var haul_along := (laid.home_global() - laid.anchor_global()).normalized()
+	var haul_sign := signf((laid.anchor_global() - light.global_position).cross(haul_along))
+	light.spin = -haul_sign * 0.15
+	heavy.spin = 0.0
+	light.drift_velocity = -haul_along * 350.0
+	heavy.drift_velocity = Vector2.ZERO
+	laid.integrate(wanderer, 0.016, false)
+	var hauled_along := (laid.home_global() - laid.anchor_global()).normalized()
+	var hauled_lever := laid.home_global() - heavy.global_position
+	if haul_sign * light.spin <= 0.05:
+		_clear_ride(wanderer)
+		fail("Сильный рывок не развернул спин")
+		return false
+	if hauled_lever.cross(-hauled_along) * heavy.spin <= 0.0:
+		_clear_ride(wanderer)
+		fail("Ход камня не раскрутил второй")
+		return false
+	var turned := light.spin
+	laid.integrate(wanderer, 0.016, false)
+	if haul_sign * light.spin <= 0.0:
+		_clear_ride(wanderer)
+		fail("Развернутый спин вернулся в прежнюю сторону")
+		return false
+	if absf(light.spin) + 0.05 < absf(turned) * 0.5:
+		_clear_ride(wanderer)
+		fail("Развернутый спин снова затих")
+		return false
+	var steel := laid.length
+	var heavy_turn := heavy.rotation
+	for _step in 45:
+		light.global_position += light.drift_velocity * 0.016
+		heavy.global_position += heavy.drift_velocity * 0.016
+		light.rotation += light.spin * 0.016
+		heavy.rotation += heavy.spin * 0.016
+		laid.integrate(wanderer, 0.016, false)
+		if absf(laid.length - steel) > 0.001:
+			_clear_ride(wanderer)
+			fail("Длина стали изменилась")
+			return false
+		if laid.home_global().distance_to(laid.anchor_global()) > steel + 0.25:
+			_clear_ride(wanderer)
+			fail("Стальной трос удлинился")
+			return false
 	light.global_position = light_pos
 	heavy.global_position = heavy_pos
 	light.rotation = light_turn
+	heavy.rotation = heavy_turn
 	light.global_position += pin_was - laid.anchor_global()
 	light.spin = 0.0
 	light.drift_velocity = Vector2.ZERO
@@ -325,7 +418,7 @@ func _check_rope_ride(wanderer: Wanderer, heavy: SpaceRock, light: SpaceRock) ->
 		fail("Длина закреплённого троса изменилась")
 		return false
 	var span_now := laid.home_global().distance_to(laid.anchor_global())
-	if absf(span_now - frozen) > 2.0:
+	if span_now > frozen + 0.25:
 		_clear_ride(wanderer)
 		fail("Трос вырос вместо толчка")
 		return false
@@ -720,6 +813,129 @@ func _check_recoil_reel_and_cap(wanderer: Wanderer, heavy: SpaceRock, light: Spa
 	if wanderer.tether.linked():
 		fail("Болт зацепился дальше двадцати размеров")
 		return false
+	return true
+
+
+func _check_pin_point(wanderer: Wanderer, heavy: SpaceRock, light: SpaceRock) -> bool:
+	## Одинаковые камни после СКМ продолжают ход. Поза не подменяет собой импульс.
+	_quiet(heavy)
+	_quiet(light)
+	heavy.rotation = 0.0
+	light.rotation = 0.0
+	var saved_scale := light.scale
+	light.scale *= heavy.get_hit_radius() / maxf(light.get_hit_radius(), 1.0)
+	wanderer.fixed_ropes.clear()
+	wanderer.undock()
+	wanderer.tether.release()
+	light.global_position = heavy.global_position + Vector2(500, 0)
+	wanderer.global_position = heavy.global_position + Vector2(0, -heavy.get_hit_radius() - 30.0)
+	wanderer.dock_to(heavy, Vector2.UP)
+	var locked := wanderer._controls_locked
+	wanderer._controls_locked = false
+	wanderer.tether.plant(wanderer, light, light.global_position + Vector2(0, light.get_hit_radius()))
+	if not wanderer.pin_tether():
+		wanderer._controls_locked = locked
+		light.scale = saved_scale
+		fail("Трос для точки СКМ не закрепился")
+		return false
+	wanderer._controls_locked = locked
+	var laid := wanderer.fixed_ropes[wanderer.fixed_ropes.size() - 1]
+	var rope := laid.home_global() - laid.anchor_global()
+	if rope.length_squared() < 1.0:
+		light.scale = saved_scale
+		_clear_ride(wanderer)
+		fail("Концы точки СКМ совпали")
+		return false
+	rope = rope.normalized()
+	light.drift_velocity = -rope * 70.0
+	heavy.drift_velocity = Vector2.ZERO
+	var from := light.global_position
+	var turn_l := light.rotation
+	var turn_h := heavy.rotation
+	light.global_position += light.drift_velocity * 0.016
+	laid.integrate(wanderer, 0.016, false)
+	light.scale = saved_scale
+	if light.drift_velocity.length() < 30.0 or heavy.drift_velocity.length() < 5.0:
+		_clear_ride(wanderer)
+		fail("СКМ погасил ход: лёгкий %.1f тяжёлый %.1f" % [light.drift_velocity.length(), heavy.drift_velocity.length()])
+		return false
+	if light.global_position.distance_to(from) < 0.5:
+		_clear_ride(wanderer)
+		fail("СКМ вернул камень на место и оставил без хода")
+		return false
+	if absf(light.rotation - turn_l) > 0.002 or absf(heavy.rotation - turn_h) > 0.002:
+		_clear_ride(wanderer)
+		fail("Натяг закрутил позу вместо хода")
+		return false
+	if laid.home_global().distance_to(laid.anchor_global()) > laid.length + 0.25:
+		_clear_ride(wanderer)
+		fail("Точка СКМ отпустила сталь")
+		return false
+	_clear_ride(wanderer)
+	return true
+
+
+func _check_reel_coast(wanderer: Wanderer, light: SpaceRock) -> bool:
+	## Пока E зажата, камень едет к герою. После отпускания эта скорость остаётся.
+	_quiet(light)
+	light.rotation = 0.0
+	wanderer.undock()
+	wanderer.tether.release()
+	wanderer.velocity = Vector2.ZERO
+	wanderer.global_position = light.global_position + Vector2(180, 0)
+	wanderer.tether.plant(wanderer, light, light.global_position)
+	wanderer.tether.length = 40.0
+	for _i in 8:
+		light.global_position += light.drift_velocity * 0.016
+		wanderer.global_position += wanderer.velocity * 0.016
+		wanderer.tether.integrate(wanderer, 0.016, true)
+	var pulled := light.drift_velocity.x
+	if pulled <= 5.0:
+		fail("Втягивание не разогнало камень: %.1f" % pulled)
+		return false
+	var mark := light.global_position
+	for _i in 12:
+		light.global_position += light.drift_velocity * 0.016
+		wanderer.global_position += wanderer.velocity * 0.016
+		wanderer.tether.integrate(wanderer, 0.016, false)
+	if light.drift_velocity.x <= pulled * 0.5:
+		fail("После E камень потерял ход: %.1f -> %.1f" % [pulled, light.drift_velocity.x])
+		return false
+	if light.global_position.x <= mark.x + 1.0:
+		fail("После E камень не летит по инерции")
+		return false
+	wanderer.tether.release()
+	return true
+
+
+func _check_hook_jerk(wanderer: Wanderer, light: SpaceRock) -> bool:
+	## Натяг у бокового крюка крутит камень. Тот же импульс в центре спина не даёт.
+	_quiet(light)
+	light.rotation = 0.0
+	wanderer.undock()
+	wanderer.tether.release()
+	wanderer.velocity = Vector2.ZERO
+	var hook := light.global_position + Vector2(0, light.get_hit_radius())
+	wanderer.global_position = light.global_position + Vector2(140, 0)
+	wanderer.tether.plant(wanderer, light, hook)
+	wanderer.tether.length = 40.0
+	wanderer.tether.integrate(wanderer, 0.016, true)
+	var lever := wanderer.tether.anchor_global() - light.global_position
+	var torque := lever.x * light.drift_velocity.y - lever.y * light.drift_velocity.x
+	if light.drift_velocity.x <= 1.0:
+		fail("Натяг у крюка не потянул тело")
+		return false
+	if absf(light.spin) <= 0.05 or torque * light.spin <= 0.0:
+		fail("Натяг у крюка не раскрутил тело: spin %.3f" % light.spin)
+		return false
+	var momentum := wanderer.velocity * wanderer.get_mass() + light.drift_velocity * light.get_mass()
+	if momentum.length() > 1.0:
+		fail("Натяг у крюка не сохранил импульс")
+		return false
+	light.spin = 0.0
+	light.drift_velocity = Vector2.ZERO
+	wanderer.velocity = Vector2.ZERO
+	wanderer.tether.release()
 	return true
 
 

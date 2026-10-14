@@ -48,6 +48,9 @@ func _ready() -> void:
 		_show_hull_texture()
 		_apply_shape()
 		return
+	## Сервер физики не знает про drift_velocity. С включённой сверкой он каждый кадр
+	## возвращает центр на место, а поворот от спина оставляет.
+	sync_to_physics = false
 	add_to_group("space_rocks")
 	if hull_texture != null:
 		hull = true
