@@ -99,28 +99,45 @@ static func collide(a: Node2D, b: Node2D, restitution: float, friction: float) -
 	b.global_position += normal * pen * mass_a / mass_sum
 
 	var contact := a.global_position + normal * ra
-	var rel := velocity_at(a, contact) - velocity_at(b, contact)
-	var approach := rel.dot(normal)
-	if approach <= 0.0:
+	var jn := resist(b, contact, a, contact, normal, restitution)
+	if jn <= 0.0:
 		return
-	var inv_a := 1.0 / mass_a
-	var inv_b := 1.0 / mass_b
-	var jn := (1.0 + restitution) * approach / (inv_a + inv_b)
-	var impulse_n := normal * jn
-	apply_impulse(a, -impulse_n, contact)
-	apply_impulse(b, impulse_n, contact)
-
-	rel = velocity_at(a, contact) - velocity_at(b, contact)
+	var rel := velocity_at(a, contact) - velocity_at(b, contact)
 	var slip := rel.dot(tangent)
-	var inertia_a := inertia(a)
-	var inertia_b := inertia(b)
-	var spin_a := 0.0 if inertia_a <= 0.0 else (ra * ra) / inertia_a
-	var spin_b := 0.0 if inertia_b <= 0.0 else (rb * rb) / inertia_b
-	var inv_t := inv_a + inv_b + spin_a + spin_b
+	var inv_t := point_inv(a, contact, tangent) + point_inv(b, contact, tangent)
+	if inv_t <= 0.0:
+		return
 	var jt := clampf(slip / inv_t, -friction * jn, friction * jn)
-	var impulse_t := tangent * jt
-	apply_impulse(a, -impulse_t, contact)
-	apply_impulse(b, impulse_t, contact)
+	apply_impulse(a, -tangent * jt, contact)
+	apply_impulse(b, tangent * jt, contact)
+
+
+## Насколько точка поддаётся толчку вдоль direction: ход и плечо до спина.
+static func point_inv(node: Node2D, at: Vector2, direction: Vector2) -> float:
+	var body_mass := mass(node)
+	if body_mass <= 0.0:
+		return 0.0
+	var inv := 1.0 / body_mass
+	var body_inertia := inertia(node)
+	if body_inertia <= 0.0:
+		return inv
+	var lever := at - node.global_position
+	var cross := lever.x * direction.y - lever.y * direction.x
+	return inv + cross * cross / body_inertia
+
+
+## Гасит скорость, с которой point_b уходит от point_a вдоль direction. Импульс в этих точках.
+static func resist(a: Node2D, point_a: Vector2, b: Node2D, point_b: Vector2, direction: Vector2, restitution: float) -> float:
+	var separating := (velocity_at(b, point_b) - velocity_at(a, point_a)).dot(direction)
+	if separating <= 0.0:
+		return 0.0
+	var inv := point_inv(a, point_a, direction) + point_inv(b, point_b, direction)
+	if inv <= 0.0:
+		return 0.0
+	var impulse := (1.0 + restitution) * separating / inv
+	apply_impulse(a, direction * impulse, point_a)
+	apply_impulse(b, -direction * impulse, point_b)
+	return impulse
 
 
 static func _misses_disk(center: Vector2, radius: float, origin: Vector2, dir: Vector2, limit: float) -> bool:
