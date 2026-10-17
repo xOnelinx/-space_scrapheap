@@ -5,7 +5,7 @@ alwaysApply: true
 
 # Космическая свалка
 
-Задумка и текущий шаг — в `GAME.md`. Стек, запуск, управление — в `README.md`. Не дублируй их здесь и не выходи за шаг в `GAME.md`.
+Задумка — в `GAME.md`. План, включая сделанные шаги, — в `PLAN.md`. Стек, запуск, управление — в `README.md`. Не дублируй их здесь и не выходи за ближайший открытый шаг в `PLAN.md`.
 
 Код игры — каталог `godot/`. Сцены — `godot/scenes/`, скрипты — `godot/scripts/`, ассеты — `godot/assets/`. Проверка механики — `godot/tests/verify_*.gd` на `scene_check.gd`: `boot()`, затем `fail("...")`. Запуск: `godot/run.sh`. Godot: `~/.local/bin/godot`.
 
