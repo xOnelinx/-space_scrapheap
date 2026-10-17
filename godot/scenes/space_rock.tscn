@@ -7,7 +7,7 @@
 radius = 26.0
 
 [node name="SpaceRock" type="AnimatableBody2D"]
-sync_to_physics = true
+sync_to_physics = false
 script = ExtResource("1_rock")
 
 [node name="Sprite" type="Sprite2D" parent="."]

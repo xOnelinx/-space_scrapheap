@@ -1,7 +1,7 @@
 class_name HarpoonTool
 extends Node
 
-## E стреляет или, пока зажата, втягивает. Q снимает трос.
+## E стреляет или, пока зажата, втягивает. Q снимает трос в руках. СКМ оставляет трос на камнях и даёт новый.
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -15,6 +15,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		_mark_handled()
 	elif event.is_action_pressed(&"release_tether"):
 		host.release_tether()
+		_mark_handled()
+	elif event.is_action_pressed(&"pin_tether"):
+		host.pin_tether()
 		_mark_handled()
 
 

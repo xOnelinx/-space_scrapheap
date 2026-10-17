@@ -48,6 +48,9 @@ func _ready() -> void:
 		_show_hull_texture()
 		_apply_shape()
 		return
+	## Сервер физики не знает про drift_velocity. С включённой сверкой он каждый кадр
+	## возвращает центр на место, а поворот от спина оставляет.
+	sync_to_physics = false
 	add_to_group("space_rocks")
 	if hull_texture != null:
 		hull = true
@@ -193,15 +196,19 @@ func _apply_shape() -> void:
 	var sprite := get_node_or_null("Sprite") as Sprite2D
 	if sprite == null:
 		return
+	var circle := get_node_or_null("CollisionShape2D") as CollisionShape2D
+	var poly := get_node_or_null("Silhouette") as CollisionPolygon2D
+	if shaped and poly != null and poly.polygon.size() >= 3 and sprite.texture == shape_texture:
+		if circle != null:
+			circle.disabled = true
+		return
 	sprite.texture = shape_texture
 	sprite.scale = Vector2.ONE
-	var circle := get_node_or_null("CollisionShape2D") as CollisionShape2D
 	if circle == null:
 		return
 	var solid := _solid_outline(HullOutline.local_points_from_texture(shape_texture, 2.0))
 	if solid.size() < 3:
 		return
-	var poly := get_node_or_null("Silhouette") as CollisionPolygon2D
 	if poly == null or poly.is_queued_for_deletion():
 		poly = CollisionPolygon2D.new()
 		poly.name = "Silhouette"

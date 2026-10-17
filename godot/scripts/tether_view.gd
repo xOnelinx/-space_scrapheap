@@ -23,30 +23,22 @@ var _muzzle_at := Vector2.ZERO
 var _muzzle_dir := Vector2.RIGHT
 var _muzzle_age := -1.0
 var _jaw_angle := 0.0
+var _home := Vector2.ZERO
+var _home_pinned := false
+var _fixed: Array[Dictionary] = []
 var _line: Line2D
+var _fixed_lines: Array[Line2D] = []
 
 
 func _ready() -> void:
 	z_index = 1
 	z_as_relative = true
 	texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	_line = Line2D.new()
-	_line.name = "Cable"
-	_line.texture = CABLE
-	_line.texture_mode = Line2D.LINE_TEXTURE_TILE
-	_line.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	_line.width = CABLE_WIDTH
-	_line.default_color = Color.WHITE
-	_line.antialiased = false
-	_line.joint_mode = Line2D.LINE_JOINT_ROUND
-	_line.begin_cap_mode = Line2D.LINE_CAP_BOX
-	_line.end_cap_mode = Line2D.LINE_CAP_BOX
-	## Под наконечником и вспышкой, которые рисует сам узел.
-	_line.z_index = -1
+	_line = _new_cable()
 	add_child(_line)
 
 
-func show_rope(tip: Vector2, flying: bool, linked: bool, burst_at: Vector2, burst_age: float, muzzle_at: Vector2 = Vector2.ZERO, muzzle_dir: Vector2 = Vector2.RIGHT, muzzle_age: float = -1.0, burst_dir: Vector2 = Vector2.ZERO, jaw_angle: float = 0.0) -> void:
+func show_rope(tip: Vector2, flying: bool, linked: bool, burst_at: Vector2, burst_age: float, muzzle_at: Vector2 = Vector2.ZERO, muzzle_dir: Vector2 = Vector2.RIGHT, muzzle_age: float = -1.0, burst_dir: Vector2 = Vector2.ZERO, jaw_angle: float = 0.0, home: Vector2 = Vector2.ZERO, home_pinned: bool = false) -> void:
 	_tip = tip
 	_flying = flying
 	_linked = linked
@@ -54,6 +46,8 @@ func show_rope(tip: Vector2, flying: bool, linked: bool, burst_at: Vector2, burs
 	_burst_age = burst_age
 	_burst_dir = burst_dir
 	_jaw_angle = jaw_angle
+	_home = home
+	_home_pinned = home_pinned
 	_muzzle_at = muzzle_at
 	_muzzle_dir = muzzle_dir
 	_muzzle_age = muzzle_age
@@ -61,14 +55,54 @@ func show_rope(tip: Vector2, flying: bool, linked: bool, burst_at: Vector2, burs
 	queue_redraw()
 
 
+func show_fixed(ropes: Array[Tether]) -> void:
+	while _fixed_lines.size() < ropes.size():
+		var extra := _new_cable()
+		_fixed_lines.append(extra)
+		add_child(extra)
+	while _fixed_lines.size() > ropes.size():
+		var extra: Line2D = _fixed_lines.pop_back()
+		extra.queue_free()
+	_fixed.clear()
+	for i in ropes.size():
+		var rope := ropes[i]
+		var tip := rope.anchor_global()
+		var jaw := rope.jaw_angle()
+		var home := rope.home_global()
+		var burst_age := -1.0
+		if rope.burst > 0.0:
+			burst_age = 1.0 - rope.burst / Tether.BURST_LIFE
+		_fixed.append({
+			"tip": tip,
+			"jaw": jaw,
+			"home": home,
+			"burst_at": rope.burst_at,
+			"burst_age": burst_age,
+			"burst_dir": rope.burst_dir,
+		})
+		_fit_chain(_fixed_lines[i], rope, jaw)
+	queue_redraw()
+
+
+## tip и jaw в одной системе. Остриё спрайта в tip, трос входит в левый край.
+static func heel(tip: Vector2, jaw: float) -> Vector2:
+	return tip - Vector2.from_angle(jaw) * float(TIP.get_width())
+
+
 func _draw() -> void:
 	if _muzzle_age >= 0.0:
 		_draw_muzzle(to_local(_muzzle_at), _muzzle_dir, _muzzle_age)
+	for mark in _fixed:
+		_draw_head_at(to_local(mark["tip"]), float(mark["jaw"]), true)
 	if _flying or _linked:
 		_draw_head(to_local(_tip))
 	## Пыль поверх губок, иначе начало струи прячется в наконечнике.
 	if _burst_age >= 0.0:
 		_draw_burst(to_local(_burst_at), _burst_age)
+	for mark in _fixed:
+		var burst_age := float(mark["burst_age"])
+		if burst_age >= 0.0:
+			_draw_burst(to_local(mark["burst_at"]), burst_age, mark["burst_dir"] as Vector2)
 
 
 func _fit_cable() -> void:
@@ -81,24 +115,72 @@ func _fit_cable() -> void:
 	if tip.length_squared() < 1.0:
 		_line.points = PackedVector2Array()
 		return
-	## Трос кончается в пятке. На камне пятка крутится вместе с телом, не вдоль троса.
-	var heel := tip - _jaw_aim() * TIP.get_width()
-	if heel.length_squared() < 1.0:
-		_line.points = PackedVector2Array()
+	## Трос кончается в основании наконечника. Второй конец — на камне под героем, если его закрепили.
+	var start := to_local(_home) if _home_pinned else Vector2.ZERO
+	_fit_span(_line, start, tip, _jaw_angle)
+
+
+func _new_cable() -> Line2D:
+	var line := Line2D.new()
+	line.texture = CABLE
+	line.texture_mode = Line2D.LINE_TEXTURE_TILE
+	line.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	line.width = CABLE_WIDTH
+	line.default_color = Color.WHITE
+	line.antialiased = false
+	line.joint_mode = Line2D.LINE_JOINT_ROUND
+	line.begin_cap_mode = Line2D.LINE_CAP_BOX
+	line.end_cap_mode = Line2D.LINE_CAP_BOX
+	## Под наконечником и вспышкой, которые рисует сам узел.
+	line.z_index = -1
+	return line
+
+
+func _fit_span(line: Line2D, start: Vector2, tip: Vector2, jaw: float) -> void:
+	if start.distance_squared_to(tip) < 1.0:
+		line.points = PackedVector2Array()
 		return
-	_line.points = PackedVector2Array([Vector2.ZERO, heel])
+	## Пятка по оси губок: иначе трос обрывается в стороне от основания наконечника.
+	var heel := heel(tip, jaw - global_rotation)
+	if heel.distance_squared_to(start) < 1.0:
+		line.points = PackedVector2Array()
+		return
+	line.points = PackedVector2Array([start, heel])
 
 
-func _jaw_aim() -> Vector2:
-	return Vector2.from_angle(_jaw_angle - global_rotation)
+func _fit_chain(line: Line2D, rope: Tether, jaw: float) -> void:
+	var world := rope.link_points()
+	if world.size() < 2:
+		line.points = PackedVector2Array()
+		return
+	var drawn := PackedVector2Array()
+	drawn.resize(world.size())
+	for i in world.size():
+		drawn[i] = to_local(world[i])
+	## Основание губок, если оно не выносит трос дальше железа. Сталь длиннее закреплённого не рисуется.
+	var pin := rope.anchor_global()
+	var home := rope.home_global()
+	var base := heel(pin, jaw)
+	if home.distance_squared_to(base) > home.distance_squared_to(pin):
+		base = pin
+	drawn[drawn.size() - 1] = to_local(base)
+	if drawn[0].distance_squared_to(drawn[drawn.size() - 1]) < 1.0:
+		line.points = PackedVector2Array()
+		return
+	line.points = drawn
 
 
 func _draw_head(tip: Vector2) -> void:
-	## Остриё в точке удара. После стыковки угол пришёл от тела, не от троса.
-	if tip.length_squared() < 1.0:
+	_draw_head_at(tip, _jaw_angle)
+
+
+func _draw_head_at(tip: Vector2, jaw: float, keep_at_hero: bool = false) -> void:
+	## Остриё в точке удара. Угол пришёл от тела, на котором сидит крюк.
+	## У закреплённого троса крюк остаётся, даже когда герой доехал до него.
+	if not keep_at_hero and tip.length_squared() < 1.0:
 		return
 	var size := TIP.get_size()
-	draw_set_transform(tip, _jaw_aim().angle(), Vector2.ONE)
+	draw_set_transform(tip, jaw - global_rotation, Vector2.ONE)
 	draw_texture_rect(TIP, Rect2(-size.x, -size.y * 0.5, size.x, size.y), false)
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 
@@ -134,10 +216,11 @@ func _draw_gas(at: Vector2, aim: Vector2, life: float) -> void:
 		draw_line(inner, outer, Color(GAS.r, GAS.g, GAS.b, gas_alpha), 2.0, false)
 
 
-func _draw_burst(at: Vector2, age: float) -> void:
-	if _burst_dir.length_squared() <= 0.01:
+func _draw_burst(at: Vector2, age: float, dir: Vector2 = Vector2.ZERO) -> void:
+	var aim := dir if dir.length_squared() > 0.01 else _burst_dir
+	if aim.length_squared() <= 0.01:
 		return
-	_draw_dock_spray(at, _burst_dir, age)
+	_draw_dock_spray(at, aim, age)
 
 
 func _draw_dock_spray(at: Vector2, dir: Vector2, age: float) -> void:
