@@ -1,13 +1,16 @@
 extends CanvasLayer
 
-## Значок груза справа сверху: сколько груз прибавил к своей массе скитальца, в процентах.
+## Справа сверху: сколько груз прибавил к своей массе скитальца, в процентах, и под ним скорость.
 
 const ICON := preload("res://assets/cargo.png")
 const COLOR := Color(0.82, 0.84, 0.9)
 const MARGIN := Vector2(20, 14)
+const SPEED_TOP := 84.0
 
 var _shown := -1
+var _shown_speed := -1
 var _label: Label
+var _speed_label: Label
 
 @onready var _host := get_parent() as Wanderer
 
@@ -35,6 +38,17 @@ func _ready() -> void:
 	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	icon.custom_minimum_size = Vector2(60, 60)
 	row.add_child(icon)
+
+	_speed_label = Label.new()
+	_speed_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_speed_label.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+	_speed_label.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	_speed_label.offset_left = -MARGIN.x
+	_speed_label.offset_right = -MARGIN.x
+	_speed_label.offset_top = SPEED_TOP
+	_speed_label.add_theme_font_size_override("font_size", 28)
+	_speed_label.add_theme_color_override("font_color", COLOR)
+	add_child(_speed_label)
 	_refresh()
 
 
@@ -47,3 +61,7 @@ func _refresh() -> void:
 	if extra != _shown:
 		_shown = extra
 		_label.text = "+%d%%" % extra
+	var speed := roundi(_host.velocity.length())
+	if speed != _shown_speed:
+		_shown_speed = speed
+		_speed_label.text = "Скорость: %d" % speed
