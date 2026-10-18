@@ -36,7 +36,7 @@ const LOST_DOOM_DELAY := 15.0
 const LEAK_PER_PUNCTURE := 0.4
 const LEAK_JET_REACH := 23.0
 ## Удар об астероид быстрее этой скорости входа рвёт скафандр в точке касания.
-const PUNCTURE_SPEED := 75.0
+const PUNCTURE_SPEED := 150.0
 const MASS := 26.0 * 26.0
 const AIM_HORIZON := 3.0
 ## Верх спрайта — рюкзак, он наружу от камня. Низ — шлем, им встаём на поверхность.
