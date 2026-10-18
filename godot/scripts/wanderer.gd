@@ -32,8 +32,10 @@ const CHARGE_DIST_MIN := 28.0
 const CHARGE_DIST_MAX := 220.0
 const RESPAWN_INPUT_PAUSE := 0.45
 const LOST_DOOM_DELAY := 15.0
-## Крен толчка от одной пробоины: доля скорости вбок.
+## Газ из одной пробоины при прыжке: доля скорости толчка против струи. Прицел её не видит.
 const LEAK_PER_PUNCTURE := 0.15
+const LEAK_JET_REACH := 34.0
+const LEAK_JET_COLOR := Color(0.92, 0.97, 1.0)
 const MASS := 26.0 * 26.0
 const AIM_HORIZON := 3.0
 ## Верх спрайта — рюкзак, он наружу от камня. Низ — шлем, им встаём на поверхность.
@@ -60,8 +62,6 @@ var _ride_u := 0.0
 var _ride_side := 0.0
 ## Масса груза на скафандре. Список предметов снаружи.
 var cargo_mass := 0.0
-## 0 — толчок по курсору. Иначе доля скорости вбок. Порванный скафандр пишет сам.
-var leak_bias := 0.0
 
 var _charging := false
 var _charge := 0.0
@@ -75,6 +75,7 @@ var _controls_locked := true
 var _lost_time := 0.0
 var _oxygen: Oxygen
 var _flight_jet: Node2D
+var _leak_jets: Array[Node2D] = []
 ## -1 — обычный спрайт. Иначе кадр захвата, пока скиталец на астероиде.
 var _grab_frame := -1
 var _grab_time := 0.0
@@ -177,7 +178,7 @@ func _commit_push(to_target: Vector2) -> void:
 	var desired := push_desired(to_target, _charge)
 	var charge := _charge
 	var rock := left as SpaceRock
-	velocity = launch_velocity(to_target, _charge)
+	velocity = launch_velocity(to_target, _charge) + _leak_kick(desired.length())
 	if rock != null:
 		var share := SpaceRock.push_share(get_mass(), rock.get_mass())
 		add_body_impulse(rock, -desired * get_mass() * share, global_position)
@@ -255,7 +256,6 @@ func _breathe(delta: float) -> bool:
 	var extra := 0.0
 	if _using_flight_correction:
 		extra = FLIGHT_OXYGEN
-	leak_bias = LEAK_PER_PUNCTURE * _oxygen.punctures
 	return _oxygen.tick(delta, extra)
 
 
@@ -295,6 +295,11 @@ func _unhandled_input(event: InputEvent) -> void:
 # shortcut: груз сбрасывается целиком и исчезает, при списке предметов — выбрасывать предмет телом в мир.
 func drop_cargo() -> void:
 	cargo_mass = 0.0
+
+
+## Пробоина там, куда пришёлся удар: газ бьёт из этой точки наружу.
+func puncture_at(world_point: Vector2) -> void:
+	_oxygen.puncture((world_point - global_position).rotated(-_sprite.rotation))
 
 
 func _step_motion(delta: float) -> void:
@@ -382,6 +387,7 @@ func _publish_views() -> void:
 	_publish_aim()
 	_publish_rope()
 	_publish_warning()
+	_publish_leaks()
 
 
 func _publish_aim() -> void:
@@ -451,6 +457,25 @@ func _build_flight_jet() -> void:
 	_flight_jet.name = "FlightJet"
 	_flight_jet.z_index = 3
 	add_child(_flight_jet)
+
+
+func _publish_leaks() -> void:
+	if _oxygen == null:
+		return
+	var holes := _oxygen.holes
+	while _leak_jets.size() < holes.size():
+		var jet := _FLIGHT_JET.new()
+		jet.name = "LeakJet%d" % _leak_jets.size()
+		jet.z_index = 3
+		jet.reach = LEAK_JET_REACH
+		jet.color = LEAK_JET_COLOR
+		jet.width = 2.0
+		add_child(jet)
+		_leak_jets.append(jet)
+	while _leak_jets.size() > holes.size():
+		_leak_jets.pop_back().queue_free()
+	for i in holes.size():
+		_leak_jets[i].set_direction(holes[i].rotated(_sprite.rotation))
 
 
 func _show_flight_jet(dir: Vector2) -> void:
@@ -648,7 +673,7 @@ func push_desired(to_target: Vector2, charge: float) -> Vector2:
 	if to_target.length_squared() <= 0.01:
 		to_target = dock.outward()
 	var speed := lerpf(PUSH_MIN, PUSH_MAX, clampf(charge, 0.0, 1.0))
-	return _with_leak(to_target.normalized() * speed)
+	return to_target.normalized() * speed
 
 
 func first_aim_hit(launch_vel: Vector2, horizon: float) -> float:
@@ -864,13 +889,11 @@ func exit_interior() -> void:
 	velocity = body_vel + outward * 12.0
 
 
-func _with_leak(desired: Vector2) -> Vector2:
-	if absf(leak_bias) < 0.0001 or desired.length_squared() <= 0.01:
-		return desired
-	var side := Vector2(-desired.y, desired.x)
-	if side.length_squared() <= 0.0001:
-		return desired
-	return desired + side.normalized() * desired.length() * leak_bias
+func _leak_kick(push_speed: float) -> Vector2:
+	var kick := Vector2.ZERO
+	for hole in _oxygen.holes:
+		kick -= hole.rotated(_sprite.rotation) * push_speed * LEAK_PER_PUNCTURE
+	return kick
 
 
 func _aim_dir() -> Vector2:

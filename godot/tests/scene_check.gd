@@ -11,11 +11,10 @@ func boot(frames: int = 4) -> Node:
 	for _i in frames:
 		await process_frame
 	var scene := get_current_scene()
-	## Проверки считают скафандр целым: стартовая пробоина кренила бы каждый прыжок.
+	## Проверки считают скафандр целым: стартовая пробоина сносила бы каждый прыжок.
 	var wanderer := scene.get_node_or_null("Wanderer") as Wanderer
 	if wanderer != null:
-		(wanderer.get_node("Oxygen") as Oxygen).punctures = 0
-		wanderer.leak_bias = 0.0
+		(wanderer.get_node("Oxygen") as Oxygen).holes.clear()
 	return scene
 
 

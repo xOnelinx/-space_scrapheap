@@ -73,20 +73,23 @@ func _check_signals_and_cargo(scene: Node, wanderer: Wanderer) -> bool:
 func _check_leak(scene: Node, wanderer: Wanderer) -> bool:
 	var rock := scene.get_node("Bodies/StaticNear") as SpaceRock
 	_stand(wanderer, rock)
-	wanderer.leak_bias = 0.0
-	var straight := wanderer.push_desired(Vector2.RIGHT, 1.0)
-	wanderer.leak_bias = 0.5
-	var biased := wanderer.push_desired(Vector2.RIGHT, 1.0)
-	var launch := wanderer.launch_velocity(Vector2.RIGHT, 1.0)
-	wanderer.leak_bias = 0.0
-	if absf(straight.y) > 0.01:
-		fail("Без пробоины толчок ушёл вбок")
+	var air := wanderer.get_node("Oxygen") as Oxygen
+	var straight := wanderer.launch_velocity(Vector2.RIGHT, 1.0)
+	air.holes.assign([Vector2.UP])
+	if wanderer.launch_velocity(Vector2.RIGHT, 1.0).distance_to(straight) > 0.01:
+		air.holes.clear()
+		fail("Прицел не должен знать про пробоину")
 		return false
-	if biased.y <= straight.length() * 0.4:
-		fail("Пробоина не сносит вектор толчка")
-		return false
-	if launch.y <= 0.0:
-		fail("Прицел не показывает боковой снос")
+	var jet := Vector2.UP.rotated(wanderer._sprite.rotation)
+	var push_speed := wanderer.push_desired(Vector2.RIGHT, 1.0).length()
+	wanderer._charge = 1.0
+	wanderer._commit_push(Vector2.RIGHT)
+	air.holes.clear()
+	var kick := wanderer.velocity - straight
+	var expect := -jet * push_speed * Wanderer.LEAK_PER_PUNCTURE
+	_stand(wanderer, rock)
+	if kick.distance_to(expect) > 0.5:
+		fail("Газ из пробоины должен толкать против струи: %s ≠ %s" % [kick, expect])
 		return false
 	return true
 

@@ -3,7 +3,8 @@ extends Node
 
 ## Запас воздуха на скафандре. Чем платить за толчок и правку курса, решает тот, кто зовёт tick.
 ## Пока open == false, баллон не забирается: ввод закрыт или скиталец уже погиб.
-## Каждая пробоина добавляет ещё одно дыхание к расходу. Изолента латает по одной.
+## Пробоина — направление из центра скафандра в осях спрайта, туда бьёт газ.
+## Каждая добавляет ещё одно дыхание к расходу. Изолента латает по одной.
 
 signal depleted
 signal changed(seconds: float)
@@ -23,7 +24,7 @@ const COLOR_SUIT := Color(1.0, 0.45, 0.38)
 var seconds := START
 var double_left := 0.0
 var open := false
-var punctures := START_PUNCTURES
+var holes: Array[Vector2] = []
 var tape := START_TAPE
 
 var _flash := 0.0
@@ -34,6 +35,8 @@ var _suit_label: Label
 
 func _ready() -> void:
 	add_to_group("oxygen")
+	for _i in START_PUNCTURES:
+		holes.append(Vector2.from_angle(randf() * TAU))
 	_build_hud()
 
 
@@ -57,15 +60,15 @@ func note_hold(hold_seconds: float) -> void:
 	double_left += hold_seconds * DOUBLE_PER_HOLD
 
 
-func puncture() -> void:
-	punctures += 1
+func puncture(dir: Vector2) -> void:
+	holes.append(dir.normalized() if dir.length_squared() > 0.0001 else Vector2.UP)
 	_refresh()
 
 
 func patch() -> bool:
-	if punctures <= 0 or tape <= 0:
+	if holes.is_empty() or tape <= 0:
 		return false
-	punctures -= 1
+	holes.pop_back()
 	tape -= 1
 	_refresh()
 	return true
@@ -74,7 +77,7 @@ func patch() -> bool:
 func tick(delta: float, extra_rate: float) -> bool:
 	if _empty:
 		return true
-	var rate := 1.0 + punctures
+	var rate := 1.0 + holes.size()
 	if double_left > 0.0:
 		rate *= 2.0
 		double_left = maxf(0.0, double_left - delta)
@@ -131,7 +134,7 @@ func _tick_flash(delta: float) -> void:
 		_flash = maxf(0.0, _flash - delta)
 		var t := clampf(_flash / FLASH_TIME, 0.0, 1.0)
 		_label.add_theme_color_override("font_color", COLOR_IDLE.lerp(Color(0.9, 0.97, 1.0), t))
-	elif double_left > 0.0 or punctures > 0:
+	elif double_left > 0.0 or not holes.is_empty():
 		_label.add_theme_color_override("font_color", COLOR_DOUBLE)
 	else:
 		_label.add_theme_color_override("font_color", COLOR_IDLE)
@@ -144,5 +147,5 @@ func _refresh() -> void:
 	_label.text = str(shown)
 	if _suit_label == null:
 		return
-	_suit_label.visible = punctures > 0 or tape > 0
-	_suit_label.text = "Пробоин: %d   Изолента: %d" % [punctures, tape]
+	_suit_label.visible = not holes.is_empty() or tape > 0
+	_suit_label.text = "Пробоин: %d   Изолента: %d" % [holes.size(), tape]

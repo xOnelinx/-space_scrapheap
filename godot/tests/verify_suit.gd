@@ -1,6 +1,6 @@
 extends "res://tests/scene_check.gd"
 
-## Пробоина удваивает дыхание и кренит толчок. X тратит моток и латает одну.
+## Пробоина удваивает дыхание, бьёт видимой струёй из места удара. X тратит моток и латает одну.
 
 
 func _initialize() -> void:
@@ -17,30 +17,32 @@ func _run() -> void:
 	air.open = true
 	air.double_left = 0.0
 
+	var hit := wanderer.global_position + Vector2(30.0, 0.0)
+	wanderer.puncture_at(hit)
 	air.seconds = 100.0
-	air.punctures = 1
 	air.tick(1.0, 0.0)
 	if absf(air.seconds - 98.0) > 0.01:
 		fail("Пробоина должна удваивать расход: %.2f" % air.seconds)
 		return
-	wanderer._breathe(0.0)
-	if absf(wanderer.leak_bias - Wanderer.LEAK_PER_PUNCTURE) > 0.0001:
-		fail("Пробоина не кренит толчок: %.3f" % wanderer.leak_bias)
+	wanderer._publish_views()
+	var jets := wanderer._leak_jets
+	if jets.size() != 1 or jets[0].direction().distance_to(Vector2.RIGHT) > 0.01:
+		fail("Струя должна бить из места удара")
 		return
 
 	air.tape = 1
 	_press_patch(wanderer)
-	if air.punctures != 0 or air.tape != 0:
-		fail("X не залатал: пробоин %d, изоленты %d" % [air.punctures, air.tape])
+	if not air.holes.is_empty() or air.tape != 0:
+		fail("X не залатал: пробоин %d, изоленты %d" % [air.holes.size(), air.tape])
 		return
-	wanderer._breathe(0.0)
-	if wanderer.leak_bias != 0.0:
-		fail("Заплатка не сняла крен")
+	wanderer._publish_views()
+	if not wanderer._leak_jets.is_empty():
+		fail("Заплатка не убрала струю")
 		return
 
-	air.puncture()
+	wanderer.puncture_at(hit)
 	_press_patch(wanderer)
-	if air.punctures != 1:
+	if air.holes.size() != 1:
 		fail("Без изоленты пробоина не латается")
 		return
 
