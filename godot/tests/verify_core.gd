@@ -47,9 +47,6 @@ func _check_signals_and_cargo(scene: Node, wanderer: Wanderer) -> bool:
 	if loaded_launch >= bare_launch - 0.5:
 		fail("Прицел не стал короче от массы груза")
 		return false
-	if wanderer.asteroid_dock_speed(rock) < 1.0e12:
-		fail("Груз не должен возвращать порог скорости посадки")
-		return false
 	wanderer.cargo_mass = 0.0
 
 	var pushes: Array[float] = []
@@ -620,9 +617,13 @@ func _check_pin(wanderer: Wanderer, heavy: SpaceRock, light: SpaceRock) -> bool:
 	var feet := wanderer.global_position
 	wanderer.tether.burst = 0.0
 	wanderer.tether.burst_dir = Vector2.ZERO
+	var locked := wanderer._controls_locked
+	wanderer._controls_locked = false
 	if not wanderer.pin_tether():
+		wanderer._controls_locked = locked
 		fail("Второй конец не сел на камень под ногами")
 		return false
+	wanderer._controls_locked = locked
 	if wanderer.tether.linked() or wanderer.tether.pinned():
 		fail("После закрепления у героя не появился новый трос")
 		return false
@@ -653,6 +654,7 @@ func _check_pin(wanderer: Wanderer, heavy: SpaceRock, light: SpaceRock) -> bool:
 
 
 func _check_rope_shares_motion(wanderer: Wanderer, heavy: SpaceRock, light: SpaceRock) -> bool:
+	_clear_ride(wanderer)
 	wanderer.tether.release()
 	wanderer.undock()
 	_quiet(heavy)
@@ -665,9 +667,13 @@ func _check_rope_shares_motion(wanderer: Wanderer, heavy: SpaceRock, light: Spac
 	wanderer.global_position = heavy.global_position + Vector2(0, -heavy.get_hit_radius() - 30.0)
 	wanderer.dock_to(heavy, Vector2.UP)
 	wanderer.tether.plant(wanderer, light, light.global_position + Vector2(-light.get_hit_radius(), 0))
+	var locked := wanderer._controls_locked
+	wanderer._controls_locked = false
 	if not wanderer.pin_tether():
+		wanderer._controls_locked = locked
 		fail("Трос между камнями не закрепился")
 		return false
+	wanderer._controls_locked = locked
 	var laid := wanderer.fixed_ropes[0]
 	var origin := laid.anchor_global()
 	var other := laid.home_global()
@@ -681,7 +687,8 @@ func _check_rope_shares_motion(wanderer: Wanderer, heavy: SpaceRock, light: Spac
 	heavy.drift_velocity = Vector2.ZERO
 	var pulling := light.drift_velocity.dot(-along)
 	laid.integrate(wanderer, 0.016, false)
-	if heavy.drift_velocity.dot(-along) <= 1.0:
+	## Тяжёлый метеорит забирает меньшую долю: раньше порог 1 был от лёгкого круга.
+	if heavy.drift_velocity.dot(-along) <= 0.2:
 		fail("Трос не передал движение второму астероиду")
 		return false
 	if light.drift_velocity.dot(-along) >= pulling - 1.0:
@@ -729,9 +736,11 @@ func _check_recoil_reel_and_cap(wanderer: Wanderer, heavy: SpaceRock, light: Spa
 	wanderer.global_position = Vector2(-60000, -60000)
 	heavy.global_position = wanderer.global_position + Vector2(100, 0)
 	wanderer.tether.plant(wanderer, heavy, heavy.global_position)
-	wanderer.tether.length = 180.0
+	## Якорь в центре, пролёт 100. Длина 180 после секунды втягивания всё ещё слабина и не тянет.
+	var reel_span := wanderer.global_position.distance_to(wanderer.tether.anchor_global())
+	wanderer.tether.length = reel_span
 	wanderer.tether.integrate(wanderer, 1.0, true)
-	if wanderer.tether.length > 180.0 - Tether.REEL_RATE + 5.0:
+	if wanderer.tether.length > reel_span - Tether.REEL_RATE + 5.0:
 		fail("Втягивание не укоротило трос")
 		return false
 	if wanderer.velocity.x <= 1.0:

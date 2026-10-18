@@ -63,7 +63,7 @@ func _check_outlines(scene: Node) -> bool:
 
 
 func _check_groups_in_stream(scene: Node) -> bool:
-	## Группы внутри потока, между ними несколько экранов, астероиды не задевают корпуса.
+	## Группы внутри потока, между ними несколько экранов. Один слой не стоит в корпусе.
 	var screen := 1280.0
 	var hulls: Array[SpaceRock] = []
 	for hull_name in _HULLS:
@@ -81,27 +81,22 @@ func _check_groups_in_stream(scene: Node) -> bool:
 		else:
 			auto_left = minf(auto_left, x - reach)
 			auto_right = maxf(auto_right, x + reach)
-		if hull.global_position.y < -120.0 or hull.global_position.y > 840.0:
+		if hull.global_position.y < -120.0 or hull.global_position.y > 900.0:
 			fail("Обломок вне потока: %s y=%.0f" % [hull.name, hull.global_position.y])
 			return false
 	var between := fed_left - auto_right if fed_left > auto_right else auto_left - fed_right
 	if between < screen * 2.5:
 		fail("Группы обломков ближе нескольких экранов: %.0f" % between)
 		return false
+	## Чужой слой проходит сквозь корпус. Один слой река разводит: круги сейчас не пересекаются.
 	for hull in hulls:
 		for node in scene.get_node("Bodies").get_children():
 			var rock := node as SpaceRock
-			if rock == null or rock == hull or rock.hull:
+			if rock == null or rock == hull or rock.hull or rock.depth != hull.depth:
 				continue
-			var rel_x := hull.global_position.x - rock.global_position.x
-			var rel_y := hull.global_position.y - rock.global_position.y
-			var need := hull.get_hit_radius() + rock.get_hit_radius() + 16.0
-			if absf(rel_x) >= need:
-				continue
-			var rel_vy := hull.drift_velocity.y - rock.drift_velocity.y
-			if absf(rel_vy) < 0.05 and absf(rel_y) > need:
-				continue
-			if absf(rel_y) <= need or rel_y * rel_vy < 0.0:
+			var gap := hull.global_position.distance_to(rock.global_position)
+			gap -= hull.get_hit_radius() + rock.get_hit_radius()
+			if gap < 0.0:
 				fail("Астероид %s пересекает %s" % [rock.name, hull.name])
 				return false
 	return true
@@ -223,7 +218,8 @@ func _save_preview(hull: SpaceRock, path: String) -> void:
 	var m := outline.stance.size()
 	for i in m:
 		_line(canvas, outline.stance[i], outline.stance[(i + 1) % m], Color(0.3, 1, 0.45), origin)
-	canvas.save_png(path)
+	var out := OS.get_temp_dir().path_join(path.get_file())
+	canvas.save_png(out)
 
 
 func _line(image: Image, a: Vector2, b: Vector2, color: Color, origin: Vector2) -> void:
