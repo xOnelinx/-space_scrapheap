@@ -273,6 +273,17 @@ func _physics_process(delta: float) -> void:
 	_publish_views()
 
 
+func _unhandled_input(event: InputEvent) -> void:
+	if accepts_input() and event.is_action_pressed(&"drop_cargo") and not event.is_echo():
+		drop_cargo()
+		get_viewport().set_input_as_handled()
+
+
+# shortcut: груз сбрасывается целиком и исчезает, при списке предметов — выбрасывать предмет телом в мир.
+func drop_cargo() -> void:
+	cargo_mass = 0.0
+
+
 func _step_motion(delta: float) -> void:
 	if _dead:
 		return

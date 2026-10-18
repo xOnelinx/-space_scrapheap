@@ -77,6 +77,15 @@ func _run() -> void:
 		push_error("Подбор: кислород %.1f" % air.seconds)
 		quit(1)
 		return
+	if absf(wanderer.get_mass() - Wanderer.MASS - Loot.MASS) > 0.01:
+		push_error("Подбор: масса %.1f" % wanderer.get_mass())
+		quit(1)
+		return
+	wanderer.drop_cargo()
+	if absf(wanderer.get_mass() - Wanderer.MASS) > 0.01:
+		push_error("Сброс: масса %.1f" % wanderer.get_mass())
+		quit(1)
+		return
 
 	print("LOOT_OK")
 	quit(0)

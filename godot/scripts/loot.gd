@@ -54,7 +54,7 @@ func _physics_process(delta: float) -> void:
 
 
 func _try_pickup() -> void:
-	var host := get_tree().get_first_node_in_group("wanderer") as Node2D
+	var host := get_tree().get_first_node_in_group("wanderer") as Wanderer
 	if host == null:
 		return
 	if global_position.distance_squared_to(host.global_position) > PICKUP_REACH * PICKUP_REACH:
@@ -62,6 +62,7 @@ func _try_pickup() -> void:
 	var air := get_tree().get_first_node_in_group("oxygen") as Oxygen
 	if air == null or not air.grant(OXYGEN_GRANT):
 		return
+	host.cargo_mass += MASS
 	_taken = true
 	queue_free()
 

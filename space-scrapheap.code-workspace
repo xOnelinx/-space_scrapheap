@@ -1,0 +1,17 @@
+{
+	"folders": [
+		{
+			"name": "godot",
+			"path": "godot"
+		},
+		{
+			"name": "repo",
+			"path": "."
+		}
+	],
+	"settings": {
+		"files.exclude": {
+			"godot": true
+		}
+	}
+}
