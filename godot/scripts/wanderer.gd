@@ -31,7 +31,7 @@ const FLIGHT_OXYGEN := 3.0
 const CHARGE_DIST_MIN := 28.0
 const CHARGE_DIST_MAX := 220.0
 const RESPAWN_INPUT_PAUSE := 0.45
-const LOST_DOOM_DELAY := 6.0
+const LOST_DOOM_DELAY := 15.0
 const MASS := 26.0 * 26.0
 const AIM_HORIZON := 3.0
 ## Верх спрайта — рюкзак, он наружу от камня. Низ — шлем, им встаём на поверхность.
@@ -420,8 +420,7 @@ func _publish_warning() -> void:
 	var warning := tree.get_first_node_in_group("lost_warning") as LostWarning
 	if warning == null:
 		return
-	var progress := lost_progress()
-	warning.show_progress(progress, LOST_DOOM_DELAY * (1.0 - progress))
+	warning.show_progress(lost_progress())
 
 
 func _flight_correction_held() -> bool:
