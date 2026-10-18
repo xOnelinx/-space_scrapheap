@@ -46,6 +46,18 @@ func _run() -> void:
 		fail("Без изоленты пробоина не латается")
 		return
 
+	var tapes := get_nodes_in_group("loot").filter(func(node: Node) -> bool: return (node as Loot).tape_grant > 0)
+	if tapes.size() != 1:
+		fail("У старта должен летать один моток изоленты, сейчас %d" % tapes.size())
+		return
+	var tape := tapes[0] as Loot
+	var mass_before := wanderer.get_mass()
+	wanderer.global_position = tape.global_position
+	tape._physics_process(0.016)
+	if not tape.is_queued_for_deletion() or air.tape != 1 or wanderer.get_mass() != mass_before:
+		fail("Подбор изоленты: моток %d, масса %.1f" % [air.tape, wanderer.get_mass()])
+		return
+
 	print("SUIT_OK")
 	quit(0)
 

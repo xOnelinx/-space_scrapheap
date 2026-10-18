@@ -15,7 +15,7 @@ func _run() -> void:
 	for _i in 4:
 		await process_frame
 
-	var loots := get_nodes_in_group("loot")
+	var loots := get_nodes_in_group("loot").filter(func(node: Node) -> bool: return (node as Loot).oxygen_grant > 0.0)
 	if loots.size() != 1:
 		push_error("На старте должен быть один баллон, сейчас %d" % loots.size())
 		quit(1)

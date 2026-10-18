@@ -4,6 +4,7 @@ extends Node2D
 ## Астероиды расставлены в сцене. Здесь слои и столкновения одного слоя.
 
 const _LOOT_SCENE := preload("res://scenes/loot.tscn")
+const _TAPE_SCENE := preload("res://scenes/tape.tscn")
 const CELL := 128.0
 const DENSITY_MIN := 2
 const DENSITY_MAX := 5
@@ -68,7 +69,7 @@ func _assign_depths() -> void:
 
 
 func _spawn_start_loot() -> void:
-	## Один баллон в кадре старта, не на камне.
+	## Баллон и запасной моток изоленты в кадре старта, по разные стороны камня.
 	var start := _start_rock()
 	if start == null or get_parent() == null:
 		return
@@ -76,6 +77,10 @@ func _spawn_start_loot() -> void:
 	loot.name = "Loot"
 	add_child(loot)
 	loot.place_near(start)
+	var tape := _TAPE_SCENE.instantiate() as Loot
+	tape.name = "Tape"
+	add_child(tape)
+	tape.place_near(start, -1.0)
 
 
 func _start_rock() -> Node2D:

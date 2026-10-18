@@ -65,6 +65,11 @@ func puncture(dir: Vector2) -> void:
 	_refresh()
 
 
+func add_tape(amount: int) -> void:
+	tape += amount
+	_refresh()
+
+
 func patch() -> bool:
 	if holes.is_empty() or tape <= 0:
 		return false
