@@ -1,6 +1,6 @@
 extends CanvasLayer
 
-## Значок груза справа сверху: масса скитальца вместе с грузом.
+## Значок груза справа сверху: сколько груз прибавил к своей массе скитальца, в процентах.
 
 const ICON := preload("res://assets/cargo.png")
 const COLOR := Color(0.82, 0.84, 0.9)
@@ -43,7 +43,7 @@ func _process(_delta: float) -> void:
 
 
 func _refresh() -> void:
-	var mass := roundi(_host.get_mass())
-	if mass != _shown:
-		_shown = mass
-		_label.text = str(mass)
+	var extra := roundi((_host.get_mass() / Wanderer.MASS - 1.0) * 100.0)
+	if extra != _shown:
+		_shown = extra
+		_label.text = "+%d%%" % extra
