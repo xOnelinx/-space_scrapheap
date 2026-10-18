@@ -37,6 +37,7 @@ const AIM_HORIZON := 3.0
 ## Верх спрайта — рюкзак, он наружу от камня. Низ — шлем, им встаём на поверхность.
 const FOOT_EXTENT := 12.0
 const _FLIGHT_JET := preload("res://scripts/flight_jet.gd")
+const _CARGO_HUD := preload("res://scripts/cargo_hud.gd")
 ## Захват астероида: руки к камню. Последний кадр держится, пока стоишь.
 const GRAB_FRAME_COUNT := 4
 const GRAB_FRAME_TIME := 0.08
@@ -91,6 +92,9 @@ func _ready() -> void:
 	_oxygen.name = "Oxygen"
 	_oxygen.depleted.connect(_on_oxygen_depleted)
 	add_child(_oxygen)
+	var cargo_hud := _CARGO_HUD.new()
+	cargo_hud.name = "CargoHud"
+	add_child(cargo_hud)
 	_build_flight_jet()
 	_add_input_tools()
 	call_deferred("_spawn_on_start_rock")

@@ -13,6 +13,7 @@ const DOUBLE_PER_HOLD := 5.0
 const COLOR_IDLE := Color(0.4, 0.78, 1.0)
 const COLOR_DOUBLE := Color(1.0, 0.62, 0.28)
 const FLASH_TIME := 0.45
+const ICON := preload("res://assets/oxygen.png")
 
 var seconds := START
 var double_left := 0.0
@@ -75,12 +76,23 @@ func _build_hud() -> void:
 	layer.name = "OxygenHud"
 	add_child(layer)
 
+	var row := HBoxContainer.new()
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.position = Vector2(20, 14)
+	row.add_theme_constant_override("separation", 12)
+	layer.add_child(row)
+
+	var icon := TextureRect.new()
+	icon.texture = ICON
+	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	icon.custom_minimum_size = Vector2(20, 64)
+	row.add_child(icon)
+
 	_label = Label.new()
-	_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_label.position = Vector2(20, 14)
 	_label.add_theme_font_size_override("font_size", 48)
 	_label.add_theme_color_override("font_color", COLOR_IDLE)
-	layer.add_child(_label)
+	row.add_child(_label)
 	_refresh()
 
 
