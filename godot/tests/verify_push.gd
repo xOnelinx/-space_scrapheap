@@ -114,6 +114,7 @@ func _check_flight_nudge(wanderer: Wanderer) -> bool:
 	var air := wanderer.get_node("Oxygen") as Oxygen
 	air.seconds = 40.0
 	air.double_left = 0.0
+	air.holes.clear()
 	wanderer._using_flight_correction = true
 	wanderer._breathe(1.0)
 	if absf(air.seconds - (40.0 - 1.0 - Wanderer.FLIGHT_OXYGEN)) > 0.01:

@@ -58,8 +58,53 @@ func _run() -> void:
 		fail("Подбор изоленты: моток %d, масса %.1f" % [air.tape, wanderer.get_mass()])
 		return
 
+	if not _check_impacts(scene, wanderer, air):
+		return
+
 	print("SUIT_OK")
 	quit(0)
+
+
+func _check_impacts(scene: Node, wanderer: Wanderer, air: Oxygen) -> bool:
+	var meteor := scene.get_node("Bodies/StaticMid") as SpaceRock
+	var hull := scene.get_node("Bodies/HullFed01") as SpaceRock
+	for node in get_nodes_in_group("space_rocks"):
+		var rock := node as SpaceRock
+		rock.sync_to_physics = false
+		rock.drift_velocity = Vector2.ZERO
+		rock.spin = 0.0
+		if rock != meteor and rock != hull:
+			rock.global_position += Vector2(0, 50000)
+	meteor.global_position = Vector2(4000, 4000)
+	hull.global_position = Vector2(-4000, 4000)
+	wanderer._controls_locked = true
+
+	air.holes.clear()
+	_fly_into(wanderer, meteor, Wanderer.PUNCTURE_SPEED * 0.6)
+	if air.holes.size() != 0:
+		fail("Мягкий удар не должен рвать скафандр")
+		return false
+	_fly_into(wanderer, meteor, Wanderer.PUNCTURE_SPEED * 2.0)
+	if not wanderer.dock.docked or air.holes.size() != 1:
+		fail("Жёсткий удар должен сажать и рвать скафандр: пробоин %d" % air.holes.size())
+		return false
+	air.holes.clear()
+	_fly_into(wanderer, hull, Wanderer.PUNCTURE_SPEED * 2.0)
+	if air.holes.size() != 0:
+		fail("Корпус ботинки ловят без пробоины")
+		return false
+	return true
+
+
+func _fly_into(wanderer: Wanderer, body: SpaceRock, speed: float) -> void:
+	wanderer.undock()
+	var reach := body.get_hit_radius() + wanderer._self_radius
+	wanderer.global_position = body.global_position + Vector2(reach + 20.0, 0.0)
+	wanderer.velocity = Vector2(-speed, 0.0)
+	for _i in 120:
+		wanderer._physics_process(1.0 / 60.0)
+		if wanderer.dock.docked:
+			return
 
 
 func _press_patch(wanderer: Wanderer) -> void:

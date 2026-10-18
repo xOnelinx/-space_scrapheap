@@ -35,6 +35,8 @@ const LOST_DOOM_DELAY := 15.0
 ## Газ из одной пробоины при прыжке: доля скорости толчка против струи. Прицел её не видит.
 const LEAK_PER_PUNCTURE := 0.4
 const LEAK_JET_REACH := 23.0
+## Удар об астероид быстрее этой скорости входа рвёт скафандр в точке касания.
+const PUNCTURE_SPEED := 75.0
 const MASS := 26.0 * 26.0
 const AIM_HORIZON := 3.0
 ## Верх спрайта — рюкзак, он наружу от камня. Низ — шлем, им встаём на поверхность.
@@ -614,6 +616,7 @@ func _resolve_hit(collision: KinematicCollision2D) -> void:
 			var away := global_position - rock.global_position
 			if away.length_squared() > 0.0001:
 				normal = away.normalized()
+			_puncture_if_hard(rock, collision.get_position(), normal)
 		dock_to(collider, normal)
 		return
 
@@ -699,8 +702,16 @@ func _dock_if_buried() -> bool:
 		return false
 	var away := global_position - buried.global_position
 	var normal := Vector2.UP if away.length_squared() < 0.0001 else away.normalized()
+	_puncture_if_hard(buried, global_position - normal * _self_radius, normal)
 	dock_to(buried, normal)
 	return true
+
+
+func _puncture_if_hard(rock: SpaceRock, contact: Vector2, normal: Vector2) -> void:
+	## Скорость входа в поверхность, как у камня в точке касания со спином.
+	var approach := -(velocity - _velocity_at(rock, contact)).dot(normal)
+	if approach > PUNCTURE_SPEED:
+		puncture_at(contact)
 
 
 func _buried_asteroid() -> SpaceRock:

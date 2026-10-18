@@ -15,7 +15,7 @@ const DOUBLE_PER_HOLD := 5.0
 const COLOR_IDLE := Color(0.4, 0.78, 1.0)
 const COLOR_DOUBLE := Color(1.0, 0.62, 0.28)
 const FLASH_TIME := 0.45
-# shortcut: старт с пробоиной и мотком, пока пробоину не даёт жёсткий удар об астероид; тогда старт целым и без изоленты.
+## Старт с пробоиной: первая задача — залатать её. Моток в кармане и запасной у стартового камня.
 const START_PUNCTURES := 1
 const START_TAPE := 1
 const ICON := preload("res://assets/oxygen.png")
