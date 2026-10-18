@@ -35,8 +35,6 @@ const LOST_DOOM_DELAY := 15.0
 ## Газ из одной пробоины при прыжке: доля скорости толчка против струи. Прицел её не видит.
 const LEAK_PER_PUNCTURE := 0.4
 const LEAK_JET_REACH := 23.0
-const LEAK_JET_CONE := 2.5
-const LEAK_JET_COLOR := Color(0.92, 0.97, 1.0)
 const MASS := 26.0 * 26.0
 const AIM_HORIZON := 3.0
 ## Верх спрайта — рюкзак, он наружу от камня. Низ — шлем, им встаём на поверхность.
@@ -469,9 +467,6 @@ func _publish_leaks() -> void:
 		jet.name = "LeakJet%d" % _leak_jets.size()
 		jet.z_index = 3
 		jet.reach = LEAK_JET_REACH
-		jet.color = LEAK_JET_COLOR
-		jet.width = 2.0
-		jet.cone = LEAK_JET_CONE
 		add_child(jet)
 		_leak_jets.append(jet)
 	while _leak_jets.size() > holes.size():

@@ -6,10 +6,6 @@ const REACH := 16.0
 const ROOT := 12.0
 
 var reach := REACH
-var color := Color(0.78, 0.92, 1.0)
-var width := 1.0
-## Насколько газ расходится к концу струи. Ноль — ровная струя.
-var cone := 0.0
 
 var _dir := Vector2.ZERO
 var _phase := 0.0
@@ -53,9 +49,8 @@ func _draw() -> void:
 		var along := fposmod(_phase * 22.0 + float(i) * 6.0, reach)
 		var fade := along / reach
 		var center := _dir * (ROOT + along)
-		var half := lerpf(2.5, 1.0, fade) * width
-		var tint := Color(color.r, color.g, color.b, lerpf(0.75, 0.0, fade))
-		draw_line(center - _dir * half, center + _dir * half, tint, width)
-		if i % 2 == 1 or cone > 0.0:
-			var spread := 1.5 * width * (1.0 + cone * fade)
-			draw_line(center - side * spread, center + side * spread, Color(tint.r, tint.g, tint.b, tint.a * 0.45), width)
+		var half := lerpf(2.5, 1.0, fade)
+		var color := Color(0.78, 0.92, 1.0, lerpf(0.75, 0.0, fade))
+		draw_line(center - _dir * half, center + _dir * half, color, 1.0)
+		if i % 2 == 1:
+			draw_line(center - side * 1.5, center + side * 1.5, Color(color.r, color.g, color.b, color.a * 0.45), 1.0)
