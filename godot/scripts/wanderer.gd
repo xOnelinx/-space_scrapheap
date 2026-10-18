@@ -32,6 +32,8 @@ const CHARGE_DIST_MIN := 28.0
 const CHARGE_DIST_MAX := 220.0
 const RESPAWN_INPUT_PAUSE := 0.45
 const LOST_DOOM_DELAY := 15.0
+## Крен толчка от одной пробоины: доля скорости вбок.
+const LEAK_PER_PUNCTURE := 0.15
 const MASS := 26.0 * 26.0
 const AIM_HORIZON := 3.0
 ## Верх спрайта — рюкзак, он наружу от камня. Низ — шлем, им встаём на поверхность.
@@ -253,6 +255,7 @@ func _breathe(delta: float) -> bool:
 	var extra := 0.0
 	if _using_flight_correction:
 		extra = FLIGHT_OXYGEN
+	leak_bias = LEAK_PER_PUNCTURE * _oxygen.punctures
 	return _oxygen.tick(delta, extra)
 
 
@@ -278,9 +281,15 @@ func _physics_process(delta: float) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if accepts_input() and event.is_action_pressed(&"drop_cargo") and not event.is_echo():
+	if not accepts_input() or event.is_echo():
+		return
+	if event.is_action_pressed(&"drop_cargo"):
 		drop_cargo()
-		get_viewport().set_input_as_handled()
+	elif event.is_action_pressed(&"patch_suit"):
+		_oxygen.patch()
+	else:
+		return
+	get_viewport().set_input_as_handled()
 
 
 # shortcut: груз сбрасывается целиком и исчезает, при списке предметов — выбрасывать предмет телом в мир.

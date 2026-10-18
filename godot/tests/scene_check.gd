@@ -10,7 +10,13 @@ func boot(frames: int = 4) -> Node:
 		return null
 	for _i in frames:
 		await process_frame
-	return get_current_scene()
+	var scene := get_current_scene()
+	## Проверки считают скафандр целым: стартовая пробоина кренила бы каждый прыжок.
+	var wanderer := scene.get_node_or_null("Wanderer") as Wanderer
+	if wanderer != null:
+		(wanderer.get_node("Oxygen") as Oxygen).punctures = 0
+		wanderer.leak_bias = 0.0
+	return scene
 
 
 func fail(message: String) -> void:

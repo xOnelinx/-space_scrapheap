@@ -3,6 +3,7 @@ extends Node
 
 ## Запас воздуха на скафандре. Чем платить за толчок и правку курса, решает тот, кто зовёт tick.
 ## Пока open == false, баллон не забирается: ввод закрыт или скиталец уже погиб.
+## Каждая пробоина добавляет ещё одно дыхание к расходу. Изолента латает по одной.
 
 signal depleted
 signal changed(seconds: float)
@@ -13,15 +14,22 @@ const DOUBLE_PER_HOLD := 5.0
 const COLOR_IDLE := Color(0.4, 0.78, 1.0)
 const COLOR_DOUBLE := Color(1.0, 0.62, 0.28)
 const FLASH_TIME := 0.45
+# shortcut: старт с пробоиной и мотком, пока пробоину не даёт жёсткий удар об астероид; тогда старт целым и без изоленты.
+const START_PUNCTURES := 1
+const START_TAPE := 1
 const ICON := preload("res://assets/oxygen.png")
+const COLOR_SUIT := Color(1.0, 0.45, 0.38)
 
 var seconds := START
 var double_left := 0.0
 var open := false
+var punctures := START_PUNCTURES
+var tape := START_TAPE
 
 var _flash := 0.0
 var _empty := false
 var _label: Label
+var _suit_label: Label
 
 
 func _ready() -> void:
@@ -49,12 +57,26 @@ func note_hold(hold_seconds: float) -> void:
 	double_left += hold_seconds * DOUBLE_PER_HOLD
 
 
+func puncture() -> void:
+	punctures += 1
+	_refresh()
+
+
+func patch() -> bool:
+	if punctures <= 0 or tape <= 0:
+		return false
+	punctures -= 1
+	tape -= 1
+	_refresh()
+	return true
+
+
 func tick(delta: float, extra_rate: float) -> bool:
 	if _empty:
 		return true
-	var rate := 1.0
+	var rate := 1.0 + punctures
 	if double_left > 0.0:
-		rate = 2.0
+		rate *= 2.0
 		double_left = maxf(0.0, double_left - delta)
 	if extra_rate > 0.0:
 		rate += extra_rate
@@ -93,6 +115,12 @@ func _build_hud() -> void:
 	_label.add_theme_font_size_override("font_size", 48)
 	_label.add_theme_color_override("font_color", COLOR_IDLE)
 	row.add_child(_label)
+
+	_suit_label = Label.new()
+	_suit_label.position = Vector2(20, 84)
+	_suit_label.add_theme_font_size_override("font_size", 22)
+	_suit_label.add_theme_color_override("font_color", COLOR_SUIT)
+	layer.add_child(_suit_label)
 	_refresh()
 
 
@@ -103,7 +131,7 @@ func _tick_flash(delta: float) -> void:
 		_flash = maxf(0.0, _flash - delta)
 		var t := clampf(_flash / FLASH_TIME, 0.0, 1.0)
 		_label.add_theme_color_override("font_color", COLOR_IDLE.lerp(Color(0.9, 0.97, 1.0), t))
-	elif double_left > 0.0:
+	elif double_left > 0.0 or punctures > 0:
 		_label.add_theme_color_override("font_color", COLOR_DOUBLE)
 	else:
 		_label.add_theme_color_override("font_color", COLOR_IDLE)
@@ -114,3 +142,7 @@ func _refresh() -> void:
 		return
 	var shown := 0 if seconds <= 0.0 else ceili(seconds)
 	_label.text = str(shown)
+	if _suit_label == null:
+		return
+	_suit_label.visible = punctures > 0 or tape > 0
+	_suit_label.text = "Пробоин: %d   Изолента: %d" % [punctures, tape]
