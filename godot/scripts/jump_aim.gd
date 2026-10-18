@@ -1,8 +1,8 @@
 class_name JumpAim
 extends Node2D
 
-## Курс — пунктир до края экрана. Стрелка вдоль того же курса.
-## Контакт с астероидом сажает при любой скорости, поэтому удар не красится как отскок.
+## Курс — пунктир до края экрана. Стрелка вдоль того же курса, всегда зелёная.
+## К астероиду цепляет любая скорость, красного прицела нет.
 
 const DASH := 10.0
 const GAP := 7.0
@@ -11,14 +11,13 @@ const ARROW_WIDTH := 2.2
 const HEAD := 9.0
 const VIEW_PAD := 3.0
 const PATH_COLOR := Color(0.72, 0.88, 1.0, 0.55)
-const ARROW_SAFE := Color(0.38, 0.95, 0.48, 0.95)
-const ARROW_HARD := Color(0.95, 0.32, 0.28, 0.95)
+const ARROW_COLOR := Color(0.38, 0.95, 0.48, 0.95)
 const PUSH_COLOR := Color(1.0, 0.86, 0.12, 0.95)
 
 var _path_end := Vector2.ZERO
 var _arrow_end := Vector2.ZERO
 var _push_end := Vector2.ZERO
-var _arrow_color := ARROW_SAFE
+var _arrow_color := ARROW_COLOR
 var _shown := false
 
 
@@ -27,13 +26,13 @@ func _ready() -> void:
 	z_as_relative = true
 
 
-func show_aim(launch: Vector2, push: Vector2, hard: bool) -> void:
+func show_aim(launch: Vector2, push: Vector2) -> void:
 	if launch.length_squared() < 0.25:
 		hide_aim()
 		return
 	_path_end = path_end_local(launch)
 	_arrow_end = velocity_end_local(launch)
-	_arrow_color = ARROW_HARD if hard else ARROW_SAFE
+	_arrow_color = ARROW_COLOR
 	_push_end = push_end_local(push)
 	_shown = true
 	queue_redraw()

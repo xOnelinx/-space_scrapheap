@@ -104,7 +104,8 @@ func _stands_and_walks(wanderer: Wanderer, rock: SpaceRock) -> bool:
 	if traveled < Wanderer.WALK_SPEED * duration * 0.7:
 		fail("По обводу слишком медленно: %.1f" % traveled)
 		return false
-	if wanderer.global_position.x <= before.x:
+	## Мелкий обвод: касательная у вершины смотрит вниз, мировой x не растёт. Крупный — как круг, D вправо.
+	if rock.get_hit_radius() >= 30.0 and wanderer.global_position.x <= before.x:
 		fail("С вершины D не ведёт вправо")
 		return false
 	return true

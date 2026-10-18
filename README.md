@@ -16,6 +16,18 @@
 godot/run.sh
 ```
 
+## Проверки
+
+На Windows:
+
+```bat
+godot\run_checks.cmd
+```
+
+В bash: `godot/run_checks.sh`.
+
+Гоняет все `godot/tests/verify_*.gd`. Ненулевой код останавливает прогон. Бинарник — переменная `GODOT`, иначе `godot` в PATH или `~/.local/bin/godot`. `run_checks.cmd` сам вызывает PowerShell с обходом политики запуска: отдельно её менять не нужно.
+
 ## Управление
 
 | Действие | Управление |

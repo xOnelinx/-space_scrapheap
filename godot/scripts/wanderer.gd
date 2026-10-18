@@ -384,8 +384,7 @@ func _publish_aim() -> void:
 	if launch.length_squared() < 0.25:
 		aim.hide_aim()
 		return
-	var horizon := aim.path_end_local(launch).length() / launch.length()
-	aim.show_aim(launch, push_desired(target, charge), aim_too_fast_for_meteor(launch, horizon))
+	aim.show_aim(launch, push_desired(target, charge))
 
 
 func _publish_rope() -> void:
@@ -659,35 +658,6 @@ func _aim_hit_time_of(body: Node2D, launch_vel: Vector2) -> float:
 	return _aim_hit_time(rock, launch_vel)
 
 
-func aim_relative_velocity(launch_vel: Vector2, horizon: float) -> Vector2:
-	## Скорость относительно тела на курсе. Нет тела — нулевой вектор, не мировая |v|.
-	var rock := first_aim_rock(launch_vel, horizon)
-	if rock == null:
-		return Vector2.ZERO
-	return launch_vel - _body_vel_at_aim_hit(rock, launch_vel)
-
-
-func aim_approach_into(rock: SpaceRock, launch_vel: Vector2) -> float:
-	## Скорость входа в поверхность — тот же смысл, что approach в _resolve_hit.
-	if rock == null:
-		return 0.0
-	var rel := launch_vel - _body_vel_at_aim_hit(rock, launch_vel)
-	var hit_t := _aim_hit_time(rock, launch_vel)
-	if hit_t >= INF:
-		return 0.0
-	var at := global_position + launch_vel * hit_t
-	var center := rock.global_position + rock.get_space_velocity() * hit_t
-	var away := at - center
-	if away.length_squared() < 0.0001:
-		return rel.length()
-	return -rel.dot(away.normalized())
-
-
-func asteroid_dock_speed(_rock: SpaceRock) -> float:
-	## Лёгкий камень больше не срезает порог: удар быстрее толчка тоже цепляет.
-	return INF
-
-
 func _dock_if_buried() -> bool:
 	## Кадр без отданного контакта: круг уже внутри астероида, вылет выглядел бы отскоком.
 	var buried := _buried_asteroid()
@@ -701,11 +671,6 @@ func _dock_if_buried() -> bool:
 
 func _buried_asteroid() -> SpaceRock:
 	return Bodies.nearest_overlap(get_tree(), global_position, _self_radius, true) as SpaceRock
-
-
-func aim_too_fast_for_meteor(_launch_vel: Vector2, _horizon: float = AIM_HORIZON) -> bool:
-	## Посадка не зависит от скорости входа: и медленный, и быстрый контакт цепляет.
-	return false
 
 
 func dock_to(body: Node2D, normal: Vector2) -> void:
@@ -771,16 +736,6 @@ func _set_body_shape_disabled(disabled: bool) -> void:
 	var shape_node := get_node_or_null("CollisionShape2D") as CollisionShape2D
 	if shape_node != null:
 		shape_node.disabled = disabled
-
-
-func _body_vel_at_aim_hit(rock: SpaceRock, launch_vel: Vector2) -> Vector2:
-	var hit_t := _aim_hit_time(rock, launch_vel)
-	if hit_t >= INF:
-		return rock.get_space_velocity()
-	var at := global_position + launch_vel * hit_t
-	var center := rock.global_position + rock.get_space_velocity() * hit_t
-	var offset := at - center
-	return rock.get_space_velocity() + rock.spin * Vector2(-offset.y, offset.x)
 
 
 func _aim_hit_time(rock: SpaceRock, launch_vel: Vector2) -> float:
