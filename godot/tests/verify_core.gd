@@ -23,6 +23,10 @@ func _run() -> void:
 		return
 	if not _check_hatch(scene, wanderer):
 		return
+	if not _check_rooms(scene, wanderer):
+		return
+	if not _check_star_background(scene, wanderer):
+		return
 	print("CORE_OK")
 	quit(0)
 
@@ -1016,6 +1020,334 @@ func _check_hatch(scene: Node, wanderer: Wanderer) -> bool:
 		fail("Снаружи круг так и выключен")
 		return false
 	return true
+
+
+func _check_rooms(scene: Node, wanderer: Wanderer) -> bool:
+	var rock := scene.get_node("Bodies/HullTorus01") as SpaceRock
+	var rooms := HullRooms.of(rock)
+	if rooms == null or not rooms.contains(0, rooms.breach):
+		fail("Дыра не в своей комнате")
+		return false
+	if not _breach_glow_outside(rooms, rock):
+		return false
+	_quiet(rock)
+	rock.rotation = 0.0
+	wanderer.tether.release()
+	wanderer.undock()
+	wanderer._controls_locked = false
+	wanderer._oxygen.double_left = 0.0
+	wanderer._oxygen.open = true
+	_stand_on_hull(wanderer, rock, Vector2(-20, -10))
+	wanderer.toggle_hatch()
+	if wanderer.dock.inside:
+		fail("F вдали от дыры пустил внутрь")
+		return false
+	_stand_on_hull(wanderer, rock, rooms.breach)
+	wanderer.toggle_hatch()
+	if not wanderer.dock.inside or wanderer._room != 0:
+		fail("F у дыры не завёл в комнату")
+		return false
+	var glow := rooms.get_node_or_null("BreachGlow") as Sprite2D
+	if glow == null or glow.visible:
+		fail("Внутри подсветка входа осталась")
+		return false
+	var sprite := rock.get_node("Sprite") as Sprite2D
+	if sprite.texture != rooms.interior:
+		fail("Внутри осталось глухое железо")
+		return false
+	rock.rotation = 1.1
+	wanderer._physics_process(0.016)
+	var cam := wanderer.get_node("Camera2D") as Camera2D
+	if absf(wrapf(cam.global_rotation - rock.global_rotation, -PI, PI)) > 0.05:
+		fail("Камера не крутится с куском")
+		return false
+	if cam.global_position.distance_to(rock.global_position) > 1.0:
+		fail("Камера не на центре обломка")
+		return false
+	if cam.ignore_rotation:
+		fail("Вид камеры не крутится с куском")
+		return false
+	rock.rotation = 0.0
+	wanderer._physics_process(0.016)
+	var before := wanderer._oxygen.seconds
+	wanderer.velocity = Vector2(4000, 0)
+	wanderer._lost_time = 4.0
+	wanderer._physics_process(1.0)
+	if wanderer._dead or wanderer._lost_time > 0.01:
+		fail("В комнате сработала гибель")
+		return false
+	if wanderer._oxygen.seconds > before - 0.5:
+		fail("В травимой комнате кислород не тикает")
+		return false
+	wanderer.cast_harpoon()
+	if wanderer.tether.linked():
+		fail("Внутри E выпустил гарпун")
+		return false
+	wanderer.dock.local = Vector2(8, 36)
+	wanderer._room = 0
+	_walk_rooms(wanderer, Vector2(0, -1), 1.0)
+	if rooms.contains(1, wanderer.dock.local) and not rooms.contains(0, wanderer.dock.local):
+		fail("Закрытая дверь пустила в дальнюю комнату")
+		return false
+	if not rooms.near_door(wanderer.dock.local):
+		fail("Не дошёл до двери: %s" % wanderer.dock.local)
+		return false
+	var plate := rooms.get_node("Door") as Sprite2D
+	if not plate.visible:
+		fail("Закрытая дверь не видна")
+		return false
+	if not _at_door_edge(rooms, wanderer, rock):
+		return false
+	var shut_at := plate.position
+	wanderer.cast_harpoon()
+	if not rooms.door_open:
+		fail("E у двери не открыл её")
+		return false
+	if rooms.passage_open() or plate.position.distance_to(shut_at) > 0.5:
+		fail("Дверь пустила сразу")
+		return false
+	_run_door(rooms, HullRooms.DOOR_TIME * 0.4)
+	if rooms.passage_open():
+		fail("Дверь пустила на полпути")
+		return false
+	if plate.position.distance_to(shut_at) < 2.0:
+		fail("Дверь не поехала")
+		return false
+	_walk_rooms(wanderer, Vector2(0, -1), 0.35)
+	if rooms.contains(1, wanderer.dock.local) and not rooms.contains(0, wanderer.dock.local):
+		fail("Дверь пустила, пока ехала")
+		return false
+	_run_door(rooms, HullRooms.DOOR_TIME)
+	if not rooms.passage_open():
+		fail("Дверь не доехала")
+		return false
+	if plate.position.distance_to(shut_at) < 10.0:
+		fail("Открытая дверь осталась на проёме")
+		return false
+	_walk_rooms(wanderer, Vector2(0, -1), 0.35)
+	if not rooms.contains(1, wanderer.dock.local):
+		fail("Открытая дверь не пустила: %s" % wanderer.dock.local)
+		return false
+	var open_at := plate.position
+	wanderer.cast_harpoon()
+	if rooms.door_open:
+		fail("E не закрыл дверь")
+		return false
+	_run_door(rooms, HullRooms.DOOR_TIME * 0.4)
+	if plate.position.distance_to(open_at) < 2.0:
+		fail("Створка не поехала обратно")
+		return false
+	if rooms.passage_open():
+		fail("Закрытие ещё пускает")
+		return false
+	_run_door(rooms, HullRooms.DOOR_TIME)
+	if plate.position.distance_to(shut_at) > 0.5:
+		fail("Створка не вернулась на проём")
+		return false
+	_walk_rooms(wanderer, Vector2(-1, -0.2), 0.8)
+	if rooms.vented(wanderer._room):
+		fail("Дальняя комната травится при закрытой двери")
+		return false
+	before = wanderer._oxygen.seconds
+	wanderer._physics_process(1.0)
+	if absf(wanderer._oxygen.seconds - before) > 0.01:
+		fail("В целой комнате кислород тикает")
+		return false
+	wanderer.dock.local = Vector2(8, 2)
+	wanderer._room = 1
+	_walk_rooms(wanderer, Vector2(0, 1), 1.0)
+	if wanderer._room != 1 or rooms.door_open:
+		fail("С дальней стороны дверь не удержала")
+		return false
+	if not _at_door_edge(rooms, wanderer, rock):
+		return false
+	var breach_world := rock.to_global(rooms.breach)
+	wanderer.toggle_hatch()
+	if wanderer.dock.inside or wanderer.dock.docked:
+		fail("Выход из комнаты оставил посадку")
+		return false
+	var local := rock.to_local(wanderer.global_position)
+	if Geometry2D.is_point_in_polygon(local, rock.outline.points):
+		fail("Выход оставил скитальца в контуре")
+		return false
+	if local.distance_to(rooms.breach) > 80.0:
+		fail("Выход не у дыры: %s" % local)
+		return false
+	if wanderer.global_position.distance_to(breach_world) < 8.0:
+		fail("Выход остался на самой дыре")
+		return false
+	if sprite.texture != rock.hull_texture:
+		fail("Снаружи остался план комнат")
+		return false
+	if not glow.visible:
+		fail("Снаружи подсветка входа погасла")
+		return false
+	if absf(cam.rotation) > 0.001 or cam.position.length() > 0.001:
+		fail("Камера не вернулась к скитальцу")
+		return false
+	if not cam.ignore_rotation:
+		fail("Снаружи вид камеры остался повёрнут")
+		return false
+	return true
+
+
+func _check_star_background(scene: Node, wanderer: Wanderer) -> bool:
+	var cam := wanderer.get_node("Camera2D") as Camera2D
+	cam.position_smoothing_enabled = false
+	cam.enabled = true
+	cam.make_current()
+	cam.ignore_rotation = false
+	cam.global_rotation = 0.4
+	cam.global_position = Vector2(800, 500)
+	var bg := Sprite2D.new()
+	bg.texture = load("res://assets/bg.png")
+	bg.set_script(load("res://scripts/background.gd"))
+	scene.add_child(bg)
+	bg._process(0.016)
+	if bg.scale.distance_to(Vector2.ONE) > 0.01:
+		fail("Фон увеличился при входе")
+		return false
+	if absf(wrapf(bg.global_rotation - cam.global_rotation, -PI, PI)) > 0.001:
+		fail("Фон не лёг на повёрнутый экран")
+		return false
+	if bg.global_position.distance_to(cam.get_screen_center_position()) > 1.0:
+		fail("Фон уехал от центра экрана")
+		return false
+	var stars := Node2D.new()
+	stars.set_script(load("res://scripts/star_field.gd"))
+	stars.star_texture = load("res://assets/zvezdets2.png")
+	scene.add_child(stars)
+	stars._process(0.016)
+	if not stars._rotating:
+		fail("Звёзды не перешли на коробку камеры")
+		return false
+	var view := stars.get_viewport_rect().size
+	var half: Vector2 = stars._view_half(true, view)
+	for rot in [0.4, 2.1]:
+		for sx in [-1.0, 1.0]:
+			for sy in [-1.0, 1.0]:
+				var off := Vector2(view.x * 0.5 * sx, view.y * 0.5 * sy).rotated(rot)
+				if absf(off.x) > half.x + 0.01 or absf(off.y) > half.y + 0.01:
+					fail("Угол экрана вылезает из звёзд")
+					return false
+	var before: Array[Vector2] = []
+	for star in stars.get_children():
+		before.append((star as Node2D).position)
+	cam.global_rotation = 2.1
+	stars._process(0.05)
+	var jumped := 0
+	var i := 0
+	for star in stars.get_children():
+		var delta: Vector2 = (star as Node2D).position - before[i]
+		if absf(delta.y) > 1.0 or absf(delta.x + 1.5) > 2.0:
+			jumped += 1
+		i += 1
+	if jumped > 2:
+		fail("Звёзды пересобираются при повороте куска")
+		return false
+	return true
+
+
+func _stand_on_hull(wanderer: Wanderer, rock: SpaceRock, local: Vector2) -> void:
+	wanderer.undock()
+	wanderer.global_position = rock.to_global(local)
+	wanderer.dock_to(rock, Vector2.UP)
+	wanderer.dock.local = local
+	wanderer.global_position = rock.to_global(local)
+
+
+func _breach_glow_outside(rooms: HullRooms, rock: SpaceRock) -> bool:
+	var glow := rooms.get_node_or_null("BreachGlow") as Sprite2D
+	if glow == null or not glow.visible or glow.texture == null:
+		fail("Подсветка входа не видна снаружи")
+		return false
+	if glow.position.length() > 0.01:
+		fail("Подсветка оторвана от контура: %s" % glow.position)
+		return false
+	var hull := rock.hull_texture.get_image()
+	if hull.is_compressed():
+		hull.decompress()
+	var image := glow.texture.get_image()
+	if image.is_compressed():
+		image.decompress()
+	var origin := Vector2(hull.get_width(), hull.get_height()) * 0.5
+	var dir := rooms.breach_out
+	if dir.length_squared() < 0.01:
+		dir = Vector2.RIGHT
+	dir = dir.normalized()
+	var inset := HullRooms.WALKER_RADIUS / rock.uniform_scale()
+	var lit := 0
+	var reach := 0
+	for y in hull.get_height():
+		var right := -1
+		var left := -1
+		for x in hull.get_width():
+			if hull.get_pixel(x, y).a < 0.2:
+				continue
+			if left < 0:
+				left = x
+			right = x
+		if right < 0:
+			continue
+		var local := Vector2(right + 0.5, y + 0.5) - origin
+		var enterable := (local - dir * inset).distance_to(rooms.breach) <= HullRooms.BREACH_REACH
+		var on := _orange(image.get_pixel(right, y))
+		if enterable:
+			reach += 1
+			if not on:
+				fail("У входа кромка без подсветки: %d,%d" % [right, y])
+				return false
+			if right + 1 < image.get_width() and not _orange(image.get_pixel(right + 1, y)):
+				fail("Снаружи входа нет оранжевого: %d,%d" % [right + 1, y])
+				return false
+		elif on:
+			fail("Подсветка дальше зоны входа: %d,%d" % [right, y])
+			return false
+		if on:
+			lit += 1
+		if left != right and _orange(image.get_pixel(left, y)):
+			fail("Подсветка зажгла левый край")
+			return false
+	if lit < 4 or reach < 4:
+		fail("Подсветка не на кромке входа")
+		return false
+	return true
+
+
+func _orange(pixel: Color) -> bool:
+	return pixel.a > 0.5 and pixel.r > pixel.g and pixel.r > pixel.b and pixel.r > 0.5
+
+
+func _at_door_edge(rooms: HullRooms, wanderer: Wanderer, rock: SpaceRock) -> bool:
+	var gap := rooms.door_clearance(
+		wanderer.dock.local,
+		wanderer._sprite_half_local(rock),
+		wanderer._door_rel(rock)
+	)
+	if gap < -0.05:
+		fail("Спрайт проходит сквозь дверь")
+		return false
+	if gap > 1.25:
+		fail("Спрайт не дошёл до кромки двери: %.2f" % gap)
+		return false
+	return true
+
+
+func _run_door(rooms: HullRooms, seconds: float) -> void:
+	var left := seconds
+	while left > 0.0:
+		var step := minf(left, 0.05)
+		rooms._process(step)
+		left -= step
+
+
+func _walk_rooms(wanderer: Wanderer, dir: Vector2, duration: float) -> void:
+	var left := duration
+	while left > 0.0:
+		var step := minf(left, 0.05)
+		wanderer._step_on_hull(dir, step)
+		wanderer.follow_dock()
+		left -= step
 
 
 func _stand(wanderer: Wanderer, rock: SpaceRock) -> void:

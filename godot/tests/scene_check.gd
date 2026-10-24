@@ -1,10 +1,13 @@
 extends SceneTree
 
 ## Общий запуск сцены и выход с ошибкой для проверок.
+## По умолчанию стенд с камнем. Раскладку игры передают res://scenes/main.tscn.
+
+const STAND_SCENE := "res://tests/stand.tscn"
 
 
-func boot(frames: int = 4) -> Node:
-	var err := change_scene_to_file("res://scenes/main.tscn")
+func boot(frames: int = 4, scene_path: String = STAND_SCENE) -> Node:
+	var err := change_scene_to_file(scene_path)
 	if err != OK:
 		fail("Сцена не загрузилась")
 		return null

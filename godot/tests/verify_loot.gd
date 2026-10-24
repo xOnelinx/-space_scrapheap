@@ -27,7 +27,7 @@ func _run() -> void:
 		quit(1)
 		return
 
-	var start := get_current_scene().get_node("Bodies/StaticNear") as SpaceRock
+	var start := get_current_scene().get_node("Bodies/HullTorus01") as SpaceRock
 	var gap := loot.global_position.distance_to(start.global_position) - start.get_hit_radius() - Loot.HIT_RADIUS
 	if gap < 8.0:
 		push_error("Баллон внутри стартового камня")

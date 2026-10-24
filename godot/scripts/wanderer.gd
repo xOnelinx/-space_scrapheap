@@ -2,7 +2,8 @@ class_name Wanderer
 extends CharacterBody2D
 
 ## Без ранца: отталкиваешься с разной силой, только с опоры. В пустоте — инерция и слабая правка курса WASD.
-## По кромке астероида — A/D. По корпусу — WASD. Внутри корпуса — тот же шаг, без прыжка.
+## По кромке астероида — A/D. По корпусу — WASD. Внутри листа — тот же шаг, без прыжка.
+## В комнатах шаг упирается в стены. Камера сидит на куске и крутится вместе с ним.
 ## Магнитные ботинки: к обломку и к астероиду цепляется при любом ударе, на любой скорости.
 ## С любой точки корпуса прыжок в любую сторону.
 ## Курс без пересечения с телами → гибель. Крутится только спрайт. Пока висит трос, этот счётчик молчит.
@@ -46,6 +47,7 @@ const GRAB_SPRITE := preload("res://assets/wanderer_grab.png")
 @export var start_rock_path: NodePath = ^"../Bodies/StaticNear"
 
 @onready var _sprite: Sprite2D = $Sprite
+@onready var _camera: Camera2D = $Camera2D
 
 var dock := Dock.new()
 var tether := Tether.new()
@@ -71,9 +73,13 @@ var _dead := false
 var _controls_locked := true
 var _lost_time := 0.0
 var _oxygen: Oxygen
+var _suit: SuitAudio
 var _flight_jet: Node2D
 ## -1 — обычный спрайт. Иначе кадр захвата, пока скиталец на астероиде.
 var _grab_frame := -1
+## Комната куска с планом. -1 — лист без комнат или снаружи.
+var _room := -1
+var _room_camera := false
 var _grab_time := 0.0
 
 
@@ -91,6 +97,9 @@ func _ready() -> void:
 	_oxygen.name = "Oxygen"
 	_oxygen.depleted.connect(_on_oxygen_depleted)
 	add_child(_oxygen)
+	_suit = SuitAudio.new()
+	_suit.name = "SuitAudio"
+	add_child(_suit)
 	_build_flight_jet()
 	_add_input_tools()
 	call_deferred("_spawn_on_start_rock")
@@ -100,7 +109,7 @@ func _ready() -> void:
 func _spawn_on_start_rock() -> void:
 	var rock := get_node_or_null(start_rock_path) as Node2D
 	if rock == null:
-		push_error("Стартовый астероид не найден: %s" % start_rock_path)
+		push_error("Стартовый обломок не найден: %s" % start_rock_path)
 		return
 	var body := rock as SpaceRock
 	var rock_r := body.get_hit_radius() if body != null else 0.0
@@ -178,6 +187,7 @@ func _commit_push(to_target: Vector2) -> void:
 	_oxygen.note_hold(_hold_time)
 	_clear_charge()
 	undock()
+	_suit.play_push()
 	pushed.emit(desired, charge)
 	if rock != null and rock.hull:
 		_begin_slip(rock)
@@ -246,10 +256,21 @@ func _on_oxygen_depleted() -> void:
 
 
 func _breathe(delta: float) -> bool:
+	if _room_air_holds():
+		return false
 	var extra := 0.0
 	if _using_flight_correction:
 		extra = FLIGHT_OXYGEN
 	return _oxygen.tick(delta, extra)
+
+
+func _room_air_holds() -> bool:
+	if not dock.inside or _room < 0:
+		return false
+	var rooms := HullRooms.of(dock.rock())
+	if rooms == null:
+		return false
+	return not rooms.vented(_room)
 
 
 func _begin_doom(message: String) -> void:
@@ -257,6 +278,7 @@ func _begin_doom(message: String) -> void:
 		return
 	_dead = true
 	_oxygen.open = false
+	_suit.play_death()
 	set_physics_process(false)
 	set_process_unhandled_input(false)
 	DeathScreen.open(get_tree(), message)
@@ -270,7 +292,13 @@ func _physics_process(delta: float) -> void:
 	## Концы троса сдвигаются до шага героя, иначе ездок отстаёт на кадр.
 	_step_fixed_ropes(delta)
 	_step_motion(delta)
+	if not _dead:
+		_sync_suit()
 	_publish_views()
+
+
+func _sync_suit() -> void:
+	_suit.sync(_using_flight_correction, _oxygen.double_left > 0.0, dock.inside and not _room_air_holds())
 
 
 func _step_motion(delta: float) -> void:
@@ -355,9 +383,32 @@ func _step_motion(delta: float) -> void:
 
 
 func _publish_views() -> void:
+	_seat_room_camera()
 	_publish_aim()
 	_publish_rope()
 	_publish_warning()
+
+
+func _seat_room_camera() -> void:
+	if _camera == null:
+		return
+	var rock := dock.rock()
+	var rooms := HullRooms.of(rock) if dock.inside else null
+	if rooms == null:
+		if not _room_camera:
+			return
+		_room_camera = false
+		_camera.ignore_rotation = true
+		_camera.position_smoothing_enabled = true
+		_camera.position = Vector2.ZERO
+		_camera.rotation = 0.0
+		return
+	_room_camera = true
+	_camera.position_smoothing_enabled = false
+	## Без этого вид остаётся осями мира: угол узла есть, обломок на экране крутится.
+	_camera.ignore_rotation = false
+	_camera.global_rotation = rock.global_rotation
+	_camera.global_position = rock.global_position
 
 
 func _publish_aim() -> void:
@@ -492,7 +543,14 @@ func _step_on_hull(screen_dir: Vector2, delta: float) -> void:
 	if rock == null or rock.outline == null or screen_dir.length_squared() < 0.01:
 		return
 	var screen_delta := screen_dir.normalized() * WALK_SPEED * delta
+	var rooms := HullRooms.of(rock)
+	if dock.inside and rooms != null:
+		screen_delta = screen_delta.rotated(rock.global_rotation)
 	var local_delta := _world_delta_to_local(rock, screen_delta)
+	if dock.inside and rooms != null:
+		dock.hull_face = screen_dir.angle() - PI / 2.0 + rock.global_rotation
+		_step_rooms(rooms, local_delta)
+		return
 	var margin := rock.outline.fit_margin(dock.local, _hull_margin(rock))
 	var next := rock.outline.slide(dock.local, local_delta, margin)
 	if next.distance_squared_to(dock.local) < 0.01:
@@ -501,12 +559,64 @@ func _step_on_hull(screen_dir: Vector2, delta: float) -> void:
 	dock.hull_face = screen_dir.angle() - PI / 2.0
 
 
+func _step_rooms(rooms: HullRooms, motion: Vector2) -> void:
+	if motion.length_squared() < 0.0001 or _room < 0:
+		return
+	var remain := motion.length()
+	var dir := motion.normalized()
+	while remain > 0.01:
+		var step_len := minf(remain, 4.0)
+		var before := dock.local
+		_step_room_once(rooms, dir * step_len)
+		if dock.local.distance_squared_to(before) < 0.0001:
+			return
+		remain -= step_len
+
+
+func _step_room_once(rooms: HullRooms, step: Vector2) -> void:
+	var next := _room_dest(rooms, dock.local, step)
+	if next.distance_squared_to(dock.local) < 0.0001:
+		next = _room_dest(rooms, dock.local, Vector2(step.x, 0.0))
+	if next.distance_squared_to(dock.local) < 0.0001:
+		next = _room_dest(rooms, dock.local, Vector2(0.0, step.y))
+	dock.local = next
+
+
+func _room_dest(rooms: HullRooms, from: Vector2, step: Vector2) -> Vector2:
+	var to := from + step
+	if rooms.contains(_room, to):
+		if rooms.passage_open():
+			return to
+		var rock := dock.rock()
+		to = rooms.stop_at_door(from, to, _sprite_half_local(rock), _door_rel(rock))
+		if rooms.contains(_room, to):
+			return to
+		return from
+	if not rooms.passage_open():
+		return from
+	var other := 1 - _room
+	if rooms.contains(other, to) and rooms.crosses_door(from, to):
+		_room = other
+		return to
+	return from
+
+
 func _world_delta_to_local(body: Node2D, world_delta: Vector2) -> Vector2:
 	return body.to_local(body.global_position + world_delta)
 
 
 func _hull_margin(rock: SpaceRock) -> float:
 	return _self_radius / rock.uniform_scale()
+
+
+func _sprite_half_local(rock: SpaceRock) -> Vector2:
+	var tex_size := _sprite.texture.get_size()
+	var drawn := Vector2(tex_size.x * absf(_sprite.scale.x), tex_size.y * absf(_sprite.scale.y))
+	return drawn * 0.5 / rock.uniform_scale()
+
+
+func _door_rel(rock: SpaceRock) -> float:
+	return dock.hull_face - rock.global_rotation
 
 
 func _face_on_surface() -> void:
@@ -693,6 +803,7 @@ func dock_to(body: Node2D, normal: Vector2) -> void:
 	else:
 		_begin_grab()
 	dock_changed.emit(true, body)
+	_suit.play_dock()
 	_publish_views()
 
 
@@ -712,6 +823,7 @@ func follow_dock() -> void:
 
 func undock() -> void:
 	var left := dock.body
+	_room = -1
 	dock.clear()
 	_set_body_shape_disabled(false)
 	_clear_charge()
@@ -793,15 +905,22 @@ func enter_interior(body: SpaceRock) -> bool:
 	dock.docked = true
 	dock.inside = true
 	dock.body = body
-	var local := body.to_local(global_position)
-	var margin := _hull_margin(body)
-	if body.outline.on_face(local, margin):
-		dock.local = local
+	var rooms := HullRooms.of(body)
+	if rooms != null:
+		dock.local = rooms.breach
+		_room = 0
+		rooms.show_layer(body, true)
 	else:
-		var inward := -local
-		if inward.length_squared() < 0.01:
-			inward = Vector2.UP
-		dock.local = body.outline.seat(local, inward.normalized(), margin)
+		_room = -1
+		var local := body.to_local(global_position)
+		var margin := _hull_margin(body)
+		if body.outline.on_face(local, margin):
+			dock.local = local
+		else:
+			var inward := -local
+			if inward.length_squared() < 0.01:
+				inward = Vector2.UP
+			dock.local = body.outline.seat(local, inward.normalized(), margin)
 	dock.hull_face = 0.0
 	global_position = body.to_global(dock.local)
 	velocity = _velocity_at(body, global_position)
@@ -819,9 +938,22 @@ func exit_interior() -> void:
 	if not dock.inside:
 		return
 	var rock := dock.rock()
+	var rooms := HullRooms.of(rock) if rock != null else null
 	var pos := global_position
 	var outward := Vector2.UP
-	if rock != null and rock.outline != null:
+	if rooms != null and rock != null and rock.outline != null:
+		var outside_local := rooms.outside_local(rock.outline, _hull_margin(rock))
+		pos = rock.to_global(outside_local)
+		var dir := rooms.breach_out
+		if dir.length_squared() < 0.01:
+			dir = Vector2.RIGHT
+		outward = rock.to_global(outside_local + dir.normalized()) - pos
+		if outward.length_squared() < 0.01:
+			outward = Vector2.UP
+		else:
+			outward = outward.normalized()
+		rooms.show_layer(rock, false)
+	elif rock != null and rock.outline != null:
 		var rim := rock.outline.nearest_rim(dock.local)
 		var out_local := rim.normal
 		if out_local.length_squared() < 0.01:
@@ -867,6 +999,8 @@ func fire_harpoon(direction: Vector2) -> void:
 	if tether.linked() or tether.flying():
 		return
 	tether.shoot(self, direction)
+	if tether.flying():
+		_suit.play_shot()
 
 
 func _reeling() -> bool:
@@ -875,9 +1009,19 @@ func _reeling() -> bool:
 
 
 func cast_harpoon() -> void:
-	if not accepts_input() or dock.inside or tether.linked() or tether.flying():
+	if not accepts_input() or tether.linked() or tether.flying():
+		return
+	if dock.inside:
+		_use_room()
 		return
 	fire_harpoon(_aim_dir())
+
+
+func _use_room() -> void:
+	var rooms := HullRooms.of(dock.rock())
+	if rooms == null or not rooms.near_door(dock.local):
+		return
+	rooms.door_open = not rooms.door_open
 
 
 func release_tether() -> void:
@@ -923,6 +1067,9 @@ func toggle_hatch() -> void:
 		return
 	var rock := dock.rock()
 	if rock != null and rock.hull:
+		var rooms := HullRooms.of(rock)
+		if rooms != null and not rooms.near_breach(dock.local):
+			return
 		enter_interior(rock)
 
 

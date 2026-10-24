@@ -37,7 +37,7 @@ func _run() -> void:
 		fail("На корпусе должен остаться обычный спрайт")
 		return
 
-	var meteor := scene.get_node("Bodies/Meteor01") as SpaceRock
+	var meteor := scene.get_node("Bodies/StaticMid") as SpaceRock
 	_redock(wanderer, meteor)
 	if wanderer.dock.has_hull() or not _grab_started(sprite):
 		fail("На метеорите захват не начался")

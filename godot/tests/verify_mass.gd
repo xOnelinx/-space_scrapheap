@@ -8,7 +8,7 @@ func _initialize() -> void:
 
 
 func _run() -> void:
-	var scene := await boot()
+	var scene := await boot(4, "res://scenes/main.tscn")
 	if scene == null:
 		return
 
@@ -17,9 +17,10 @@ func _run() -> void:
 		fail("Нет астероидов")
 		return
 
-	var start := scene.get_node("Bodies/StaticNear") as SpaceRock
-	if start.spin != 0.0:
-		fail("Стартовая скала не должна крутиться")
+	var start := scene.get_node("Bodies/HullTorus01") as SpaceRock
+	var wanderer := scene.get_node("Wanderer") as Wanderer
+	if wanderer.dock.rock() != start or not wanderer.dock.docked or wanderer.dock.inside:
+		fail("Скиталец стартует не на обломке")
 		return
 
 	var heavy: SpaceRock = null

@@ -62,6 +62,7 @@ func _try_pickup() -> void:
 	var air := get_tree().get_first_node_in_group("oxygen") as Oxygen
 	if air == null or not air.grant(OXYGEN_GRANT):
 		return
+	(host.get_node("SuitAudio") as SuitAudio).play_canister()
 	_taken = true
 	queue_free()
 

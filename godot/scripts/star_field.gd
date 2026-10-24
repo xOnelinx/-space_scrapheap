@@ -8,6 +8,8 @@ const MARGIN := 40.0
 
 @export var star_texture: Texture2D
 
+var _rotating := false
+
 
 func _ready() -> void:
 	if star_texture == null:
@@ -30,7 +32,13 @@ func _process(delta: float) -> void:
 	if cam != null:
 		center = cam.get_screen_center_position()
 
-	var half := view * 0.5
+	var rotating := cam != null and not cam.ignore_rotation
+	var half := _view_half(rotating, view)
+	## Коробка меняется только на входе и выходе. Пока кусок крутится, она одна и та же.
+	if rotating != _rotating:
+		_rotating = rotating
+		_scatter(center, half)
+		return
 	var min_p := center - half - Vector2(MARGIN, MARGIN)
 	var max_p := center + half + Vector2(MARGIN, MARGIN)
 	var span := max_p - min_p
@@ -46,3 +54,18 @@ func _process(delta: float) -> void:
 			star.position.y += span.y
 		elif star.position.y > max_p.y:
 			star.position.y -= span.y
+
+
+func _scatter(center: Vector2, half: Vector2) -> void:
+	var min_p := center - half - Vector2(MARGIN, MARGIN)
+	var span := (half + Vector2(MARGIN, MARGIN)) * 2.0
+	for star in get_children():
+		star.position = min_p + Vector2(randf() * span.x, randf() * span.y)
+
+
+func _view_half(rotating: bool, view: Vector2) -> Vector2:
+	if not rotating:
+		return view * 0.5
+	## Квадрат по диагонали экрана вмещает вид при любом угле. От угла не зависит.
+	var radius := view.length() * 0.5
+	return Vector2(radius, radius)

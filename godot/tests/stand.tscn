@@ -1,0 +1,62 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/asteroids/asteroid_04.tscn" id="1_near"]
+[ext_resource type="PackedScene" path="res://scenes/asteroids/asteroid_05.tscn" id="2_mid"]
+[ext_resource type="PackedScene" path="res://scenes/space_rock.tscn" id="3_rock"]
+[ext_resource type="Texture2D" path="res://assets/hulls/federation_bomber_01.png" id="4_fed"]
+[ext_resource type="PackedScene" path="res://scenes/hull_torus_01.tscn" id="5_torus"]
+[ext_resource type="Script" path="res://scripts/wanderer.gd" id="6_wanderer"]
+[ext_resource type="Texture2D" path="res://assets/wanderer.png" id="7_tex"]
+[ext_resource type="Script" path="res://scripts/jump_aim.gd" id="8_aim"]
+[ext_resource type="Script" path="res://scripts/lost_warning.gd" id="9_lost"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_wanderer"]
+radius = 9.0
+
+[node name="Stand" type="Node2D"]
+
+[node name="LostWarning" type="CanvasLayer" parent="."]
+layer = 90
+script = ExtResource("9_lost")
+
+[node name="Bodies" type="Node2D" parent="."]
+
+[node name="StaticNear" parent="Bodies" instance=ExtResource("1_near")]
+position = Vector2(220, 400)
+scale = Vector2(0.1656, 0.1656)
+
+[node name="StaticMid" parent="Bodies" instance=ExtResource("2_mid")]
+position = Vector2(900, 400)
+scale = Vector2(0.1338, 0.1338)
+
+[node name="StaticDust" parent="Bodies" instance=ExtResource("3_rock")]
+position = Vector2(4000, 0)
+scale = Vector2(0.5, 0.5)
+
+[node name="HullFed01" parent="Bodies" instance=ExtResource("3_rock")]
+position = Vector2(-400, 400)
+hull_texture = ExtResource("4_fed")
+
+[node name="HullTorus01" parent="Bodies" instance=ExtResource("5_torus")]
+position = Vector2(2000, 2000)
+
+[node name="Wanderer" type="CharacterBody2D" parent="."]
+z_index = 20
+position = Vector2(320, 400)
+motion_mode = 1
+script = ExtResource("6_wanderer")
+
+[node name="Sprite" type="Sprite2D" parent="Wanderer"]
+scale = Vector2(0.375, 0.375)
+texture = ExtResource("7_tex")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Wanderer"]
+shape = SubResource("CircleShape2D_wanderer")
+
+[node name="JumpAim" type="Node2D" parent="Wanderer"]
+z_index = -1
+script = ExtResource("8_aim")
+
+[node name="Camera2D" type="Camera2D" parent="Wanderer"]
+position_smoothing_enabled = true
+position_smoothing_speed = 8.0

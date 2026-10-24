@@ -8,7 +8,7 @@ func _initialize() -> void:
 
 
 func _run() -> void:
-	var scene := await boot()
+	var scene := await boot(4, "res://scenes/main.tscn")
 	if scene == null:
 		return
 	var names: Array[String] = ["Meteor01", "Meteor02", "Meteor03", "Meteor04", "Meteor05"]
@@ -46,9 +46,9 @@ func _run() -> void:
 	if _radial_aspect(long_poly) < 1.35:
 		fail("Вытянутый метеорит остался круглым: %.2f" % _radial_aspect(long_poly))
 		return
-	var start := scene.get_node("Bodies/StaticNear") as SpaceRock
-	if not start.shaped or start.hull or start.get_node_or_null("Silhouette") == null:
-		fail("Стартовая скала должна быть новым астероидом")
+	var meteor := scene.get_node("Bodies/Meteor04") as SpaceRock
+	if not meteor.shaped or meteor.hull or meteor.get_node_or_null("Silhouette") == null:
+		fail("Метеорит должен остаться астероидом по силуэту")
 		return
 	var hull := scene.get_node("Bodies/HullFed01") as SpaceRock
 	if not hull.hull or hull.shaped:

@@ -291,6 +291,7 @@ func _attach(host: Wanderer, rock: Node2D, world_point: Vector2) -> void:
 	_hit(host, rock, world_point)
 	_loose = HIT_CARRY
 	_ignite(world_point, world_point - rock.global_position)
+	(host.get_node("SuitAudio") as SuitAudio).play_hit()
 
 
 func _aboard_anchor(host: Wanderer) -> bool:

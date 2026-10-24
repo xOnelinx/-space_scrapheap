@@ -13,7 +13,7 @@ func _initialize() -> void:
 
 
 func _run() -> void:
-	var scene := await boot()
+	var scene := await boot(4, "res://scenes/main.tscn")
 	if scene == null:
 		return
 	if not _check_outlines(scene):
@@ -103,7 +103,7 @@ func _check_groups_in_stream(scene: Node) -> bool:
 
 
 func _check_rim_walk(scene: Node, wanderer: Wanderer) -> bool:
-	var rock := scene.get_node("Bodies/StaticNear") as SpaceRock
+	var rock := scene.get_node("Bodies/Meteor04") as SpaceRock
 	wanderer.dock_to(rock, Vector2.UP)
 	if wanderer.dock.has_shape():
 		var along_before := wanderer.dock.along

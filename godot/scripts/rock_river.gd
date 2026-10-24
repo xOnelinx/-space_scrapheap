@@ -70,6 +70,10 @@ func _assign_depths() -> void:
 func _spawn_start_loot() -> void:
 	## Один баллон в кадре старта, не на камне.
 	var start := _start_rock()
+	if start == null and get_parent() != null:
+		var host := get_parent().get_node_or_null("Wanderer") as Wanderer
+		if host != null:
+			start = host.get_node_or_null(host.start_rock_path) as Node2D
 	if start == null or get_parent() == null:
 		return
 	var loot := _LOOT_SCENE.instantiate() as Loot
