@@ -233,12 +233,11 @@ func _paint_pair(hull: Image, image: Image, along: int, line: int, out_along: in
 		return
 	var origin := Vector2(hull.get_width(), hull.get_height()) * 0.5
 	var local := Vector2(x + 0.5, y + 0.5) - origin
-	var outward := Vector2(
-		out_along if along_x else out_line,
-		out_line if along_x else out_along
-	)
-	## Подошва внутри кромки. Снаружи круга входа F не пускает, полоска там не нужна.
-	var stand := local - outward * _walk_inset()
+	var dir := breach_out
+	if dir.length_squared() < 0.01:
+		dir = Vector2.RIGHT
+	## Подошва внутри кромки, со стороны входа. Дальше круга F не пускает.
+	var stand := local - dir.normalized() * _walk_inset()
 	if stand.distance_to(breach) > BREACH_REACH:
 		return
 	image.set_pixel(x, y, GLOW_INNER)
