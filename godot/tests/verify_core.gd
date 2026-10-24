@@ -1093,24 +1093,26 @@ func _check_rooms(scene: Node, wanderer: Wanderer) -> bool:
 		fail("Не дошёл до двери: %s" % wanderer.dock.local)
 		return false
 	var plate := rooms.get_node("Door") as Sprite2D
-	if not plate.visible:
+	var left := plate.get_node("Left") as Sprite2D
+	var right := plate.get_node("Right") as Sprite2D
+	if not plate.visible or not left.visible or not right.visible:
 		fail("Закрытая дверь не видна")
 		return false
 	if not _at_door_edge(rooms, wanderer, rock):
 		return false
-	var shut_at := plate.position
+	var shut_gap := _door_gap(plate)
 	wanderer.cast_harpoon()
 	if not rooms.door_open:
 		fail("E у двери не открыл её")
 		return false
-	if rooms.passage_open() or plate.position.distance_to(shut_at) > 0.5:
+	if rooms.passage_open() or absf(_door_gap(plate) - shut_gap) > 0.5:
 		fail("Дверь пустила сразу")
 		return false
 	_run_door(rooms, HullRooms.DOOR_TIME * 0.4)
 	if rooms.passage_open():
 		fail("Дверь пустила на полпути")
 		return false
-	if plate.position.distance_to(shut_at) < 2.0:
+	if _door_gap(plate) < shut_gap + 2.0:
 		fail("Дверь не поехала")
 		return false
 	_walk_rooms(wanderer, Vector2(0, -1), 0.35)
@@ -1121,27 +1123,27 @@ func _check_rooms(scene: Node, wanderer: Wanderer) -> bool:
 	if not rooms.passage_open():
 		fail("Дверь не доехала")
 		return false
-	if plate.position.distance_to(shut_at) < 10.0:
+	if left.visible or right.visible:
 		fail("Открытая дверь осталась на проёме")
 		return false
 	_walk_rooms(wanderer, Vector2(0, -1), 0.35)
 	if not rooms.contains(1, wanderer.dock.local):
 		fail("Открытая дверь не пустила: %s" % wanderer.dock.local)
 		return false
-	var open_at := plate.position
+	var open_gap := _door_gap(plate)
 	wanderer.cast_harpoon()
 	if rooms.door_open:
 		fail("E не закрыл дверь")
 		return false
 	_run_door(rooms, HullRooms.DOOR_TIME * 0.4)
-	if plate.position.distance_to(open_at) < 2.0:
+	if _door_gap(plate) > open_gap - 2.0:
 		fail("Створка не поехала обратно")
 		return false
 	if rooms.passage_open():
 		fail("Закрытие ещё пускает")
 		return false
 	_run_door(rooms, HullRooms.DOOR_TIME)
-	if plate.position.distance_to(shut_at) > 0.5:
+	if absf(_door_gap(plate) - shut_gap) > 0.5 or not left.visible or not right.visible:
 		fail("Створка не вернулась на проём")
 		return false
 	_walk_rooms(wanderer, Vector2(-1, -0.2), 0.8)
@@ -1331,6 +1333,12 @@ func _at_door_edge(rooms: HullRooms, wanderer: Wanderer, rock: SpaceRock) -> boo
 		fail("Спрайт не дошёл до кромки двери: %.2f" % gap)
 		return false
 	return true
+
+
+func _door_gap(plate: Node2D) -> float:
+	var left := plate.get_node("Left") as Node2D
+	var right := plate.get_node("Right") as Node2D
+	return right.position.x - left.position.x
 
 
 func _run_door(rooms: HullRooms, seconds: float) -> void:

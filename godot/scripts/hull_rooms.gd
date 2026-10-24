@@ -16,8 +16,9 @@ const GLOW_INNER := Color(0.769, 0.318, 0.047)
 const GLOW_OUTER := Color(1.0, 0.478, 0.094)
 ## Круг скитальца. Подошва стоит внутри железа на этот радиус, делённый на масштаб куска.
 const WALKER_RADIUS := 9.0
-## Створка уезжает на свою ширину. Пока не доехала, в щель не пролезть.
+## Половинки уезжают в косяки. Рисуется только то, что ещё в проёме.
 const DOOR_TIME := 0.25
+const LEAF_W := ((OPENING_X1 - OPENING_X0) + 1) >> 1
 
 @export var interior: Texture2D
 @export var breach := Vector2.ZERO
@@ -33,6 +34,8 @@ var _slide := 0.0
 
 var _inside := false
 var _plate: Sprite2D
+var _left: Sprite2D
+var _right: Sprite2D
 var _plate_center := Vector2.ZERO
 var _glow: Sprite2D
 
@@ -49,7 +52,10 @@ func _ready() -> void:
 	_plate.centered = true
 	_plate.z_index = 2
 	_plate.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	_plate.texture = _door_texture()
+	_left = _make_leaf("Left", false)
+	_right = _make_leaf("Right", true)
+	_plate.add_child(_left)
+	_plate.add_child(_right)
 	var span := door_b - door_a
 	_plate_center = Vector2(
 		(OPENING_X0 + OPENING_X1) * 0.5 - TEX_ORIGIN_X,
@@ -262,27 +268,49 @@ func _step_door(delta: float) -> void:
 
 
 func _apply_door_plate() -> void:
-	if _plate == null:
+	if _plate == null or _left == null:
 		return
-	var travel := float(OPENING_X1 - OPENING_X0)
-	_plate.position = _plate_center + _door_axis() * (travel * _slide)
+	_plate.position = _plate_center
 	_plate.visible = _inside
+	var width := float(OPENING_X1 - OPENING_X0)
+	var travel := float(LEAF_W) * _slide
+	var shown := maxf(0.0, float(LEAF_W) - travel)
+	_place_leaf(_left, shown, travel, -1.0, width)
+	_place_leaf(_right, shown, 0.0, 1.0, width)
 
 
-func _door_texture() -> ImageTexture:
-	var width := OPENING_X1 - OPENING_X0
-	var image := Image.create(width, PLATE_THICK, false, Image.FORMAT_RGBA8)
+func _place_leaf(leaf: Sprite2D, shown: float, region_x: float, side: float, width: float) -> void:
+	leaf.visible = shown >= 0.5
+	var draw := maxf(shown, 0.0)
+	leaf.position = Vector2(side * (width * 0.5 - draw * 0.5), 0.0)
+	if shown < 0.5:
+		return
+	leaf.region_rect = Rect2(region_x, 0, shown, PLATE_THICK)
+
+
+func _make_leaf(leaf_name: String, inner_on_left: bool) -> Sprite2D:
+	var leaf := Sprite2D.new()
+	leaf.name = leaf_name
+	leaf.centered = true
+	leaf.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	leaf.texture = _leaf_texture(inner_on_left)
+	leaf.region_enabled = true
+	return leaf
+
+
+func _leaf_texture(inner_on_left: bool) -> ImageTexture:
+	var image := Image.create(LEAF_W, PLATE_THICK, false, Image.FORMAT_RGBA8)
 	var plate := Color(0.55, 0.53, 0.50)
 	var edge := Color(0.78, 0.76, 0.72)
 	var handle := Color(0.32, 0.31, 0.29)
 	image.fill(plate)
-	for x in width:
+	for x in LEAF_W:
 		image.set_pixel(x, 0, edge)
-	var mid := width >> 1
+	var handle_x := 0 if inner_on_left else LEAF_W - 1
+	var neighbor := 1 if inner_on_left else LEAF_W - 2
 	for y in range(2, 4):
-		image.set_pixel(mid - 1, y, handle)
-		image.set_pixel(mid, y, handle)
-		image.set_pixel(mid + 1, y, handle)
+		image.set_pixel(handle_x, y, handle)
+		image.set_pixel(neighbor, y, handle)
 	return ImageTexture.create_from_image(image)
 
 
