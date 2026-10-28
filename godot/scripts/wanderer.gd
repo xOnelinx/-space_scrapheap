@@ -9,6 +9,7 @@ extends CharacterBody2D
 ## ПКМ — курс до края экрана и стрелка скорости (спин опоры).
 ## Сила толчка — по расстоянию курсора: дальше сильнее, ближе слабее.
 ## Кислород — узел Oxygen. Секунда зажатого толчка — потом 5 секунд двойного расхода.
+## R — кинетический выстрел к курсору. Отдача назад, пуля не впивается.
 
 signal pushed(desired: Vector2, charge: float)
 signal dock_changed(docked: bool, body: Node2D)
@@ -55,6 +56,7 @@ const GRAB_SPRITE := preload("res://assets/wanderer_grab.png")
 
 var dock := Dock.new()
 var tether := Tether.new()
+var gun := Gun.new()
 ## Тросы, у которых оба конца уже сидят на телах. Q их не снимает.
 var fixed_ropes: Array[Tether] = []
 var _ride: Tether = null
@@ -91,6 +93,9 @@ func _ready() -> void:
 	var rope := TetherView.new()
 	rope.name = "TetherView"
 	add_child(rope)
+	var shots := GunView.new()
+	shots.name = "GunView"
+	add_child(shots)
 	DeathScreen.clear_orphans(get_tree())
 	_oxygen = Oxygen.new()
 	_oxygen.name = "Oxygen"
@@ -134,6 +139,9 @@ func _add_input_tools() -> void:
 	var harpoon := HarpoonTool.new()
 	harpoon.name = "HarpoonTool"
 	add_child(harpoon)
+	var gun_tool := GunTool.new()
+	gun_tool.name = "GunTool"
+	add_child(gun_tool)
 	var hatch := HatchTool.new()
 	hatch.name = "HatchTool"
 	add_child(hatch)
@@ -277,6 +285,7 @@ func _process(_delta: float) -> void:
 func _physics_process(delta: float) -> void:
 	## Концы троса сдвигаются до шага героя, иначе ездок отстаёт на кадр.
 	_step_fixed_ropes(delta)
+	gun.integrate(self, delta)
 	_step_motion(delta)
 	_publish_views()
 
@@ -387,6 +396,7 @@ func _step_motion(delta: float) -> void:
 func _publish_views() -> void:
 	_publish_aim()
 	_publish_rope()
+	_publish_gun()
 	_publish_warning()
 	_publish_leaks()
 
@@ -427,6 +437,13 @@ func _publish_rope() -> void:
 		home = tether.home_global()
 	view.show_rope(tip, tether.flying(), tether.linked(), tether.burst_at, age, tether.muzzle_at, tether.muzzle_dir, muzzle_age, tether.burst_dir, tether.jaw_angle(), home, tether.pinned())
 	view.show_fixed(fixed_ropes)
+
+
+func _publish_gun() -> void:
+	var view := get_node_or_null("GunView") as GunView
+	if view == null:
+		return
+	view.show_gun(gun)
 
 
 func _publish_warning() -> void:
@@ -913,6 +930,15 @@ func _aim_dir() -> Vector2:
 			return velocity.normalized()
 		return Vector2.UP
 	return to_target
+
+
+func fire_gun(direction: Vector2 = Vector2.ZERO) -> void:
+	if dock.inside or _dead or _ride != null:
+		return
+	var aim := direction
+	if aim.length_squared() <= 0.01:
+		aim = _aim_dir()
+	gun.shoot(self, aim)
 
 
 func fire_harpoon(direction: Vector2) -> void:
