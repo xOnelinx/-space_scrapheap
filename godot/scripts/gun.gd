@@ -7,6 +7,8 @@ const MUZZLE_SPEED := 780.0
 const RECOIL_SPEED := 64.0
 const RANGE := 960.0
 const SPARK_LIFE := 0.16
+## Клетка крупнее камня: пуля смотрит пару вёдер, а не всю сцену.
+const CELL := 256.0
 
 var rounds: Array[Round] = []
 var sparks: Array[Spark] = []
@@ -32,8 +34,14 @@ func integrate(host: Wanderer, delta: float) -> void:
 		sparks[i].life -= delta
 		if sparks[i].life <= 0.0:
 			sparks.remove_at(i)
+	if rounds.is_empty():
+		return
+	## Иначе каждая пуля заново берёт группу из сотен камней.
+	var tree := host.get_tree()
+	var nodes: Array = Bodies.pushable(tree) if tree != null else []
+	var grid := _body_grid(nodes)
 	for i in range(rounds.size() - 1, -1, -1):
-		if _fly(host, rounds[i], delta):
+		if _fly(host, rounds[i], delta, grid):
 			rounds.remove_at(i)
 
 
@@ -50,7 +58,7 @@ func _recoil(host: Wanderer, aim: Vector2) -> void:
 	host.add_impulse(back * host.get_mass())
 
 
-func _fly(host: Wanderer, round: Round, delta: float) -> bool:
+func _fly(host: Wanderer, round: Round, delta: float, grid: Dictionary) -> bool:
 	var step := round.vel * delta
 	var dist := step.length()
 	if dist <= 0.001:
@@ -60,7 +68,7 @@ func _fly(host: Wanderer, round: Round, delta: float) -> bool:
 	if room <= 0.0:
 		return true
 	dist = minf(dist, room)
-	var rock := Bodies.along_ray(host.get_tree(), round.pos, dir, dist, round.ignore, true)
+	var rock := _nearest(grid, round.pos, dir, dist, round.ignore)
 	round.flown += dist
 	if rock != null:
 		var hit_t := Body.ray_distance(rock, round.pos, dir)
@@ -68,6 +76,53 @@ func _fly(host: Wanderer, round: Round, delta: float) -> bool:
 		return true
 	round.pos += dir * dist
 	return round.flown >= RANGE
+
+
+func _body_grid(nodes: Array) -> Dictionary:
+	var grid: Dictionary = {}
+	for node in nodes:
+		var body := node as Node2D
+		if body == null or not Body.is_body(body):
+			continue
+		var radius := Body.hit_radius(body)
+		var center := body.global_position
+		var min_c := _cell(center - Vector2(radius, radius))
+		var max_c := _cell(center + Vector2(radius, radius))
+		for y in range(min_c.y, max_c.y + 1):
+			for x in range(min_c.x, max_c.x + 1):
+				var key := Vector2i(x, y)
+				if not grid.has(key):
+					grid[key] = []
+				var bucket: Array = grid[key]
+				bucket.append(body)
+	return grid
+
+
+func _nearest(grid: Dictionary, origin: Vector2, dir: Vector2, reach: float, ignore: Node2D) -> Node2D:
+	var best_t := reach
+	var found: Node2D = null
+	var end := origin + dir * reach
+	var c0 := _cell(origin)
+	var c1 := _cell(end)
+	for y in range(mini(c0.y, c1.y), maxi(c0.y, c1.y) + 1):
+		for x in range(mini(c0.x, c1.x), maxi(c0.x, c1.x) + 1):
+			var key := Vector2i(x, y)
+			if not grid.has(key):
+				continue
+			var bucket: Array = grid[key]
+			for node in bucket:
+				var body := node as Node2D
+				if body == null or body == ignore:
+					continue
+				var t := Body.ray_distance(body, origin, dir, best_t)
+				if t >= 0.0 and t < INF and t <= best_t:
+					best_t = t
+					found = body
+	return found
+
+
+func _cell(at: Vector2) -> Vector2i:
+	return Vector2i(floori(at.x / CELL), floori(at.y / CELL))
 
 
 func _strike(host: Wanderer, rock: Node2D, world_point: Vector2, dir: Vector2) -> void:
