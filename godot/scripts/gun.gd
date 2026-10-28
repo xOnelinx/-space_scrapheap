@@ -6,7 +6,8 @@ extends RefCounted
 const MUZZLE_SPEED := 780.0
 const RECOIL_SPEED := 64.0
 const RANGE := 960.0
-const SPARK_LIFE := 0.16
+## Столько же, сколько пыль стыковки гарпуна: песчинки успевают разлететься.
+const SPARK_LIFE := 1.05
 ## Клетка крупнее камня: пуля смотрит пару вёдер, а не всю сцену.
 const CELL := 256.0
 
@@ -46,13 +47,13 @@ func integrate(host: Wanderer, delta: float) -> void:
 
 
 func _recoil(host: Wanderer, aim: Vector2) -> void:
-	## С опоры отдача делится и отпускает ноги, как выстрел гарпуна.
+	## Пуля уносит импульс вперёд. Ноги давят на камень в ту же сторону, что и отдача, не вслед за иглой.
 	var back := -aim * RECOIL_SPEED
 	var stood := host.dock.body
 	if host.dock.docked and not host.dock.inside and Body.is_body(stood):
 		var share := SpaceRock.push_share(host.get_mass(), Body.mass(stood))
 		host.velocity = Body.velocity_at(stood, host.global_position) + back * share
-		host.add_body_impulse(stood, -back * host.get_mass() * share, host.global_position)
+		host.add_body_impulse(stood, back * host.get_mass() * share, host.global_position)
 		host.undock()
 		return
 	host.add_impulse(back * host.get_mass())
@@ -126,10 +127,14 @@ func _cell(at: Vector2) -> Vector2i:
 
 
 func _strike(host: Wanderer, rock: Node2D, world_point: Vector2, dir: Vector2) -> void:
-	var spark := Spark.new()
-	spark.at = world_point
-	spark.life = SPARK_LIFE
-	sparks.append(spark)
+	var away := world_point - rock.global_position
+	var stone := rock as SpaceRock
+	if stone != null and not stone.hull and away.length_squared() > 1.0:
+		var spark := Spark.new()
+		spark.at = world_point
+		spark.dir = away.normalized()
+		spark.life = SPARK_LIFE
+		sparks.append(spark)
 	## Импульс в центр: спин пишется отдельно, иначе плечо посчитается дважды.
 	var tip_mass := Wanderer.MASS * RECOIL_SPEED / MUZZLE_SPEED
 	var mass := Body.mass(rock)
@@ -158,4 +163,5 @@ class Round extends RefCounted:
 
 class Spark extends RefCounted:
 	var at := Vector2.ZERO
+	var dir := Vector2.ZERO
 	var life := 0.0

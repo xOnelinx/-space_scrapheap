@@ -245,12 +245,13 @@ static func ray_circle(origin: Vector2, dir: Vector2, center: Vector2, radius: f
 
 
 func _recoil(host: Wanderer, aim: Vector2) -> void:
+	## Болт уносит импульс вперёд. Ноги давят на камень в ту же сторону, что и отдача.
 	var back := -aim * RECOIL_SPEED
 	var stood := host.dock.body
 	if host.dock.docked and not host.dock.inside and Body.is_body(stood):
 		var share := SpaceRock.push_share(host.get_mass(), Body.mass(stood))
 		host.velocity = Body.velocity_at(stood, host.global_position) + back * share
-		host.add_body_impulse(stood, -back * host.get_mass() * share, host.global_position)
+		host.add_body_impulse(stood, back * host.get_mass() * share, host.global_position)
 		host.undock()
 		return
 	host.add_impulse(back * host.get_mass())

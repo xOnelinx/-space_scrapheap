@@ -52,6 +52,7 @@ func _check_hit(scene: Node, wanderer: Wanderer) -> bool:
 	wanderer.velocity = Vector2.ZERO
 	var rim := rock.get_hit_radius() * 0.65
 	wanderer.global_position = rock.global_position + Vector2(-(rock.get_hit_radius() + 80.0), rim)
+	wanderer.gun.sparks.clear()
 	wanderer.fire_gun(Vector2.RIGHT)
 	if absf(wanderer.velocity.x + Gun.RECOIL_SPEED) > 0.05 or absf(wanderer.velocity.y) > 0.05:
 		fail("Выстрел в пустоте не отдал назад: %s" % wanderer.velocity)
@@ -63,6 +64,14 @@ func _check_hit(scene: Node, wanderer: Wanderer) -> bool:
 		return false
 	if wanderer.gun.rounds.size() != 0:
 		fail("Пуля осталась после попадания")
+		return false
+	if wanderer.gun.sparks.is_empty():
+		fail("Попадание в астероид не подняло песок")
+		return false
+	var spray := wanderer.gun.sparks[0]
+	var away := spray.at - rock.global_position
+	if away.length_squared() < 1.0 or spray.dir.dot(away.normalized()) < 0.5:
+		fail("Песок полетел не от камня")
 		return false
 	return true
 
@@ -80,8 +89,8 @@ func _check_kick_off(scene: Node, wanderer: Wanderer) -> bool:
 	if wanderer.dock.docked or wanderer.velocity.x >= -1.0:
 		fail("Выстрел с камня не оттолкнул")
 		return false
-	if rock.drift_velocity.x <= 0.01:
-		fail("Опора не получила отдачу выстрела")
+	if rock.drift_velocity.x >= -0.01:
+		fail("Опора получила отдачу в сторону выстрела")
 		return false
 	wanderer.gun.integrate(wanderer, 0.05)
 	if wanderer.gun.rounds.is_empty():

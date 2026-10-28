@@ -727,8 +727,8 @@ func _check_recoil_reel_and_cap(wanderer: Wanderer, heavy: SpaceRock, light: Spa
 	if wanderer.dock.docked or wanderer.velocity.x >= -1.0:
 		fail("С тела выстрел не отдал назад")
 		return false
-	if heavy.drift_velocity.x <= before + 0.2:
-		fail("Опора не получила реакцию выстрела")
+	if heavy.drift_velocity.x >= before - 0.01:
+		fail("Опора получила реакцию в сторону выстрела")
 		return false
 	if not wanderer.tether.flying() or wanderer.tether.anchor == heavy:
 		fail("Выстрел с камня сразу сел на него")
