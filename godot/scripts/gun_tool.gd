@@ -1,7 +1,7 @@
 class_name GunTool
 extends Node
 
-## R стреляет к курсору. Один выстрел на нажатие.
+## ЛКМ стреляет к курсору. Один выстрел на нажатие.
 
 
 func _unhandled_input(event: InputEvent) -> void:

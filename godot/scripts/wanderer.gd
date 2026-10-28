@@ -9,7 +9,7 @@ extends CharacterBody2D
 ## ПКМ — курс до края экрана и стрелка скорости (спин опоры).
 ## Сила толчка — по расстоянию курсора: дальше сильнее, ближе слабее.
 ## Кислород — узел Oxygen. Секунда зажатого толчка — потом 5 секунд двойного расхода.
-## R — кинетический выстрел к курсору. Отдача назад, пуля не впивается.
+## ЛКМ — кинетический выстрел к курсору. Отдача назад, пуля не впивается.
 
 signal pushed(desired: Vector2, charge: float)
 signal dock_changed(docked: bool, body: Node2D)
@@ -123,7 +123,7 @@ func _spawn_on_start_rock() -> void:
 
 
 func _unlock_controls_when_ready() -> void:
-	## Ждём, пока отпустят толчок (клик рестарта), затем пауза — и только потом можно толкаться.
+	## Ждём, пока отпустят пробел, затем пауза — и только потом можно толкаться.
 	while Input.is_action_pressed(&"push"):
 		await get_tree().process_frame
 	await get_tree().create_timer(RESPAWN_INPUT_PAUSE).timeout
@@ -173,7 +173,7 @@ func is_push_charging() -> bool:
 
 
 func cancel_push_charge() -> void:
-	## Отпустили ПКМ: заряд сгорает, прыжка нет. Нужен новый зажим ЛКМ.
+	## Отпустили ПКМ: заряд сгорает, прыжка нет. Нужен новый зажим пробела.
 	_clear_charge()
 
 

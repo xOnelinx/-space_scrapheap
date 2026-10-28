@@ -13,6 +13,8 @@ func _run() -> void:
 		return
 	var wanderer: Wanderer = scene.get_node("Wanderer")
 	wanderer.set_physics_process(false)
+	if not _check_click(wanderer):
+		return
 	if not _check_hit(scene, wanderer):
 		return
 	if not _check_kick_off(scene, wanderer):
@@ -21,6 +23,24 @@ func _run() -> void:
 		return
 	print("GUN_OK")
 	quit(0)
+
+
+func _check_click(wanderer: Wanderer) -> bool:
+	wanderer._controls_locked = false
+	wanderer.undock()
+	wanderer.velocity = Vector2.ZERO
+	wanderer.global_position = Vector2(50000, 50000)
+	wanderer.gun.rounds.clear()
+	var event := InputEventMouseButton.new()
+	event.button_index = MOUSE_BUTTON_LEFT
+	event.pressed = true
+	wanderer.get_node("GunTool")._unhandled_input(event)
+	if wanderer.gun.rounds.size() != 1:
+		fail("ЛКМ не выстрелила")
+		return false
+	wanderer.gun.rounds.clear()
+	wanderer.velocity = Vector2.ZERO
+	return true
 
 
 func _check_hit(scene: Node, wanderer: Wanderer) -> bool:

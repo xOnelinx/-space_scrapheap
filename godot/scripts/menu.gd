@@ -64,6 +64,10 @@ func _show_pause() -> void:
 
 func _close() -> void:
 	_set_open(false)
+	## Иначе пробел остаётся ui_accept у кнопки меню и не доходит до прыжка.
+	var viewport := get_viewport()
+	if viewport != null:
+		viewport.gui_release_focus()
 	get_tree().paused = false
 
 

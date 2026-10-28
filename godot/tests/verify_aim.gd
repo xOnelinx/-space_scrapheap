@@ -208,10 +208,10 @@ func _check_aim_release_cancels_charge(scene: Node, wanderer: Wanderer) -> bool:
 	wanderer.undock()
 	wanderer.global_position = rock.global_position + Vector2(0, -rock.get_hit_radius() - 14.0)
 	wanderer.dock_to(rock, Vector2.UP)
-	_mouse(wanderer, MOUSE_BUTTON_LEFT, true)
+	_jump_key(wanderer, true)
 	wanderer._charge = 0.7
 	if not wanderer._charging:
-		fail("Заряд ЛКМ не начался")
+		fail("Заряд пробела не начался")
 		return false
 	_mouse(wanderer, MOUSE_BUTTON_RIGHT, false)
 	if wanderer._charging or wanderer._charge > 0.0:
@@ -220,17 +220,24 @@ func _check_aim_release_cancels_charge(scene: Node, wanderer: Wanderer) -> bool:
 	if not wanderer.dock.docked:
 		fail("Отпуск ПКМ не должен толкать")
 		return false
-	_mouse(wanderer, MOUSE_BUTTON_LEFT, false)
+	_jump_key(wanderer, false)
 	if not wanderer.dock.docked:
-		fail("Отпуск старой ЛКМ после сброса не должен толкать")
+		fail("Отпуск старого пробела после сброса не должен толкать")
 		return false
-	_mouse(wanderer, MOUSE_BUTTON_LEFT, true)
+	_jump_key(wanderer, true)
 	wanderer._charge = 1.0
-	_mouse(wanderer, MOUSE_BUTTON_LEFT, false)
+	_jump_key(wanderer, false)
 	if wanderer.dock.docked:
-		fail("После нового зажима ЛКМ должны оттолкнуться")
+		fail("После нового зажима пробела должны оттолкнуться")
 		return false
 	return true
+
+
+func _jump_key(wanderer: Wanderer, pressed: bool) -> void:
+	var event := InputEventKey.new()
+	event.physical_keycode = KEY_SPACE
+	event.pressed = pressed
+	wanderer.get_node("PushTool")._unhandled_input(event)
 
 
 func _mouse(wanderer: Wanderer, button: MouseButton, pressed: bool) -> void:
