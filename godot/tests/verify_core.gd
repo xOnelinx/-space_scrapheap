@@ -142,6 +142,8 @@ func _check_tether(scene: Node, wanderer: Wanderer) -> bool:
 	if wanderer.velocity.distance_to(keep_v) > 0.01 or heavy.drift_velocity.distance_to(keep_d) > 0.01:
 		fail("Слабина потянула")
 		return false
+	if not _check_rope_snap(wanderer, heavy):
+		return false
 
 	if not _pulls(wanderer, heavy, true):
 		return false
@@ -884,6 +886,42 @@ func _check_pin_point(wanderer: Wanderer, heavy: SpaceRock, light: SpaceRock) ->
 		fail("Точка СКМ отпустила сталь")
 		return false
 	_clear_ride(wanderer)
+	return true
+
+
+func _check_rope_snap(wanderer: Wanderer, heavy: SpaceRock) -> bool:
+	## На пределе длины часть скорости расхождения возвращается к болту, телу — реакция.
+	_quiet(heavy)
+	wanderer.undock()
+	wanderer.tether.release()
+	var reach := wanderer.character_size() * Tether.BODIES
+	var outbound := 80.0
+	wanderer.velocity = Vector2(outbound, 0)
+	heavy.drift_velocity = Vector2.ZERO
+	heavy.spin = 0.0
+	wanderer.global_position = heavy.global_position + Vector2(reach + 40.0, 0)
+	wanderer.tether.plant(wanderer, heavy, heavy.global_position)
+	wanderer.tether.length = reach
+	var momentum := wanderer.velocity * wanderer.get_mass()
+	wanderer.tether.integrate(wanderer, 0.016, false)
+	var toward := wanderer.tether.anchor_global() - wanderer.global_position
+	if toward.length_squared() < 1.0:
+		fail("После натяга болт совпал со скитальцем")
+		return false
+	toward = toward.normalized()
+	var back := (wanderer.velocity - heavy.drift_velocity).dot(toward)
+	var want := outbound * Tether.SNAP_RESTITUTION
+	if absf(back - want) > 0.5:
+		fail("Натяг не вернул ход к болту: %.1f, ждали %.1f" % [back, want])
+		return false
+	if heavy.drift_velocity.dot(toward) >= -0.2:
+		fail("Натяг не отдал импульс телу")
+		return false
+	var left := wanderer.velocity * wanderer.get_mass() + heavy.drift_velocity * heavy.get_mass()
+	if left.distance_to(momentum) > 1.0:
+		fail("Упругий натяг прибавил импульс")
+		return false
+	wanderer.tether.release()
 	return true
 
 

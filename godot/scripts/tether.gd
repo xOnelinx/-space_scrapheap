@@ -15,6 +15,8 @@ const MIN_LENGTH := 16.0
 const HIT_CARRY := 0.30
 ## Без отскока: рывок меняет спин и оставляет его таким, слабина старую скорость не возвращает.
 const ROPE_RESTITUTION := 0.0
+## Доля скорости, которую резкий предел живого троса отдаёт обратно к болту.
+const SNAP_RESTITUTION := 0.4
 const LINK_COUNT := 16
 const BURST_LIFE := 1.05
 ## Свет пороха гаснет раньше: газ ещё висит, когда вспышка уже погасла.
@@ -577,7 +579,9 @@ func _constrain(host: Wanderer, _delta: float, reeling: bool) -> void:
 		var mass := Body.mass(anchor)
 		var inv := (1.0 / host.get_mass()) + (1.0 / mass if mass > 0.0 else 0.0)
 		if mass > 0.0 and inv > 0.0:
-			var impulse := needed / inv
+			## E выбирает трос без отскока. Упор в предел длины отдаёт долю скорости к болту.
+			var give := 0.0 if reeling else SNAP_RESTITUTION
+			var impulse := needed * (1.0 + give) / inv
 			host.add_impulse(along * impulse)
 			var rock_dir := -along
 			host.add_body_impulse(anchor, rock_dir * impulse, anchor.global_position)
